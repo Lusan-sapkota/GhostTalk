@@ -1,0 +1,67 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/dist
+
+# python 
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info
+*.eggs
+*.whl
+*.mypy_cache
+*.pytest_cache
+*.coverage
+*.hypothesis/
+*.tox
+*.venv
+*.env
+*.venv/
+*.envrc
+*.env.local
+*.env.development
+
+# macOS
+*.DS_Store
+# Windows
+Thumbs.db
+ehthumbs.db
+# Linux
+*~
+# JetBrains
+.idea/
+# VS Code
+.vscode/
+# Local env files
+.env
+.env.local
+.env.development
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/.nx
+/.nx/cache
+/.vscode/*
+!/.vscode/extensions.json
+.idea
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional eslint cache
+.eslintcache
