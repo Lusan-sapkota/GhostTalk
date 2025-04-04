@@ -3,22 +3,13 @@ from flask_cors import CORS
 import random
 import os
 from dotenv import load_dotenv
-import requests
+import time
 import json
+import requests
 
 app = Flask(__name__)
 CORS(app)
 load_dotenv()
-
-# Appwrite configuration
-APPWRITE_ENDPOINT = os.getenv('VITE_APPWRITE_ENDPOINT')
-APPWRITE_PROJECT_ID = os.getenv('VITE_APPWRITE_PROJECT_ID')
-APPWRITE_DATABASE_ID = os.getenv('VITE_APPWRITE_DATABASE_ID')
-APPWRITE_COLLECTION_ID_USERS = os.getenv('VITE_APPWRITE_COLLECTION_ID_USERS')
-
-# Create API key for server-side operations
-# Store this securely and use environment variable
-APPWRITE_API_KEY = os.getenv('APPWRITE_API_KEY')  # Add this to your .env file
 
 # Load words from files
 def load_words(file_path):
@@ -26,44 +17,44 @@ def load_words(file_path):
         return [line.strip() for line in file if line.strip()]
 
 try:
-    adjectives = load_words('words/adjectives.txt')
-    nouns = load_words('words/nouns.txt')
+    # Update path to match your workspace structure
+    adjectives = load_words('./words/english-adjectives.txt')
+    nouns = load_words('./words/english-nouns.txt')
+    print(f"Loaded {len(adjectives)} adjectives and {len(nouns)} nouns")
 except Exception as e:
     print(f"Error loading word files: {e}")
     adjectives = ["happy", "clever", "brave", "shiny", "gentle"]
     nouns = ["ghost", "cat", "star", "moon", "tiger"]
 
-# Helper function to make Appwrite API requests
-def appwrite_request(method, endpoint, data=None, params=None):
-    headers = {
-        'Content-Type': 'application/json',
-        'X-Appwrite-Project': APPWRITE_PROJECT_ID,
-        'X-Appwrite-Key': APPWRITE_API_KEY
-    }
-    
-    url = f"{APPWRITE_ENDPOINT}{endpoint}"
-    
-    if method == 'GET':
-        response = requests.get(url, headers=headers, params=params)
-    elif method == 'POST':
-        response = requests.post(url, headers=headers, json=data)
-    
-    return response
+# Appwrite configuration
+APPWRITE_ENDPOINT = os.getenv('VITE_APPWRITE_ENDPOINT')
+APPWRITE_PROJECT_ID = os.getenv('VITE_APPWRITE_PROJECT_ID')
+APPWRITE_API_KEY = os.getenv('VITE_APPWRITE_API_KEY')
+APPWRITE_DATABASE_ID = os.getenv('VITE_APPWRITE_DATABASE_ID')
+APPWRITE_COLLECTION_ID_USERS = os.getenv('VITE_APPWRITE_COLLECTION_ID_USERS')
 
-# Check if username exists in Appwrite
-def username_exists(username):
-    endpoint = f"/databases/{APPWRITE_DATABASE_ID}/collections/{APPWRITE_COLLECTION_ID_USERS}/documents"
-    params = {
-        'queries': [f'username={username}']
+def check_username_exists(username):
+    headers = {
+        'X-Appwrite-Project': APPWRITE_PROJECT_ID,
+        'X-Appwrite-Key': APPWRITE_API_KEY,
+        'Content-Type': 'application/json'
     }
     
-    response = appwrite_request('GET', endpoint, params=params)
+    # Use Appwrite's database API to query for the username
+    url = f"{APPWRITE_ENDPOINT}/databases/{APPWRITE_DATABASE_ID}/collections/{APPWRITE_COLLECTION_ID_USERS}/documents"
+    params = {
+        'queries': [f'equal("username", "{username}")']
+    }
     
-    if response.status_code == 200:
-        data = response.json()
-        return len(data.get('documents', [])) > 0
-    
-    return False
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            return len(data.get('documents', [])) > 0
+        return False
+    except Exception as e:
+        print(f"Error checking username: {e}")
+        return False
 
 @app.route('/generate-username', methods=['GET'])
 def generate_username():
@@ -78,13 +69,7 @@ def generate_username():
         username = f"{adj.capitalize()}{noun.capitalize()}{number}"
         
         # Check if username already exists in Appwrite
-        try:
-            if not username_exists(username):
-                return jsonify({"username": username})
-            
-        except Exception as e:
-            print(f"Appwrite error: {e}")
-            # If there's an API error, just return the generated username
+        if not check_username_exists(username):
             return jsonify({"username": username})
         
         attempts += 1
@@ -94,11 +79,6 @@ def generate_username():
 
 @app.route('/register', methods=['POST'])
 def register():
-    from appwrite.client import Client
-    from appwrite.services.account import Account
-    from appwrite.services.databases import Databases
-    from appwrite.id import ID
-    
     data = request.json
     username = data.get('username')
     email = data.get('email')
@@ -106,38 +86,41 @@ def register():
     gender = data.get('gender')
     remember_me = data.get('rememberMe', False)
     
-    # Create Appwrite client
-    client = Client()
-    client.set_endpoint(APPWRITE_ENDPOINT)
-    client.set_project(APPWRITE_PROJECT_ID)
-    client.set_key(APPWRITE_API_KEY)
+    # Check if the username already exists
+    if check_username_exists(username):
+        return jsonify({"error": "Username already exists"}), 400
     
-    databases = Databases(client)
+    # Create headers for Appwrite API
+    headers = {
+        'X-Appwrite-Project': APPWRITE_PROJECT_ID,
+        'X-Appwrite-Key': APPWRITE_API_KEY,
+        'Content-Type': 'application/json'
+    }
+    
+    # Create user document in Appwrite
+    document_data = {
+        'username': username,
+        'email': email,
+        'password': password,  # In production, you should hash this before storing
+        'gender': gender,
+        'remember': remember_me,
+        'createdAt': str(int(time.time()))
+    }
+    
+    # Use Appwrite's API to create a document
+    url = f"{APPWRITE_ENDPOINT}/databases/{APPWRITE_DATABASE_ID}/collections/{APPWRITE_COLLECTION_ID_USERS}/documents"
     
     try:
-        # Check if username already exists
-        if username_exists(username):
-            return jsonify({"error": "Username already exists"}), 400
+        response = requests.post(url, headers=headers, json={
+            'documentId': 'unique()',
+            'data': document_data
+        })
         
-        # Create user document in Appwrite
-        user_data = {
-            'username': username,
-            'email': email,
-            'password': password,  # In production, you should hash this
-            'gender': gender,
-            'remember': remember_me,
-            'createdAt': str(int(time.time()))
-        }
-        
-        # Create user document in the database
-        result = databases.create_document(
-            database_id=APPWRITE_DATABASE_ID,
-            collection_id=APPWRITE_COLLECTION_ID_USERS,
-            document_id=ID.unique(),
-            data=user_data
-        )
-        
-        return jsonify({"message": "Registration successful", "userId": result["$id"]}), 201
+        if response.status_code == 201:
+            return jsonify({"message": "Registration successful", "userId": response.json()['$id']}), 201
+        else:
+            print(f"Error response from Appwrite: {response.text}")
+            return jsonify({"error": "Registration failed"}), 500
     
     except Exception as e:
         print(f"Registration error: {e}")

@@ -19,7 +19,8 @@ import {
   IonCheckbox,
   IonSelect,
   IonSelectOption,
-  IonSpinner
+  IonSpinner,
+  IonLoading
 } from '@ionic/react';
 import { personAdd, refresh } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
@@ -36,6 +37,10 @@ const Register: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
+
+  // Backend URL from environment variable or default
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
   // Generate a username when the component loads
   useEffect(() => {
@@ -45,19 +50,26 @@ const Register: React.FC = () => {
   const generateUsername = async () => {
     setIsGeneratingUsername(true);
     try {
-      const response = await fetch('http://localhost:5000/generate-username', {
-        method: 'GET'
+      const response = await fetch(`${backendUrl}/generate-username`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
       
       if (response.ok) {
         const data = await response.json();
         setUsername(data.username);
       } else {
-        setToastMessage('Failed to generate username');
+        console.error('Failed to generate username, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
+        setToastMessage(`Failed to generate username (${response.status})`);
         setShowToast(true);
       }
     } catch (error) {
-      setToastMessage('Error generating username');
+      console.error('Error generating username:', error);
+      setToastMessage('Error connecting to server. Please try again.');
       setShowToast(true);
     } finally {
       setIsGeneratingUsername(false);
@@ -86,7 +98,7 @@ const Register: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/register', {
+      const response = await fetch(`${backendUrl}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

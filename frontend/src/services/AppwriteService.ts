@@ -89,14 +89,10 @@ export class AppwriteService {
         import.meta.env.VITE_APPWRITE_COLLECTION_ID_CHATS,
         [
           Query.equal('$or', [
-            Query.and([
-              Query.equal('senderId', userId1),
-              Query.equal('receiverId', userId2)
-            ]),
-            Query.and([
-              Query.equal('senderId', userId2),
-              Query.equal('receiverId', userId1)
-            ])
+            Query.equal('senderId', userId1),
+            Query.equal('receiverId', userId2),
+            Query.equal('senderId', userId2),
+            Query.equal('receiverId', userId1)
           ]),
           Query.orderDesc('timestamp')
         ]
