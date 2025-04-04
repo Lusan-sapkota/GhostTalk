@@ -1,0 +1,33 @@
+.register-container {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.register-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.register-icon-container ion-icon {
+  font-size: 64px;
+}
+
+ion-card-header {
+  text-align: center;
+}
+
+.register-button {
+  margin-top: 20px;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.login-link a {
+  color: var(--ion-color-primary);
+  text-decoration: none;
+}

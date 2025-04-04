@@ -1,0 +1,131 @@
+.start-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.random-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.random-icon ion-icon {
+  font-size: 64px;
+}
+
+.random-title {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-top: 0;
+}
+
+.description {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--ion-color-medium);
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-item h3 {
+  margin: 0;
+  color: var(--ion-color-primary);
+  font-size: 1.5rem;
+}
+
+.stat-item p {
+  margin: 5px 0;
+  color: var(--ion-color-medium);
+}
+
+/* Chat styles */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.message-bubble {
+  margin-bottom: 10px;
+  max-width: 80%;
+  display: flex;
+}
+
+.my-message {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.other-message {
+  margin-right: auto;
+  justify-content: flex-start;
+}
+
+.message-content {
+  padding: 10px 15px;
+  border-radius: 18px;
+  position: relative;
+}
+
+.my-message .message-content {
+  background-color: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+
+.other-message .message-content {
+  background-color: var(--ion-color-light);
+  color: var(--ion-color-dark);
+}
+
+.message-content p {
+  margin: 0;
+}
+
+.message-time {
+  font-size: 0.7rem;
+  margin-top: 5px;
+  display: block;
+  text-align: right;
+}
+
+.message-input-container {
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  background-color: var(--ion-background-color);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.message-input-container ion-textarea {
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --padding-start: 15px;
+  --padding-end: 15px;
+  --border-radius: 20px;
+  margin-right: 10px;
+  background-color: var(--ion-color-light);
+}
