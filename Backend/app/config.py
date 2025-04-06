@@ -7,10 +7,11 @@ load_dotenv()
 class Config:
     # Flask configs
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False') == 'True'
     
     # JWT configs
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'your-jwt-secret-key'
-    JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour in seconds
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get('JWT_ACCESS_TOKEN_EXPIRES', 600))  # 10 minutes
     
     # Appwrite configs
     APPWRITE_ENDPOINT = os.environ.get('APPWRITE_ENDPOINT')

@@ -1,4 +1,4 @@
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from .appwrite_service import AppwriteService
 from ..utils.security import generate_token
 
@@ -15,8 +15,7 @@ class AuthService:
                 return {'success': False, 'message': 'Email already registered'}, 400
             
             # Create user
-            hashed_password = generate_password_hash(password)
-            user = self.appwrite_service.create_user(email, hashed_password, name)
+            user = self.appwrite_service.create_user(email, password, name)
             
             # Generate token
             token = generate_token(user['$id'])
@@ -37,24 +36,21 @@ class AuthService:
     def login_user(self, email, password):
         """Login a user"""
         try:
-            # Get user by email
-            user = self.appwrite_service.get_user_by_email(email)
+            # Try to login with Appwrite
+            result = self.appwrite_service.login_user(email, password)
             
-            if not user or not check_password_hash(user['password'], password):
-                return {'success': False, 'message': 'Invalid email or password'}, 401
-            
-            # Generate token
-            token = generate_token(user['$id'])
+            # Generate JWT token
+            token = generate_token(result['user']['$id'])
             
             return {
                 'success': True,
                 'message': 'Login successful',
                 'user': {
-                    'id': user['$id'],
-                    'email': user['email'],
-                    'name': user['name']
+                    'id': result['user']['$id'],
+                    'email': result['user']['email'],
+                    'name': result['user']['name']
                 },
                 'token': token
             }, 200
         except Exception as e:
-            return {'success': False, 'message': str(e)}, 500
+            return {'success': False, 'message': 'Invalid email or password'}, 401

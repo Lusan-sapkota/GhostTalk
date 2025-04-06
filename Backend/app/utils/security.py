@@ -1,7 +1,7 @@
 import jwt
 import datetime
-from flask import current_app, request
 from functools import wraps
+from flask import current_app, request, jsonify
 
 def generate_token(user_id):
     """Generate JWT token for authentication"""
@@ -27,15 +27,15 @@ def token_required(f):
             token = auth_header.split(" ")[1]
         
         if not token:
-            return {'message': 'Authentication token is missing'}, 401
+            return jsonify({'success': False, 'message': 'Authentication token is missing'}), 401
         
         try:
             data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
             current_user_id = data['sub']
         except jwt.ExpiredSignatureError:
-            return {'message': 'Token has expired'}, 401
+            return jsonify({'success': False, 'message': 'Token has expired'}), 401
         except jwt.InvalidTokenError:
-            return {'message': 'Invalid token'}, 401
+            return jsonify({'success': False, 'message': 'Invalid token'}), 401
         
         return f(current_user_id, *args, **kwargs)
     

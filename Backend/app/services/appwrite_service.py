@@ -1,12 +1,12 @@
 import time
+import random
+import string
 from appwrite.client import Client
 from appwrite.services.users import Users
 from appwrite.services.databases import Databases
 from appwrite.services.storage import Storage
 from appwrite.services.avatars import Avatars
 from flask import current_app
-import random
-import string
 from ..utils.name_generator import generate_random_name
 
 class AppwriteService:
@@ -25,9 +25,9 @@ class AppwriteService:
         
         # Database IDs
         self.database_id = 'ghosttalk-db'
-        self.APPWRITE_COLLECTION_ID_AUTH = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
-        self.APPWRITE_COLLECTION_ID_CHATS = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
-        self.APPWRITE_COLLECTION_ID_CHAT_ROOMS = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
+        self.users_collection_id = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
+        self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
+        self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
     
     def create_user(self, email, password, name=None):
         """Create a new Appwrite user"""
@@ -49,7 +49,7 @@ class AppwriteService:
             # Create user profile document
             self.database.create_document(
                 database_id=self.database_id,
-                collection_id=self.APPWRITE_COLLECTION_ID_AUTH,
+                collection_id=self.users_collection_id,
                 document_id=user_id,
                 data={
                     'userId': user_id,
@@ -63,6 +63,16 @@ class AppwriteService:
             return user
         except Exception as e:
             print(f"Error creating user: {str(e)}")
+            raise e
+    
+    def login_user(self, email, password):
+        """Login user with email and password"""
+        try:
+            session = self.users.create_session(email=email, password=password)
+            user = self.get_user(session['userId'])
+            return {'session': session, 'user': user}
+        except Exception as e:
+            print(f"Error logging in: {str(e)}")
             raise e
 
     def get_user(self, user_id):
@@ -87,6 +97,22 @@ class AppwriteService:
         except Exception as e:
             print(f"Error getting user by email: {str(e)}")
             return None
+    
+    def update_user(self, user_id, name=None, email=None):
+        """Update user information"""
+        try:
+            updates = {}
+            if name is not None:
+                updates['name'] = name
+            if email is not None:
+                updates['email'] = email
+                
+            if updates:
+                return self.users.update(user_id, **updates)
+            return self.get_user(user_id)
+        except Exception as e:
+            print(f"Error updating user: {str(e)}")
+            raise e
             
     def create_chat(self, sender_id, recipient_id, message):
         """Create a new chat message"""
@@ -96,7 +122,7 @@ class AppwriteService:
             # Create chat document
             chat = self.database.create_document(
                 database_id=self.database_id,
-                collection_id=self.APPWRITE_COLLECTION_ID_CHATS,
+                collection_id=self.chats_collection_id,
                 document_id=chat_id,
                 data={
                     'senderId': sender_id,
@@ -112,16 +138,26 @@ class AppwriteService:
             print(f"Error creating chat: {str(e)}")
             raise e
     
-    def get_chats(self, user_id, other_user_id):
-        """Get chat messages between two users"""
+    def get_chats(self, user_id, other_user_id=None):
+        """Get chat messages between users
+        If other_user_id is None, get all chats for the user"""
         try:
-            # Get chats where user is sender or recipient
+            query = []
+            if other_user_id:
+                # Get chats between two specific users
+                query = [
+                    f'(senderId={user_id} && recipientId={other_user_id}) || (senderId={other_user_id} && recipientId={user_id})'
+                ]
+            else:
+                # Get all chats where user is sender or recipient
+                query = [
+                    f'senderId={user_id} || recipientId={user_id}'
+                ]
+                
             chats = self.database.list_documents(
                 database_id=self.database_id,
-                collection_id=self.APPWRITE_COLLECTION_ID_CHATS,
-                queries=[
-                    f'(senderId={user_id} && recipientId={other_user_id}) || (senderId={other_user_id} && recipientId={user_id})'
-                ],
+                collection_id=self.chats_collection_id,
+                queries=query,
                 order_field='timestamp',
                 order_type='ASC'
             )
@@ -131,7 +167,7 @@ class AppwriteService:
             print(f"Error getting chats: {str(e)}")
             return []
     
-    def create_room(self, name, creator_id, is_private=False):
+    def create_room(self, name, creator_id, description="", is_private=False, require_login=True, chat_type='discussion'):
         """Create a new chat room"""
         try:
             room_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
@@ -139,14 +175,18 @@ class AppwriteService:
             # Create room document
             room = self.database.create_document(
                 database_id=self.database_id,
-                collection_id=self.APPWRITE_COLLECTION_ID_CHAT_ROOMS,
+                collection_id=self.rooms_collection_id,
                 document_id=room_id,
                 data={
                     'name': name,
+                    'description': description,
                     'creatorId': creator_id,
                     'isPrivate': is_private,
+                    'requireLogin': require_login,
+                    'chatType': chat_type,
                     'createdAt': int(time.time()),
-                    'members': [creator_id]
+                    'members': [creator_id],
+                    'lastActivity': int(time.time())
                 }
             )
             
@@ -154,3 +194,33 @@ class AppwriteService:
         except Exception as e:
             print(f"Error creating room: {str(e)}")
             raise e
+    
+    def get_rooms(self, is_private=None, user_id=None):
+        """Get chat rooms
+        If is_private is None, get all rooms
+        If is_private is True, get only private rooms
+        If is_private is False, get only public rooms
+        If user_id is provided, only get rooms where user is a member (for private rooms)
+        """
+        try:
+            queries = []
+            
+            if is_private is not None:
+                queries.append(f'isPrivate={str(is_private).lower()}')
+            
+            if is_private and user_id:
+                # For private rooms, check if user is a member
+                queries.append(f'members.{user_id}=*')
+            
+            rooms = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.rooms_collection_id,
+                queries=queries,
+                order_field='lastActivity',
+                order_type='DESC'
+            )
+            
+            return rooms['documents']
+        except Exception as e:
+            print(f"Error getting rooms: {str(e)}")
+            return []
