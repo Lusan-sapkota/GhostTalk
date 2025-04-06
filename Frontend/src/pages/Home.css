@@ -4,17 +4,34 @@
   padding: 20px;
 }
 
-/* Hero Section */
+/* Hero Section with ghostly gradient */
 .hero-section {
   background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
   padding: 60px 20px;
   color: white;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add ghostly mist effect */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(255,255,255,0.1) 100%);
+  opacity: 0.7;
+  animation: ghostPulse 5s ease-in-out infinite;
 }
 
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-section h1 {
@@ -22,6 +39,7 @@
   font-weight: bold;
   margin-bottom: 20px;
   line-height: 1.2;
+  text-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
 .hero-section p {
@@ -36,6 +54,13 @@
   --padding-end: 25px;
   font-weight: bold;
   font-size: 1rem;
+  box-shadow: var(--ghost-shadow-medium);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.get-started-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ghost-shadow-strong);
 }
 
 /* Section Styling */
@@ -67,16 +92,26 @@
   background-color: var(--ion-background-color);
 }
 
+/* Feature cards with ghostly hover effects */
 .feature-card {
   height: 100%;
   border-radius: 15px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dark .feature-card {
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--ghost-shadow-medium);
 }
 
 .feature-icon {
@@ -88,6 +123,7 @@
 .feature-icon ion-icon {
   font-size: 48px;
   color: var(--ion-color-primary);
+  filter: drop-shadow(0 0 5px rgba(var(--ion-color-primary-rgb), 0.5));
 }
 
 ion-card-title {
@@ -120,10 +156,23 @@ ion-card-title {
 }
 
 .pro-header {
-  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, #6a64ff 100%);
   padding: 40px 20px;
   text-align: center;
   position: relative;
+  overflow: hidden;
+}
+
+/* Add ghostly mist effect to pro section */
+.pro-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: ghostPulse 8s ease-in-out infinite;
 }
 
 .pro-badge {
@@ -135,6 +184,12 @@ ion-card-title {
   padding: 5px 15px;
   font-weight: bold;
   margin-bottom: 15px;
+  position: relative;
+}
+
+.pro-badge ion-icon {
+  margin-right: 5px;
+  animation: ghostPulse 2s infinite;
 }
 
 .pro-header h2 {
@@ -165,7 +220,11 @@ ion-card-title {
 
 .pro-feature-item:hover {
   transform: translateY(-3px);
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.dark .pro-feature-item:hover {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.15);
 }
 
 .save-text {
@@ -180,7 +239,7 @@ ion-card-title {
   align-items: center;
   width: 50px;
   height: 50px;
-  background-color: rgba(255, 193, 7, 0.1);
+  background-color: rgba(var(--ion-color-primary-rgb), 0.15);
   border-radius: 50%;
   margin-right: 15px;
   flex-shrink: 0;
@@ -188,7 +247,7 @@ ion-card-title {
 
 .feature-icon-container ion-icon {
   font-size: 24px;
-  color: var(--ion-color-warning);
+  color: var(--ion-color-primary);
 }
 
 .feature-text {
@@ -427,13 +486,16 @@ ion-card-title {
   background-color: var(--ion-color-dark);
   color: var(--ion-color-light);
   width: 100%;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
 .footer-content {
   display: flex;
   flex-wrap: wrap;
-  padding: 40px 20px;
+  padding: 40px 20px 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -509,16 +571,28 @@ ion-card-title {
   font-size: 20px;
 }
 
+/* Ensure copyright part is visible */
 .copyright {
+  width: 100%;
   text-align: center;
-  padding: 20px;
+  padding: 15px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+  margin-top: 0;
+  position: relative;
+  z-index: 3;
+}
+
+.dark .copyright {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .copyright p {
   margin: 0;
-  opacity: 0.8;
   font-size: 0.9rem;
+  opacity: 0.7;
+  color: var(--ion-color-light);
 }
 
 /* Add these to ensure page structure */
@@ -570,4 +644,9 @@ ion-content {
 
 ion-footer {
   flex-shrink: 0;
+}
+
+/* Fix content overflow */
+ion-content::part(scroll) {
+  padding-bottom: 20px;
 }

@@ -1,32 +1,31 @@
-
 /* Ionic Variables and Theming. For more info, please see:
 http://ionicframework.com/docs/theming/ */
 
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
-  --ion-color-primary: #ffcc00;
-  --ion-color-primary-rgb: 255, 204, 0;
-  --ion-color-primary-contrast: #000000;
-  --ion-color-primary-contrast-rgb: 0, 0, 0;
-  --ion-color-primary-shade: #e0b400;
-  --ion-color-primary-tint: #ffd11a;
+  --ion-color-primary: #8a2be2; /* Changed to a ghostly purple */
+  --ion-color-primary-rgb: 138, 43, 226;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #7926c7;
+  --ion-color-primary-tint: #9640e5;
 
   /** secondary **/
-  --ion-color-secondary: #3880ff;
-  --ion-color-secondary-rgb: 56, 128, 255;
+  --ion-color-secondary: #50c8ff;
+  --ion-color-secondary-rgb: 80, 200, 255;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #3171e0;
-  --ion-color-secondary-tint: #4c8dff;
+  --ion-color-secondary-shade: #46b0e0;
+  --ion-color-secondary-tint: #62ceff;
 
   /** tertiary **/
-  --ion-color-tertiary: #5260ff;
-  --ion-color-tertiary-rgb: 82, 96, 255;
+  --ion-color-tertiary: #6a64ff;
+  --ion-color-tertiary-rgb: 106, 100, 255;
   --ion-color-tertiary-contrast: #ffffff;
   --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #4854e0;
-  --ion-color-tertiary-tint: #6370ff;
+  --ion-color-tertiary-shade: #5d58e0;
+  --ion-color-tertiary-tint: #7974ff;
 
   /** success **/
   --ion-color-success: #2dd36f;
@@ -76,13 +75,107 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
 
-  /* Custom color for GhostTalk */
-  --ion-color-ghost: #343a40;
-  --ion-color-ghost-rgb: 52, 58, 64;
-  --ion-color-ghost-contrast: #ffffff;
-  --ion-color-ghost-contrast-rgb: 255, 255, 255;
-  --ion-color-ghost-shade: #2e3338;
-  --ion-color-ghost-tint: #484e53;
+  /* Custom ghost color */
+  --ion-color-ghost: #bda2db; /* Lighter ghostly purple */
+  --ion-color-ghost-rgb: 189, 162, 219;
+  --ion-color-ghost-contrast: #000000;
+  --ion-color-ghost-contrast-rgb: 0, 0, 0;
+  --ion-color-ghost-shade: #a68fc1;
+  --ion-color-ghost-tint: #c4abdf;
+  
+  /* Ghost accent colors */
+  --ghost-accent-1: #c4a1ff;
+  --ghost-accent-2: #e2cfff;
+  --ghost-glow: 0 0 15px rgba(138, 43, 226, 0.3);
+  
+  /* Animation speeds */
+  --animation-slow: 3s;
+  --animation-medium: 2s;
+  --animation-fast: 0.5s;
+  
+  /* Custom shadows */
+  --ghost-shadow-subtle: 0 4px 10px rgba(138, 43, 226, 0.15);
+  --ghost-shadow-medium: 0 8px 20px rgba(138, 43, 226, 0.2);
+  --ghost-shadow-strong: 0 10px 30px rgba(138, 43, 226, 0.3);
+}
+
+/* Define custom Ionic colors */
+.ion-color-ghost {
+  --ion-color-base: var(--ion-color-ghost);
+  --ion-color-base-rgb: var(--ion-color-ghost-rgb);
+  --ion-color-contrast: var(--ion-color-ghost-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-ghost-contrast-rgb);
+  --ion-color-shade: var(--ion-color-ghost-shade);
+  --ion-color-tint: var(--ion-color-ghost-tint);
+}
+
+/* Ultra-Thin Ghostly Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 2px;                /* Thinner vertical scrollbar width */
+  height: 2px;               /* Thinner horizontal scrollbar height */
+}
+
+/* Hidden by default, appears on hover */
+::-webkit-scrollbar-track {
+  background: transparent;   /* Transparent track for subtle appearance */
+  margin: 4px 0;             /* Increased margin to make the area feel more spacious */
+}
+
+/* Style the scrollbar thumb with ghostly effects */
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--ion-color-primary-rgb), 0.3);  /* More transparent for subtlety */
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 4px rgba(var(--ion-color-primary-rgb), 0.15);
+}
+
+/* Enhanced hover effect for the thinner thumb */
+::-webkit-scrollbar-thumb:hover {
+  width: 3px; /* Slightly expand on hover for better usability */
+  background: rgba(var(--ion-color-primary-rgb), 0.6);
+  box-shadow: 0 0 8px rgba(var(--ion-color-primary-rgb), 0.4);
+}
+
+/* Make main content scrollbars slightly more visible but still thin */
+ion-content::-webkit-scrollbar-thumb {
+  background: rgba(var(--ion-color-primary-rgb), 0.35);
+  box-shadow: var(--ghost-glow);
+}
+
+/* Make scrollbars on small elements ultra thin */
+ion-textarea::-webkit-scrollbar,
+ion-select::-webkit-scrollbar,
+.small-scroll::-webkit-scrollbar {
+  width: 1px;    /* Ultra thin for small elements */
+  height: 1px;
+}
+
+/* Special hover behavior for chat areas - expand slightly when user hovers */
+.messages-container:hover::-webkit-scrollbar-thumb {
+  width: 3px;
+}
+
+/* Firefox scrollbar styling - update to be ultra thin */
+* {
+  scrollbar-width: thin; /* This is the thinnest Firefox supports */
+  scrollbar-color: var(--ion-color-primary) transparent;
+}
+
+/* Animated appearance for scrollbars */
+@media (prefers-reduced-motion: no-preference) {
+  ::-webkit-scrollbar-thumb {
+    animation: ghostFadeIn 0.5s ease;
+  }
+  
+  @keyframes ghostFadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
 }
 
 /* Dark mode */
@@ -92,19 +185,15 @@ http://ionicframework.com/docs/theming/ */
    * -------------------------------------------
    */
   body.dark {
-    --ion-color-primary: #ffcc00;
-    --ion-color-primary-rgb: 255, 204, 0;
-    --ion-color-primary-contrast: #000000;
-    --ion-color-primary-contrast-rgb: 0, 0, 0;
-    --ion-color-primary-shade: #e0b400;
-    --ion-color-primary-tint: #ffd11a;
+    --ion-color-primary: #a64dff; /* Brighter purple for dark mode */
+    --ion-color-primary-rgb: 166, 77, 255;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #9244e0;
+    --ion-color-primary-tint: #af5fff;
 
-    --ion-color-secondary: #50c8ff;
-    --ion-color-secondary-rgb: 80, 200, 255;
-    --ion-color-secondary-contrast: #ffffff;
-    --ion-color-secondary-contrast-rgb: 255, 255, 255;
-    --ion-color-secondary-shade: #46b0e0;
-    --ion-color-secondary-tint: #62ceff;
+    --ion-color-secondary: #6a64ff;
+    --ion-color-secondary-rgb: 106, 100, 255;
 
     --ion-color-tertiary: #6a64ff;
     --ion-color-tertiary-rgb: 106, 100, 255;
@@ -162,6 +251,19 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-ghost-contrast-rgb: 255, 255, 255;
     --ion-color-ghost-shade: #191919;
     --ion-color-ghost-tint: #333333;
+
+    /* Ghost accent colors for dark mode */
+    --ghost-accent-1: #9d6cff;
+    --ghost-accent-2: #c9a9ff;
+    --ghost-glow: 0 0 20px rgba(166, 77, 255, 0.4);
+
+    /* Background colors */
+    --ion-background-color: #121212;
+    --ion-background-color-rgb: 18, 18, 18;
+
+    /* Card, item backgrounds */
+    --ion-item-background: #1e1e1e;
+    --ion-card-background: #1e1e1e;
   }
 
   /*
@@ -231,5 +333,18 @@ http://ionicframework.com/docs/theming/ */
     --ion-toolbar-background: #1a1b1e;
     --ion-tab-bar-background: #1a1b1e;
     --ion-tab-bar-color-selected: var(--ion-color-primary);
+  }
+  @media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+      background: var(--ion-color-dark);  /* Dark background for the track */
+    }
+  
+    ::-webkit-scrollbar-thumb {
+      background: var(--ion-color-ghost);  /* Ghostly purple for dark mode */
+    }
+  
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--ion-color-primary); /* Primary color on hover */
+    }
   }
 }

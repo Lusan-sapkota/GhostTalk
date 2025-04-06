@@ -1,14 +1,9 @@
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonButtons,
-  IonMenuButton,
   IonButton,
   IonIcon,
-  IonSearchbar,
   IonList,
   IonItem,
   IonAvatar,
@@ -19,22 +14,28 @@ import {
   IonModal,
   IonInput,
   IonFooter,
-  IonTextarea
+  IonTextarea,
+  IonHeader,
+  IonToolbar,
+  IonTitle
 } from '@ionic/react';
 import { 
   chatbubble, 
   personCircle, 
   add, 
   ellipsisVertical,
-  checkmarkCircle,
-  searchCircle
+  checkmarkCircle
 } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import './ChatIndividual.css';
 import { themeService } from '../services/ThemeService';
 import LoginPrompt from '../components/LoginPrompt';
-import { appwriteService } from '../services/AppwriteService';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api.service';
+import { useHistory } from 'react-router-dom';
+import HeaderComponent from '../components/HeaderComponent';
 
+// Interface definitions remain unchanged
 interface Chat {
   id: number;
   name: string;
@@ -46,26 +47,21 @@ interface Chat {
 }
 
 const ChatIndividual: React.FC = () => {
+  const history = useHistory();
+  const { currentUser, isAuthenticated, isLoading } = useAuth();
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const [searchText, setSearchText] = useState('');
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [chatId, setChatId] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState<boolean>(false);
 
+  // Update theme state when theme changes
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = await appwriteService.getCurrentUser();
-      setIsLoggedIn(!!user);
-    };
-    
-    checkAuth();
+    const cleanup = themeService.onThemeChange((isDark) => {
+      setDarkMode(isDark);
+    });
+    return cleanup;
   }, []);
-
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
 
   const handleStartNewChat = () => {
     console.log(`Starting chat with ID: ${chatId}`);
@@ -74,7 +70,7 @@ const ChatIndividual: React.FC = () => {
   };
 
   const handleStartPrivateChat = () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
@@ -83,7 +79,7 @@ const ChatIndividual: React.FC = () => {
   };
 
   const handleChatClick = (chatId: number) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
@@ -91,6 +87,12 @@ const ChatIndividual: React.FC = () => {
     history.push(`/chat-individual/${chatId}`);
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    // Filter chats based on search text will happen automatically due to filteredChats calculation
+  };
+
+  // Mock chats data
   const chats: Chat[] = [
     {
       id: 1,
@@ -119,78 +121,66 @@ const ChatIndividual: React.FC = () => {
       unread: 1,
       online: false
     },
-    {
-      id: 4,
-      name: 'Emma Wilson',
-      avatar: 'https://ionicframework.com/docs/img/demos/avatar.svg',
-      lastMessage: 'Thanks for your help!',
-      time: 'Yesterday',
-      unread: 0,
-      online: false
-    }
+    // Add more mock chats here
   ];
 
-  const filteredChats = chats.filter(chat => 
-    chat.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Filter chats based on search text
+  const filteredChats = searchText
+    ? chats.filter(chat =>
+        chat.name.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : chats;
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Individual Chats</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleToggleTheme}>
-              <IonIcon slot="icon-only" icon={ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-        <IonToolbar>
-          <IonSearchbar 
-            value={searchText} 
-            onIonChange={e => setSearchText(e.detail.value!)}
-            placeholder="Search contacts"
-          />
-        </IonToolbar>
-      </IonHeader>
+      <HeaderComponent 
+        title="Private Chat" 
+        onSearchChange={handleSearchChange} 
+        searchPlaceholder="Search chats..."
+      />
 
       <IonContent fullscreen>
-        <IonList>
-          {filteredChats.map(chat => (
-            <IonItem key={chat.id} routerLink={`/chat-individual/${chat.id}`} detail={true} onClick={() => handleChatClick(chat.id)}>
-              <IonAvatar slot="start">
-                <div className="avatar-container">
+        {filteredChats.length > 0 ? (
+          <IonList className="chat-list">
+            {filteredChats.map((chat) => (
+              <IonItem 
+                key={chat.id} 
+                className={`chat-item staggered-item ${chat.unread > 0 ? 'has-unread' : ''}`} 
+                onClick={() => handleChatClick(chat.id)}
+                lines="none"
+              >
+                <IonAvatar slot="start" className="chat-avatar">
                   <img src={chat.avatar} alt={chat.name} />
                   {chat.online && <div className="online-indicator"></div>}
+                </IonAvatar>
+                <IonLabel>
+                  <h2>{chat.name}</h2>
+                  <p>{chat.lastMessage}</p>
+                </IonLabel>
+                <div className="chat-meta">
+                  <span className="chat-time">{chat.time}</span>
+                  {chat.unread > 0 && (
+                    <IonBadge color="primary" className="unread-badge">{chat.unread}</IonBadge>
+                  )}
                 </div>
-              </IonAvatar>
-              <IonLabel>
-                <h2>{chat.name}</h2>
-                <p>{chat.lastMessage}</p>
-                <span className="message-time">{chat.time}</span>
-              </IonLabel>
-              {chat.unread > 0 && (
-                <IonBadge color="primary" slot="end">{chat.unread}</IonBadge>
-              )}
-            </IonItem>
-          ))}
-        </IonList>
-
-        <div className="no-chats-message" style={{ display: filteredChats.length === 0 ? 'flex' : 'none' }}>
-          <IonIcon icon={chatbubble} />
-          <h4>No chats found</h4>
-          <p>Start a new chat or modify your search.</p>
-        </div>
+              </IonItem>
+            ))}
+          </IonList>
+        ) : (
+          <div className="no-chats-container ghost-appear">
+            <IonIcon icon={chatbubble} />
+            <h4>No chats found</h4>
+            <p>Start a new chat or modify your search.</p>
+          </div>
+        )}
 
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton onClick={() => setIsNewChatModalOpen(true)}>
+          <IonFabButton onClick={() => setIsNewChatModalOpen(true)} className="ghost-shadow">
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
 
+        {/* Modal and Login Prompt remain unchanged */}
         <IonModal isOpen={isNewChatModalOpen} onDidDismiss={() => setIsNewChatModalOpen(false)}>
           <IonHeader>
             <IonToolbar color="primary">
@@ -206,59 +196,48 @@ const ChatIndividual: React.FC = () => {
             <div className="new-chat-info">
               <IonIcon icon={personCircle} color="primary" />
               <p>
-                Enter the unique ID of the person you want to chat with.
-                They'll need to accept your request first.
+                Enter the ID of the person you want to chat with. You can share your own ID
+                to let others initiate a chat with you.
               </p>
             </div>
             
-            <IonItem>
-              <IonLabel position="floating">User ID</IonLabel>
+            <IonItem className="chat-id-input">
+              <IonLabel position="floating">Chat ID</IonLabel>
               <IonInput 
-                value={chatId} 
-                onIonChange={e => setChatId(e.detail.value!)} 
-                placeholder="Enter user ID"
-                required
+                value={chatId}
+                onIonChange={e => setChatId(e.detail.value || '')}
+                placeholder="Enter chat ID here"
               />
             </IonItem>
-
+            
             <IonButton 
-              expand="block" 
-              className="start-chat-button"
+              expand="block"
+              className="start-chat-button ghost-float"
               onClick={handleStartPrivateChat}
               disabled={!chatId.trim()}
             >
               <IonIcon slot="start" icon={chatbubble} />
               Start Chat
             </IonButton>
-
-            <div className="separator">
-              <span>OR</span>
+            
+            <div className="id-share-container">
+              <h4>Share your Chat ID</h4>
+              <div className="user-id-display">
+                <span className="user-id">{currentUser?.id || 'Login to see your ID'}</span>
+                {currentUser?.id && (
+                  <IonButton fill="clear" size="small">
+                    <IonIcon icon={checkmarkCircle} slot="icon-only" />
+                  </IonButton>
+                )}
+              </div>
             </div>
-
-            <IonButton 
-              expand="block" 
-              fill="outline"
-              className="scan-code-button"
-              onClick={() => console.log('Scan code')}
-            >
-              <IonIcon slot="start" icon={searchCircle} />
-              Scan QR Code
-            </IonButton>
           </IonContent>
         </IonModal>
 
-        <LoginPrompt
+        <LoginPrompt 
           isOpen={showLoginPrompt}
-          message="Please log in to start private conversations."
-          onDismiss={() => setShowLoginPrompt(false)}
-          onLogin={() => {
-            setShowLoginPrompt(false);
-            history.push('/login');
-          }}
-          onRegister={() => {
-            setShowLoginPrompt(false);
-            history.push('/register');
-          }}
+          onClose={() => setShowLoginPrompt(false)}
+          message="You need to be logged in to chat with users."
         />
       </IonContent>
     </IonPage>

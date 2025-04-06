@@ -16,10 +16,37 @@ import {
   IonTabButton,
   IonTabs,
   setupIonicReact,
+  IonButtons,
+  IonButton,
+  IonSearchbar,
+  IonFooter,
+  IonItemDivider,
+  IonToggle
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 
-import { home, chatbubbles, people, informationCircle, person, flashlight } from 'ionicons/icons';
+import { 
+  homeOutline,
+  compassOutline,
+  peopleOutline,
+  chatbubblesOutline, 
+  searchOutline,
+  logInOutline,
+  personAddOutline,
+  personCircleOutline,
+  settingsOutline,
+  informationCircleOutline,
+  documentTextOutline,
+  shieldOutline,
+  helpCircleOutline,
+  contrastOutline,
+  moon,
+  sunny,
+  logOutOutline,
+  lockClosedOutline,
+  globeOutline,
+  closeOutline
+} from 'ionicons/icons';
 
 import Home from './pages/Home';
 import RandomChat from './pages/RandomChat';
@@ -51,10 +78,181 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import { useEffect } from 'react';
-import { themeService } from './services/ThemeService';
+import './theme/animations.css';
+import './theme/menu.css';
+import './App.css';
+import { useEffect, useState } from 'react';
+import themeService from './services/ThemeService';
+import { AuthProvider } from './contexts/AuthContext';
+import { apiService } from './services/api.service';
+import { useAuth } from './contexts/AuthContext';
 
 setupIonicReact();
+
+const SideMenu: React.FC = () => {
+  const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
+  const { isAuthenticated, logout } = useAuth();
+  
+  useEffect(() => {
+    const cleanup = themeService.onThemeChange((isDark) => {
+      setDarkMode(isDark);
+    });
+    
+    return cleanup;
+  }, []);
+  
+  const handleToggleTheme = () => {
+    const isDark = themeService.toggleTheme();
+    setDarkMode(isDark);
+  };
+
+  return (
+    <IonMenu contentId="main" className="ghost-fade-in">
+      <IonHeader>
+        <IonToolbar color="primary" className="ghost-shadow">
+          <IonTitle className="ghost-pulse">GhostTalk</IonTitle>
+          <IonButtons slot="end">
+            <IonButton className="menu-close-btn" onClick={() => document.querySelector('ion-menu')?.close()}>
+              <IonIcon slot="icon-only" icon={closeOutline} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        <div className="menu-header ghost-float">
+          <div className="ghost-icon">
+            <div className="ghost-eyes"></div>
+          </div>
+          <h2>Welcome, Ghost</h2>
+          <p>Connect anonymously</p>
+        </div>
+        
+        <IonList className="menu-list" lines="none">
+          <IonMenuToggle>
+            <IonItem routerLink="/home" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={homeOutline} />
+              <IonLabel>Home</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          
+          <IonMenuToggle>
+            <IonItem routerLink="/random-chat" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={compassOutline} /> 
+              <IonLabel>Random Chat</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          
+          <IonMenuToggle>
+            <IonItem routerLink="/chat-room" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={peopleOutline} />
+              <IonLabel>Chat Rooms</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          
+          {isAuthenticated && (
+          <IonMenuToggle>
+            <IonItem routerLink="/chat-individual" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={chatbubblesOutline} />
+              <IonLabel>Private Chat</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          )}
+
+          <IonMenuToggle>
+            <IonItem routerLink="/search" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={searchOutline} />
+              <IonLabel>Search Users</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+
+          <IonItemDivider className="menu-divider">Authentication</IonItemDivider>
+          <IonMenuToggle>
+            <IonItem routerLink="/login" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={logInOutline} /> {/* Changed: more appropriate for login */}
+              <IonLabel>Login</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/register" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={personAddOutline} /> {/* Changed: more appropriate for registration */}
+              <IonLabel>Register</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          
+          {isAuthenticated && (
+          <IonItemDivider className="menu-divider">Profile & Settings</IonItemDivider>
+          )}
+          
+          {isAuthenticated && (
+          <IonMenuToggle>
+            <IonItem routerLink="/profile" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={personCircleOutline} /> {/* Changed: better represents profile */}
+              <IonLabel>Profile</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          )}
+          {isAuthenticated && (
+          <IonMenuToggle>
+            <IonItem routerLink="/settings" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={settingsOutline} /> {/* Changed: proper settings icon */}
+              <IonLabel>Settings</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          )}
+
+          <IonItemDivider className="menu-divider">Info & Support</IonItemDivider>
+          <IonMenuToggle>
+            <IonItem routerLink="/about" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={informationCircleOutline} />
+              <IonLabel>About</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/terms" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={documentTextOutline} /> {/* Changed: better represents terms document */}
+              <IonLabel>Terms & Conditions</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/privacy" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={shieldOutline} /> {/* Changed: shield represents privacy/protection */}
+              <IonLabel>Privacy Policy</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/support" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={helpCircleOutline} /> {/* Changed: help icon for support */}
+              <IonLabel>Help & Support</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+
+          <IonItemDivider className="menu-divider">Preferences</IonItemDivider>
+          
+          <IonItem className="theme-toggle-item staggered-item">
+            <IonIcon slot="start" icon={darkMode ? moon : sunny} />
+            <IonLabel>{darkMode ? 'Dark Mode' : 'Light Mode'}</IonLabel>
+            <IonToggle 
+              checked={darkMode} 
+              onIonChange={handleToggleTheme} 
+              slot="end" 
+            />
+          </IonItem>
+
+          {isAuthenticated && (
+            <IonItem button onClick={() => logout()} className="staggered-item logout-item">
+              <IonIcon slot="start" icon={logOutOutline} />
+              <IonLabel>Logout</IonLabel>
+            </IonItem>
+          )}
+        </IonList>
+      </IonContent>
+      <IonFooter className="menu-footer">
+        <p>GhostTalk v1.0.0</p>
+        <p className="copyright">© {new Date().getFullYear()} GhostTalk</p>
+      </IonFooter>
+    </IonMenu>
+  );
+};
 
 const App: React.FC = () => {
   // Apply initial theme
@@ -64,92 +262,48 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <IonApp>
-      <IonReactRouter>
-        <IonMenu contentId="main">
-          <IonHeader>
-            <IonToolbar color="primary">
-              <IonTitle>GhostTalk</IonTitle>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent>
-            <IonList>
-              <IonMenuToggle>
-                <IonItem routerLink="/home" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={home} />
-                  <IonLabel>Home</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-              <IonMenuToggle>
-                <IonItem routerLink="/random-chat" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={chatbubbles} />
-                  <IonLabel>Random Chat</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-              <IonMenuToggle>
-                <IonItem routerLink="/chat-room" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={people} />
-                  <IonLabel>Chat Rooms</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-              <IonMenuToggle>
-                <IonItem routerLink="/chat-individual" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={chatbubbles} />
-                  <IonLabel>Individual Chat</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-              <IonMenuToggle>
-                <IonItem routerLink="/about" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={informationCircle} />
-                  <IonLabel>About</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-              <IonMenuToggle>
-                <IonItem routerLink="/profile" routerDirection="none" lines="none">
-                  <IonIcon slot="start" icon={person} />
-                  <IonLabel>Profile</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-            </IonList>
-          </IonContent>
-        </IonMenu>
-        
-        <IonTabs>
-          <IonRouterOutlet id="main">
-            <Route exact path="/home" component={Home} />
-            <Route exact path="/random-chat" component={RandomChat} />
-            <Route exact path="/chat-room" component={ChatRoom} />
-            <Route exact path="/chat-individual" component={ChatIndividual} />
-            <Route exact path="/about" component={About} />
-            <Route exact path="/profile" component={Profile} />
-            <Route exact path="/login" component={Login} />
-            <Route exact path="/register" component={Register} />
-            <Route exact path="/">
-              <Redirect to="/home" />
-            </Route>
-          </IonRouterOutlet>
+    <AuthProvider>
+      <IonApp>
+        <IonReactRouter>
+          <SideMenu />
           
-          <IonTabBar slot="bottom">
-            <IonTabButton tab="home" href="/home">
-              <IonIcon icon={home} />
-              <IonLabel>Home</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="randomChat" href="/random-chat">
-              <IonIcon icon={flashlight} />
-              <IonLabel>Random</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="chatRoom" href="/chat-room">
-              <IonIcon icon={people} />
-              <IonLabel>Rooms</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="profile" href="/profile">
-              <IonIcon icon={person} />
-              <IonLabel>Profile</IonLabel>
-            </IonTabButton>
-          </IonTabBar>
-        </IonTabs>
-      </IonReactRouter>
-    </IonApp>
+          <IonTabs>
+            <IonRouterOutlet id="main">
+              <Route exact path="/home" component={Home} />
+              <Route exact path="/random-chat" component={RandomChat} />
+              <Route exact path="/chat-room" component={ChatRoom} />
+              <Route exact path="/chat-individual" component={ChatIndividual} />
+              <Route exact path="/about" component={About} />
+              <Route exact path="/profile" component={Profile} />
+              <Route exact path="/login" component={Login} />
+              <Route exact path="/register" component={Register} />
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+            </IonRouterOutlet>
+            
+            <IonTabBar slot="bottom" className="ghost-shadow">
+              <IonTabButton tab="home" href="/home">
+                <IonIcon icon={homeOutline} />
+                <IonLabel>Home</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="randomChat" href="/random-chat">
+                <IonIcon icon={compassOutline} />
+                <IonLabel>Random</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="chatRoom" href="/chat-room">
+                <IonIcon icon={peopleOutline} />
+                <IonLabel>Rooms</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="profile" href="/profile">
+                <IonIcon icon={personCircleOutline} />
+                <IonLabel>Profile</IonLabel>
+              </IonTabButton>
+            </IonTabBar>
+          </IonTabs>
+        </IonReactRouter>
+      </IonApp>
+    </AuthProvider>
   );
 };
 

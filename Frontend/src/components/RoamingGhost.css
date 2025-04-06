@@ -1,0 +1,133 @@
+.roaming-ghost {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  z-index: 10;
+  pointer-events: all;
+  opacity: 0.6;
+  transition: all 7s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.3s ease;
+  cursor: pointer;
+}
+
+.roaming-ghost:hover {
+  opacity: 0.8;
+  transform: scale(1.2);
+}
+
+.ghost-body {
+  width: 100%;
+  height: 70%;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50% 50% 0 0;
+  position: relative;
+  box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: floatUpDown 4s ease-in-out infinite;
+}
+
+.ghost-face {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-eyes {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  margin-bottom: 5px;
+}
+
+.ghost-eye {
+  width: 6px;
+  height: 6px;
+  background-color: var(--ion-color-dark);
+  border-radius: 50%;
+  animation: blinkEyes 4s ease-in-out infinite;
+}
+
+.ghost-mouth {
+  width: 8px;
+  height: 4px;
+  background-color: var(--ion-color-dark);
+  border-radius: 0 0 50% 50%;
+  transform: translateY(2px);
+}
+
+.ghost-tail {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 30%;
+}
+
+.ghost-tail::before,
+.ghost-tail::after {
+  content: '';
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.8);
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  bottom: 0;
+}
+
+.ghost-tail::before {
+  left: 6px;
+}
+
+.ghost-tail::after {
+  left: 22px;
+}
+
+/* Add a surprised animation for when the ghost is clicked */
+.ghost-surprised .ghost-eye {
+  height: 8px;
+  width: 8px;
+  background-color: var(--ion-color-primary);
+}
+
+.ghost-surprised .ghost-mouth {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Animations */
+@keyframes floatUpDown {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes blinkEyes {
+  0%, 45%, 55%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* Dark mode adjustments */
+:root.dark .ghost-body,
+:root.dark .ghost-tail::before,
+:root.dark .ghost-tail::after {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.3);
+  box-shadow: 0 0 12px rgba(var(--ion-color-primary-rgb), 0.4);
+}
+
+:root.dark .ghost-eye,
+:root.dark .ghost-mouth {
+  background-color: white;
+}

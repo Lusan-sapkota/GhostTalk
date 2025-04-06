@@ -1,11 +1,6 @@
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
   IonCard,
   IonCardHeader,
   IonCardContent,
@@ -27,24 +22,26 @@ import {
   send, 
   pulse, 
   personCircleOutline, 
-  refresh, 
-  ellipsisVertical,
-  flash
+  refresh
 } from 'ionicons/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './RandomChat.css';
 import { themeService } from '../services/ThemeService';
+import HeaderComponent from '../components/HeaderComponent';
 
 const RandomChat: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [chats, setChats] = useState<{text: string, isMe: boolean, time: string}[]>([]);
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
-
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
+  
+  // Update theme state when theme changes
+  useEffect(() => {
+    const cleanup = themeService.onThemeChange((isDark) => {
+      setDarkMode(isDark);
+    });
+    return cleanup;
+  }, []);
 
   const startChat = () => {
     setIsConnected(true);
@@ -81,19 +78,10 @@ const RandomChat: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Random Chat</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleToggleTheme}>
-              <IonIcon slot="icon-only" icon={darkMode ? flash : ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
+      <HeaderComponent 
+        title="Random Chat" 
+        showSearch={false}
+      />
       
       <IonContent fullscreen>
         {!isConnected ? (
@@ -124,7 +112,7 @@ const RandomChat: React.FC = () => {
                     <p>Anonymous</p>
                   </div>
                 </div>
-                <IonButton expand="block" onClick={startChat}>
+                <IonButton expand="block" onClick={startChat} className="ghost-shadow">
                   <IonIcon slot="start" icon={chatbubbles} />
                   Start Random Chat
                 </IonButton>

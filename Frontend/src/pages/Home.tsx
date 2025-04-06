@@ -1,24 +1,17 @@
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonCard,
   IonCardHeader,
   IonCardTitle,
-  IonCardSubtitle,
   IonCardContent,
   IonButton,
   IonGrid,
   IonRow,
   IonCol,
-  IonButtons,
-  IonMenuButton,
   IonIcon,
   IonFooter,
-  IonBadge,
-  IonImg
+  IonBadge
 } from '@ionic/react';
 import { 
   chatbubbles, 
@@ -30,51 +23,57 @@ import {
   flash, 
   globe,
   logoGooglePlaystore,
-  moon,
-  sunny,
   logoTwitter,
   logoFacebook,
   logoInstagram,
   logoGithub
 } from 'ionicons/icons';
 import './Home.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { themeService } from '../services/ThemeService';
+import HeaderComponent from '../components/HeaderComponent';
+import RoamingGhost from '../components/RoamingGhost';
 
 const Home: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
+  const [searchText, setSearchText] = useState('');
 
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
+  // Update dark mode state when theme changes
+  useEffect(() => {
+    const cleanup = themeService.onThemeChange((isDark) => {
+      setDarkMode(isDark);
+    });
+    
+    return cleanup;
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    // Implement search functionality here
+    console.log("Searching for:", value);
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>GhostTalk</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleToggleTheme}>
-              <IonIcon slot="icon-only" icon={darkMode ? sunny : moon} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
+    <IonPage className="ghost-appear">
+      <HeaderComponent 
+        title="GhostTalk" 
+        onSearchChange={handleSearchChange} 
+        searchPlaceholder="Search ghostly things..."
+      />
       
       <IonContent fullscreen>
-        {/* Hero Section */}
-        <div className="hero-section">
+        {/* Add the roaming ghost */}
+        <RoamingGhost pageId="home" />
+        
+        {/* Hero Section with ghost animation */}
+        <div className="hero-section ghost-appear">
           <div className="hero-content">
             <h1>Connect Anonymously,<br />Chat Freely</h1>
             <p>
               GhostTalk lets you chat with people around the world 
               without revealing your identity. Safe, secure, and completely free.
             </p>
-            <IonButton routerLink="/random-chat" size="large" className="get-started-btn">
+            <IonButton routerLink="/random-chat" size="large" className="get-started-btn ghost-shadow">
               <IonIcon slot="start" icon={flash} />
               Let's Start Chatting
             </IonButton>
@@ -83,17 +82,18 @@ const Home: React.FC = () => {
 
         {/* Features Section */}
         <div className="section features-section">
-          <div className="section-header">
+          <div className="section-header ghost-appear">
             <h2>Key Features</h2>
             <p>Discover what makes GhostTalk special</p>
           </div>
           
           <IonGrid>
             <IonRow>
-              <IonCol size="12" sizeMd="4">
-                <IonCard className="feature-card">
+              {/* Feature cards with staggered animation */}
+              <IonCol size="12" sizeMd="4" className="staggered-item">
+                <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon">
+                    <div className="feature-icon ghost-float">
                       <IonIcon icon={chatbubbles} />
                     </div>
                     <IonCardTitle>Random Chat</IonCardTitle>
@@ -108,10 +108,10 @@ const Home: React.FC = () => {
                 </IonCard>
               </IonCol>
               
-              <IonCol size="12" sizeMd="4">
-                <IonCard className="feature-card">
+              <IonCol size="12" sizeMd="4" className="staggered-item">
+                <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon">
+                    <div className="feature-icon ghost-float">
                       <IonIcon icon={people} />
                     </div>
                     <IonCardTitle>Chat Rooms</IonCardTitle>
@@ -126,10 +126,10 @@ const Home: React.FC = () => {
                 </IonCard>
               </IonCol>
               
-              <IonCol size="12" sizeMd="4">
-                <IonCard className="feature-card">
+              <IonCol size="12" sizeMd="4" className="staggered-item">
+                <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon">
+                    <div className="feature-icon ghost-float">
                       <IonIcon icon={lockClosed} />
                     </div>
                     <IonCardTitle>Private Chat</IonCardTitle>

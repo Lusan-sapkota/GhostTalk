@@ -1,36 +1,50 @@
 import time
 import random
 import string
+from flask import current_app
 from appwrite.client import Client
 from appwrite.services.users import Users
 from appwrite.services.databases import Databases
 from appwrite.services.storage import Storage
 from appwrite.services.avatars import Avatars
-from flask import current_app
 from ..utils.name_generator import generate_random_name
 
 class AppwriteService:
     def __init__(self):
         """Initialize Appwrite client and services"""
-        self.client = Client()
-        self.client.set_endpoint(current_app.config['APPWRITE_ENDPOINT'])
-        self.client.set_project(current_app.config['APPWRITE_PROJECT_ID'])
-        self.client.set_key(current_app.config['APPWRITE_API_KEY'])
-        
-        # Initialize services
-        self.users = Users(self.client)
-        self.database = Databases(self.client)
-        self.storage = Storage(self.client)
-        self.avatars = Avatars(self.client)
-        
-        # Database IDs
-        self.database_id = 'ghosttalk-db'
-        self.users_collection_id = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
-        self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
-        self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
+        self.client = None
+        self.users = None
+        self.database = None
+        self.storage = None
+        self.avatars = None
+        self.database_id = None
+        self.users_collection_id = None
+        self.chats_collection_id = None
+        self.rooms_collection_id = None
+    
+    def _initialize_client(self):
+        """Initialize the Appwrite client and services when needed"""
+        if self.client is None:
+            self.client = Client()
+            self.client.set_endpoint(current_app.config['APPWRITE_ENDPOINT'])
+            self.client.set_project(current_app.config['APPWRITE_PROJECT_ID'])
+            self.client.set_key(current_app.config['APPWRITE_API_KEY'])
+            
+            # Initialize services
+            self.users = Users(self.client)
+            self.database = Databases(self.client)
+            self.storage = Storage(self.client)
+            self.avatars = Avatars(self.client)
+            
+            # Database IDs
+            self.database_id = 'ghosttalk-db'  # Consider moving to config
+            self.users_collection_id = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
+            self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
+            self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
     
     def create_user(self, email, password, name=None):
         """Create a new Appwrite user"""
+        self._initialize_client()
         try:
             # Generate random name if not provided
             if not name:
@@ -67,6 +81,7 @@ class AppwriteService:
     
     def login_user(self, email, password):
         """Login user with email and password"""
+        self._initialize_client()
         try:
             session = self.users.create_session(email=email, password=password)
             user = self.get_user(session['userId'])
@@ -77,6 +92,7 @@ class AppwriteService:
 
     def get_user(self, user_id):
         """Get a user by their ID"""
+        self._initialize_client()
         try:
             return self.users.get(user_id)
         except Exception as e:
@@ -85,6 +101,7 @@ class AppwriteService:
     
     def get_user_by_email(self, email):
         """Get a user by their email address"""
+        self._initialize_client()
         try:
             # List users with this email
             users = self.users.list(
@@ -100,6 +117,7 @@ class AppwriteService:
     
     def update_user(self, user_id, name=None, email=None):
         """Update user information"""
+        self._initialize_client()
         try:
             updates = {}
             if name is not None:
@@ -116,6 +134,7 @@ class AppwriteService:
             
     def create_chat(self, sender_id, recipient_id, message):
         """Create a new chat message"""
+        self._initialize_client()
         try:
             chat_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
             
@@ -141,6 +160,7 @@ class AppwriteService:
     def get_chats(self, user_id, other_user_id=None):
         """Get chat messages between users
         If other_user_id is None, get all chats for the user"""
+        self._initialize_client()
         try:
             query = []
             if other_user_id:
@@ -169,6 +189,7 @@ class AppwriteService:
     
     def create_room(self, name, creator_id, description="", is_private=False, require_login=True, chat_type='discussion'):
         """Create a new chat room"""
+        self._initialize_client()
         try:
             room_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
             
@@ -202,6 +223,7 @@ class AppwriteService:
         If is_private is False, get only public rooms
         If user_id is provided, only get rooms where user is a member (for private rooms)
         """
+        self._initialize_client()
         try:
             queries = []
             

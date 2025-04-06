@@ -1,0 +1,36 @@
+/* Basic structure to ensure content is fully visible */
+ion-app, ion-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+ion-content {
+  flex: 1 0 auto;
+}
+
+ion-footer {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* Ensure no overlap with tab bar */
+ion-content {
+  --padding-bottom: var(--ion-safe-area-bottom, 20px);
+}
+
+/* Ensure footer content is visible with proper spacing */
+.footer-content {
+  padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 20px);
+}
+
+/* Ensure menu content does not overlap with menu footer */
+ion-menu ion-content {
+  --padding-bottom: 60px;
+}
+
+ion-menu ion-footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}

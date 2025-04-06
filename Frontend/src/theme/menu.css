@@ -1,0 +1,603 @@
+/* Enhanced Side Menu Styling with Ghost Theme */
+
+/* Menu Container */
+ion-menu {
+  --width: 280px;
+  --background: var(--ion-background-color);
+}
+
+/* Menu Header with Enhanced Ghost Effects */
+.menu-header {
+  padding: 35px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Ghostly mist effect for menu header - enhanced with multiple layers */
+.menu-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0.7;
+  animation: ghostMistFlow 12s ease-in-out infinite alternate;
+}
+
+/* Additional ghostly particles */
+.menu-header::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="white" opacity="0.5"/></svg>');
+  background-size: 100px 100px;
+  opacity: 0.3;
+  animation: ghostParticles 20s linear infinite;
+  pointer-events: none;
+}
+
+.menu-header h2 {
+  margin: 10px 0 5px;
+  font-weight: 600;
+  font-size: 1.5rem;
+  position: relative;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.menu-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
+  position: relative;
+  letter-spacing: 0.3px;
+}
+
+/* Enhanced Ghost Icon with Better 3D Effect */
+.ghost-icon {
+  width: 70px;
+  height: 70px;
+  background-color: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 5px 15px -5px rgba(0, 0, 0, 0.3),
+    inset 0 0 15px rgba(255, 255, 255, 0.4);
+  animation: ghostBounce 4s ease-in-out infinite;
+}
+
+/* Ghost body */
+.ghost-icon::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  bottom: 20px;
+  background: linear-gradient(to bottom, white 70%, rgba(255, 255, 255, 0.8));
+  border-radius: 50% 50% 0 0;
+  box-shadow: inset 0 -4px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Ghost mouth */
+.ghost-icon::after {
+  content: '';
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  width: 30px;
+  height: 10px;
+  background-color: white;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0 2px 3px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Ghost eyes */
+.ghost-icon .ghost-eyes {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  z-index: 2;
+}
+
+.ghost-icon .ghost-eyes::before,
+.ghost-icon .ghost-eyes::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ion-color-primary);
+  animation: ghostBlink 4s ease-in-out infinite;
+}
+
+/* Enhanced Menu List Styling with Better Visual Hierarchy */
+.menu-list {
+  margin-top: 12px;
+  padding-bottom: 10px;
+}
+
+/* Menu Item Base Styling */
+.menu-list ion-item {
+  --padding-start: 22px;
+  --padding-end: 22px;
+  --min-height: 54px;
+  margin: 4px 8px;
+  --border-radius: 12px;
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.08);
+  --background-focused: rgba(var(--ion-color-primary-rgb), 0.1);
+  --background-activated: rgba(var(--ion-color-primary-rgb), 0.12);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+
+/* Active State Enhancement with Left Border Indicator */
+.menu-list ion-item.item-active {
+  --background: rgba(var(--ion-color-primary-rgb), 0.12);
+  --color: var(--ion-color-primary);
+  font-weight: 600;
+  position: relative;
+  box-shadow: 0 2px 8px -4px rgba(var(--ion-color-primary-rgb), 0.5);
+  transform: translateX(4px);
+}
+
+/* Active indicator line */
+.menu-list ion-item.item-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  background: var(--ion-color-primary);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 8px rgba(var(--ion-color-primary-rgb), 0.6);
+  animation: ghostPulseGlow 2s ease-in-out infinite;
+}
+
+/* Enhanced Icon Styling */
+.menu-list ion-item ion-icon {
+  color: var(--ion-color-primary);
+  margin-right: 14px;
+  font-size: 22px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0.85;
+}
+
+/* Improved Label Styling */
+.menu-list ion-item ion-label {
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+
+/* Enhanced Hover Effect with Scaling and Glow */
+.menu-list ion-item:hover {
+  --background: rgba(var(--ion-color-primary-rgb), 0.08);
+  transform: translateX(3px);
+}
+
+.menu-list ion-item:hover ion-icon {
+  filter: drop-shadow(0 0 4px rgba(var(--ion-color-primary-rgb), 0.6));
+  transform: scale(1.18);
+  opacity: 1;
+}
+
+/* Enhanced Icon Animations by Section */
+.menu-list ion-item[routerLink^="/home"] ion-icon,
+.menu-list ion-item[routerLink^="/random-chat"] ion-icon {
+  animation: ghostFloat 5s ease-in-out infinite;
+}
+
+.menu-list ion-item[routerLink^="/chat-room"] ion-icon,
+.menu-list ion-item[routerLink^="/chat-individual"] ion-icon {
+  animation: ghostPulse 4s ease-in-out infinite;
+}
+
+.menu-list ion-item[routerLink^="/profile"] ion-icon,
+.menu-list ion-item[routerLink^="/settings"] ion-icon {
+  animation: ghostSpin 6s ease-in-out infinite;
+}
+
+.menu-list ion-item[routerLink^="/about"] ion-icon,
+.menu-list ion-item[routerLink^="/terms"] ion-icon,
+.menu-list ion-item[routerLink^="/privacy"] ion-icon {
+  animation: ghostWiggle 7s ease-in-out infinite;
+}
+
+/* Staggered delays with better timing */
+.menu-list ion-item:nth-child(1) ion-icon { animation-delay: 0s; }
+.menu-list ion-item:nth-child(2) ion-icon { animation-delay: 0.3s; }
+.menu-list ion-item:nth-child(3) ion-icon { animation-delay: 0.6s; }
+.menu-list ion-item:nth-child(4) ion-icon { animation-delay: 0.9s; }
+.menu-list ion-item:nth-child(5) ion-icon { animation-delay: 1.2s; }
+.menu-list ion-item:nth-child(6) ion-icon { animation-delay: 1.5s; }
+
+/* Enhanced Divider with Ghostly Style */
+.menu-divider {
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  --padding-start: 16px;
+  opacity: 0.8;
+  margin-top: 24px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Ghost icon before divider text */
+.menu-divider::before {
+  content: '';
+  display: block;
+  width: 15px;
+  height: 15px;
+  background-color: rgba(var(--ion-color-primary-rgb), 0.2);
+  border-radius: 50%;
+  position: relative;
+  margin-left: 16px;
+  box-shadow: 0 0 8px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: ghostPulseGlow 3s ease-in-out infinite;
+}
+
+/* Animation for the gradient line */
+@keyframes ghostGradientShift {
+  0%, 100% {
+    opacity: 0.5;
+    background-position: 0% 50%;
+  }
+  50% {
+    opacity: 0.8;
+    background-position: 100% 50%;
+  }
+}
+
+/* Theme Toggle Item Enhancement */
+.theme-toggle-item {
+  --padding-start: 22px;
+  --padding-end: 16px;
+  --background: rgba(var(--ion-color-primary-rgb), 0.04);
+  border-radius: 12px;
+  margin: 10px 8px;
+  box-shadow: 0 2px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Toggle styling */
+.theme-toggle-item ion-toggle {
+  --background: rgba(var(--ion-color-medium-rgb), 0.3);
+  --background-checked: rgba(var(--ion-color-primary-rgb), 0.5);
+  --handle-background: white;
+  --handle-background-checked: white;
+  --handle-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --handle-width: 20px;
+  --handle-height: 20px;
+  --handle-border-radius: 50%;
+}
+
+/* Enhanced Logout Item */
+.logout-item {
+  margin-top: 16px;
+  --background: rgba(var(--ion-color-danger-rgb), 0.04);
+  color: var(--ion-color-danger);
+  font-weight: 500;
+}
+
+.logout-item ion-icon {
+  color: var(--ion-color-danger) !important;
+  transition: all 0.3s ease;
+}
+
+/* Enhanced logout hover effect with shake animation */
+.logout-item:hover {
+  --background: rgba(var(--ion-color-danger-rgb), 0.08);
+}
+
+.logout-item:hover ion-icon {
+  transform: translateX(-4px);
+  animation: ghostShake 1s ease-in-out;
+}
+
+/* Enhanced Footer with Better Styling */
+.menu-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 16px;
+  border-top: 1px solid rgba(var(--ion-color-medium-rgb), 0.15);
+  color: var(--ion-color-medium);
+  background: rgba(var(--ion-background-color-rgb), 0.7);
+  backdrop-filter: blur(5px);
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+/* Ensure footer stays in view */
+ion-menu ion-content {
+  --overflow: auto;
+  --padding-bottom: 70px;
+}
+
+.menu-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(var(--ion-color-primary-rgb), 0.3),
+    transparent
+  );
+}
+
+.menu-footer p {
+  margin: 6px 0;
+}
+
+.copyright {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-style: italic;
+  padding-top: 5px;
+  display: block;
+}
+
+/* Dark Mode Enhancements */
+:root.dark .menu-header {
+  background: linear-gradient(135deg, var(--ion-color-primary) 10%, #381980 100%);
+}
+
+:root.dark .ghost-icon {
+  box-shadow: 
+    0 5px 15px -5px rgba(0, 0, 0, 0.5),
+    inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+:root.dark .menu-list ion-item {
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.15);
+}
+
+:root.dark .menu-list ion-item.item-active {
+  --background: rgba(var(--ion-color-primary-rgb), 0.2);
+  box-shadow: 0 2px 10px -4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark .menu-divider {
+  opacity: 0.7;
+}
+
+:root.dark .menu-divider::before {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+:root.dark .theme-toggle-item {
+  --background: rgba(0, 0, 0, 0.2);
+}
+
+:root.dark .menu-footer {
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Enhanced Animations */
+@keyframes ghostFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes ghostPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes ghostSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ghostBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes ghostWiggle {
+  0%, 100% {
+    transform: skewX(0);
+  }
+  25% {
+    transform: skewX(3deg);
+  }
+  75% {
+    transform: skewX(-3deg);
+  }
+}
+
+@keyframes ghostBlink {
+  0%, 48%, 52%, 100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(0.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes ghostShake {
+  0%, 100% {
+    transform: translateX(-4px);
+  }
+  20%, 60% {
+    transform: translateX(-2px);
+  }
+  40%, 80% {
+    transform: translateX(-6px);
+  }
+}
+
+@keyframes ghostMistFlow {
+  0% {
+    opacity: 0.5;
+    transform: translateX(-5%) translateY(0);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(5%) translateY(-5%);
+  }
+  100% {
+    opacity: 0.5;
+    transform: translateX(-5%) translateY(0);
+  }
+}
+
+@keyframes ghostParticles {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ghostPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--ion-color-primary-rgb), 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(var(--ion-color-primary-rgb), 0.9);
+  }
+}
+
+/* Custom scrollbar for menu content */
+ion-menu ion-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+ion-menu ion-content::-webkit-scrollbar-track {
+  background: rgba(var(--ion-color-medium-rgb), 0.1);
+}
+
+ion-menu ion-content::-webkit-scrollbar-thumb {
+  background: rgba(var(--ion-color-primary-rgb), 0.3);
+  border-radius: 5px;
+}
+
+ion-menu ion-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--ion-color-primary-rgb), 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  ion-menu {
+    --width: 260px;
+  }
+  
+  .menu-list ion-item {
+    --min-height: 50px;
+    margin: 2px 6px;
+  }
+  
+  .menu-header h2 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Add ghost eyes to the ghost icon */
+.ghost-icon:after {
+  content: '';
+  position: relative;
+}
+
+.ghost-icon:before {
+  content: '';
+  position: relative;
+}
+
+.ghost-icon {
+  position: relative;
+}
+
+.ghost-icon::before, .ghost-icon::after {
+  content: '';
+  position: absolute;
+}
+
+.ghost-eyes {
+  position: absolute;
+  top: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.ghost-eyes::before, .ghost-eyes::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ion-color-dark);
+}
+
+/* Add this to your menu.css file */
+
+.menu-close-btn {
+  --padding-end: 10px;
+  --padding-start: 10px;
+  opacity: 0.8;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.menu-close-btn:hover {
+  transform: rotate(90deg);
+  opacity: 1;
+}
