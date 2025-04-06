@@ -1,0 +1,88 @@
+# ========================
+# OS / Editor / General
+# ========================
+.DS_Store
+Thumbs.db
+*.log
+*.env
+*.env.*.local
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.cache
+*.gz
+*.zip
+
+# VS Code & IDE configs
+.vscode/
+.idea/
+
+# ========================
+# Frontend (Ionic React)
+# ========================
+Frontend/node_modules/
+Frontend/www/
+Frontend/platforms/
+Frontend/plugins/
+Frontend/dist/
+Frontend/coverage/
+Frontend/build/
+Frontend/.angular/
+Frontend/.vscode/
+Frontend/package-lock.json
+Frontend/yarn.lock
+Frontend/pnpm-lock.yaml
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.production.local
+Frontend/*.tsbuildinfo
+
+# ========================
+# Backend (Flask / Python)
+# ========================
+Backend/__pycache__/
+Backend/*.pyc
+Backend/*.pyo
+Backend/*.pyd
+Backend/*.db
+Backend/*.sqlite3
+Backend/.env
+Backend/.flaskenv
+Backend/.python-version
+Backend/.mypy_cache/
+Backend/.pytest_cache/
+Backend/.vscode/
+Backend/.idea/
+Backend/instance/
+Backend/venv/
+Backend/.venv/
+Backend/env/
+Backend/*.egg-info/
+Backend/.coverage
+Backend/htmlcov/
+Backend/.tox/
+
+# ========================
+# OS Specific
+# ========================
+ehthumbs.db
+Icon?
+Desktop.ini
+$RECYCLE.BIN/
+.Trashes
+.Spotlight-V100
+.fseventsd
+
+# ========================
+# Docker (Optional)
+# ========================
+docker-compose.override.yml
+*.pid
+
+# ========================
+# Optional - Mac/Linux Swap
+# ========================
+*.un~
+*~
