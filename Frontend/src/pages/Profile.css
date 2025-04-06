@@ -1,0 +1,93 @@
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.avatar-upload {
+  position: relative;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.avatar-upload-overlay ion-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.username {
+  margin: 5px 0 0 0;
+  font-size: 1.5rem;
+}
+
+.user-id {
+  margin: 5px 0;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+.pro-badge {
+  margin-top: 5px;
+}
+
+.profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+ion-card-header h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+ion-card-header h3 ion-icon {
+  margin-right: 8px;
+  font-size: 1.4rem;
+}
+
+.upgrade-card {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+}
+
+.dark .upgrade-card {
+  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+}
+
+.upgrade-card h3 {
+  color: var(--ion-color-warning);
+  margin: 0;
+}
+
+.upgrade-card ul {
+  padding-left: 20px;
+  margin: 15px 0;
+}
+
+.upgrade-card li {
+  margin-bottom: 8px;
+}

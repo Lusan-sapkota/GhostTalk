@@ -1,0 +1,573 @@
+.home-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
+  padding: 60px 20px;
+  color: white;
+  text-align: center;
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-section h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.hero-section p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+.get-started-btn {
+  --border-radius: 30px;
+  --padding-start: 25px;
+  --padding-end: 25px;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* Section Styling */
+.section {
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-header h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--ion-color-primary);
+}
+
+.section-header p {
+  font-size: 1.1rem;
+  color: var(--ion-color-medium);
+}
+
+/* Features Section */
+.features-section {
+  background-color: var(--ion-background-color);
+}
+
+.feature-card {
+  height: 100%;
+  border-radius: 15px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.feature-icon ion-icon {
+  font-size: 48px;
+  color: var(--ion-color-primary);
+}
+
+ion-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.feature-action {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Pro Section */
+.pro-section {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-radius: 15px;
+}
+
+.dark .pro-section {
+  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+}
+
+.premium-card {
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.pro-header {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  padding: 40px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 20px;
+  padding: 5px 15px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.pro-header h2 {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+.pro-header p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pro-features {
+  padding: 20px 0;
+}
+
+.pro-feature-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 12px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.pro-feature-item:hover {
+  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.save-text {
+  font-size: 1.2rem;
+  font-weight: bold !important;
+  color: green;
+}
+
+.feature-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(255, 193, 7, 0.1);
+  border-radius: 50%;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.feature-icon-container ion-icon {
+  font-size: 24px;
+  color: var(--ion-color-warning);
+}
+
+.feature-text {
+  flex: 1;
+}
+
+.feature-text h3 {
+  font-size: 1.2rem;
+  margin: 0 0 5px;
+}
+
+/* Pro Pricing Section - Enhanced Styles */
+.pro-pricing {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+}
+
+.pricing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.pricing-option {
+  background-color: var(--ion-background-color);
+  border-radius: 16px;
+  padding: 30px 25px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 220px;
+  overflow: visible;
+}
+
+.pricing-option:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.pricing-header {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--ion-color-primary);
+  letter-spacing: -0.5px;
+}
+
+.best-value-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  padding: 8px 12px;
+  font-weight: bold;
+  z-index: 10;
+  border-radius: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--ion-color-light);
+  margin: 5px 0;
+  line-height: 1;
+  letter-spacing: -1px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+}
+
+.dark .price {
+  color: white;
+}
+
+.price span {
+  font-size: 1.1rem;
+  font-weight: normal;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+.save-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ion-color-success);
+  margin: 8px 0 12px;
+  display: block;
+}
+
+.pricing-option ion-button {
+  margin-top: 15px;
+  --border-radius: 12px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.best-value {
+  border: 2px solid var(--ion-color-success);
+  z-index: 1;
+  box-shadow: 0 10px 25px rgba(var(--ion-color-success-rgb), 0.2);
+}
+
+.best-value .pricing-header {
+  color: var(--ion-color-success);
+}
+
+.pricing-note-container {
+  margin-top: 15px;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.pricing-note {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  margin: 0;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Price Section Responsive Fixes */
+@media (max-width: 768px) {
+  .pricing-option {
+    height: auto;
+    min-height: 200px;
+    padding: 25px 20px;
+  }
+  
+  .best-value {
+    transform: scale(1.02);
+  }
+  
+  .price {
+    font-size: 2.5rem;
+  }
+  
+  .pricing-header {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pro-pricing {
+    padding: 10px 0;
+  }
+  
+  .pricing-container {
+    gap: 20px;
+  }
+  
+  .pricing-option {
+    padding: 20px 15px;
+    min-height: 180px;
+  }
+}
+
+/* App Download Section */
+.app-download-section {
+  background-color: var(--ion-background-color);
+}
+
+.app-download-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-info {
+  flex: 1;
+  min-width: 280px;
+  padding: 20px;
+}
+
+.app-info h3 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: var(--ion-color-primary);
+}
+
+.app-features-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+}
+
+.app-features-list li {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+}
+
+.app-features-list ion-icon {
+  margin-right: 10px;
+  color: var(--ion-color-primary);
+}
+
+.store-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.playstore-btn {
+  --border-radius: 10px;
+  --padding-start: 20px;
+  --padding-end: 20px;
+}
+
+.app-image {
+  flex: 1;
+  min-width: 280px;
+  text-align: center;
+  padding: 20px;
+}
+
+.app-image img {
+  max-width: 100%;
+  height: auto;
+  max-height: 500px;
+}
+
+/* Footer fixes */
+.home-footer {
+  background-color: var(--ion-color-dark);
+  color: var(--ion-color-light);
+  width: 100%;
+  padding: 0;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-section {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 30px;
+  padding: 0 15px;
+}
+
+.footer-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.footer-section h3:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background-color: var(--ion-color-primary);
+}
+
+.footer-section p {
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 10px;
+}
+
+.footer-section ul li a {
+  color: var(--ion-color-light);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+  opacity: 1;
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icons a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--ion-color-light);
+  transition: background-color 0.3s ease;
+}
+
+.social-icons ion-icon {
+  font-size: 20px;
+}
+
+.copyright {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.copyright p {
+  margin: 0;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* Add these to ensure page structure */
+ion-app, ion-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+  
+  .section {
+    padding: 40px 20px;
+  }
+  
+  .section-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .pro-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .best-value {
+    transform: none;
+  }
+  
+  .footer-section {
+    flex: 1 0 100%;
+  }
+}
+
+ion-content {
+  --padding-bottom: 0;
+}
+
+ion-page {
+  display: flex;
+  flex-direction: column;
+}
+
+ion-content {
+  flex: 1 0 auto;
+}
+
+ion-footer {
+  flex-shrink: 0;
+}
