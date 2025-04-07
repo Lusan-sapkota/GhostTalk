@@ -34,23 +34,16 @@ import {
   qrCode,
   ellipsisVertical
 } from 'ionicons/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Profile.css';
-import { themeService } from '../services/ThemeService';
 import BackHeaderComponent from '../components/BackHeaderComponent';
 
 const Profile: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const [username, setUsername] = useState('GhostUser123');
   const [email, setEmail] = useState('user@example.com');
   const [bio, setBio] = useState('Just a friendly ghost in the digital world.');
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
 
   const handleSaveProfile = () => {
     setIsEditing(false);
@@ -146,16 +139,6 @@ const Profile: React.FC = () => {
               <IonIcon icon={notifications} slot="start" color="primary" />
               <IonLabel>Notifications</IonLabel>
               <IonToggle checked={true} slot="end" />
-            </IonItem>
-
-            <IonItem>
-              <IonIcon icon={moon} slot="start" color="primary" />
-              <IonLabel>Dark Mode</IonLabel>
-              <IonToggle 
-                checked={darkMode} 
-                onIonChange={handleToggleTheme} 
-                slot="end" 
-              />
             </IonItem>
 
             <IonItem button routerLink="/change-password">

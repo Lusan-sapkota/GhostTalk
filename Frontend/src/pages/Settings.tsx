@@ -33,13 +33,11 @@ import {
 } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import BackHeaderComponent from '../components/BackHeaderComponent';
-import { themeService } from '../services/ThemeService';
 import './Settings.css';
 import { useAuth } from '../contexts/AuthContext';
 // import RoamingGhost from '../components/RoamingGhost';
 
 const Settings: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [readReceipts, setReadReceipts] = useState(true);
   const [onlineStatus, setOnlineStatus] = useState(true);
@@ -54,37 +52,47 @@ const Settings: React.FC = () => {
   const [messagePrivacy, setMessagePrivacy] = useState('everyone');
   
   const { isAuthenticated } = useAuth();
-  
-  useEffect(() => {
-    const cleanup = themeService.onThemeChange((isDark) => {
-      setDarkMode(isDark);
-    });
-    return cleanup;
-  }, []);
-
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
-
-  const handleThemeChange = (value: string) => {
-    setTheme(value);
-    if (value === 'dark') {
-      themeService.setDarkMode(true);
-    } else if (value === 'light') {
-      themeService.setDarkMode(false);
-    } else {
-      // Handle system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      themeService.setDarkMode(prefersDark);
-    }
-  };
 
   const handleSaveSettings = () => {
-    // Show a success notification
-    document.querySelector('ion-toast')?.setAttribute('is-open', 'true');
+    // Create settings object from all the state variables
+    const settings = {
+      notifications: {
+        enabled: notificationsEnabled,
+      },
+      privacy: {
+        readReceipts,
+        onlineStatus,
+        bioPrivacy,
+        blockUnknown,
+        messagePrivacy
+      },
+      appearance: {
+        theme,
+        fontSize
+      },
+      language,
+      data: {
+        chatBackup,
+        dataSaver
+      }
+    };
+    
+    // Here you would typically save these settings to local storage or a backend API
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    // Show success feedback to the user
+    // In a real app, you might use a toast notification or other feedback mechanism
+    console.log('Settings saved successfully', settings);
+    
+    // You could also add a temporary visual confirmation here
+    const saveButton = document.querySelector('.save-settings-button');
+    if (saveButton) {
+      saveButton.classList.add('button-saved');
+      setTimeout(() => {
+        saveButton.classList.remove('button-saved');
+      }, 2000);
+    }
   };
-
   return (
     <IonPage className="ghost-appear">
       <BackHeaderComponent 
@@ -103,16 +111,10 @@ const Settings: React.FC = () => {
             
             <IonItem lines="full">
               <IonIcon slot="start" icon={moonOutline} />
-              <IonLabel>Theme</IonLabel>
-              <IonSelect 
-                value={theme} 
-                onIonChange={(e) => handleThemeChange(e.detail.value)}
-                interface="popover"
-              >
-                <IonSelectOption value="system">System Default</IonSelectOption>
-                <IonSelectOption value="light">Light</IonSelectOption>
-                <IonSelectOption value="dark">Dark</IonSelectOption>
-              </IonSelect>
+              <IonLabel>
+                Theme
+                <p>Using system preference</p>
+              </IonLabel>
             </IonItem>
             
             <IonItem lines="full">

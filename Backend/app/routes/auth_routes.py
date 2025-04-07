@@ -147,3 +147,18 @@ def session_alert():
     session_data = data.get('sessionData')
     response, status_code = auth_service.send_session_alert(email, session_data)
     return jsonify(response), status_code
+
+@auth_bp.route('/check-verification', methods=['POST'])
+def check_verification():
+    """Check if a user's email is verified"""
+    data = request.json
+    
+    if not data or not data.get('email'):
+        return {'success': False, 'message': 'Email is required'}, 400
+        
+    email = data.get('email')
+    
+    auth_service = AuthService()
+    result = auth_service.check_email_verification(email)
+    
+    return result

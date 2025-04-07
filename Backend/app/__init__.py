@@ -11,7 +11,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Enable CORS
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:8100", "supports_credentials": True}})
     
     # Debug output to verify configuration loading
     print(f"Loaded database ID: {app.config.get('APPWRITE_DATABASE_ID')}")

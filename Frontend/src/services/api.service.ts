@@ -1,7 +1,7 @@
 const BASE_URL = 'http://localhost:5000/api'; // Update this with your actual Flask API URL
 
 class ApiService {
-  async makeRequest(endpoint: string, method: string = 'GET', data?: any) {
+  async makeRequest(endpoint: string, method: string = 'GET', data?: any, options?: any) {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     
     const headers: HeadersInit = {
@@ -12,17 +12,21 @@ class ApiService {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const options: RequestInit = {
+    const requestOptions: RequestInit = {
       method,
       headers,
+      // Add credentials: 'include' for authentication requests
+      credentials: 'include',
+      // Merge any additional options provided
+      ...options
     };
     
     if (data && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(data);
+      requestOptions.body = JSON.stringify(data);
     }
     
     try {
-      const response = await fetch(`${BASE_URL}${endpoint}`, options);
+      const response = await fetch(`${BASE_URL}${endpoint}`, requestOptions);
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
@@ -34,8 +38,8 @@ class ApiService {
     const data = {
       email,
       password,
-      name: profileData.name,
-      gender: profileData.gender,
+      name: profileData.name, // This will be used as username in the backend
+      gender: profileData.gender || 'prefer_not_to_say',
       bio: profileData.bio || ''
     };
     
@@ -43,7 +47,13 @@ class ApiService {
   }
   
   async login(email: string, password: string) {
-    return this.makeRequest('/auth/login', 'POST', { email, password });
+    try {
+      // Use credentials: 'include' to support cookies for authentication
+      return this.makeRequest('/auth/login', 'POST', { email, password }, { credentials: 'include' });
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'Authentication failed' };
+    }
   }
   
   async logout() {
@@ -85,7 +95,30 @@ class ApiService {
   }
 
   async sendMagicLink(email: string) {
-    return this.makeRequest('/auth/magic-link', 'POST', { email });
+    try {
+      const response = await this.makeRequest('/auth/magic-link', 'POST', { email });
+      
+      // If backend doesn't check verification, do it client-side
+      if (response.success && !response.hasOwnProperty('needsVerification')) {
+        try {
+          // Check user verification status
+          const userResponse = await this.makeRequest('/auth/check-verification', 'POST', { email });
+          if (!userResponse.isVerified) {
+            return {
+              ...response,
+              needsVerification: true
+            };
+          }
+        } catch (e) {
+          console.error('Error checking verification status:', e);
+        }
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Error sending magic link:', error);
+      return { success: false, message: 'Failed to send magic link' };
+    }
   }
 
   async forgotPassword(email: string) {

@@ -20,17 +20,19 @@ import {
   IonList,
   IonSpinner
 } from '@ionic/react';
-import { personAdd, eye, eyeOff, checkmarkCircle, closeCircle, alertCircle, refreshCircleOutline } from 'ionicons/icons';
+import { personAdd, eye, eyeOff, checkmarkCircle, closeCircle, alertCircle, refreshCircleOutline, mail } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import './Register.css';
 import BackHeaderComponent from '../components/BackHeaderComponent';
 import { apiService } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
+import { useRateLimit } from '../hooks/useRateLimit';
 
 const Register: React.FC = () => {
   const history = useHistory();
   const { register } = useAuth();
+  const [isResending, setIsResending] = useState(false);
   
   // Form fields
   const [email, setEmail] = useState('');
@@ -59,6 +61,8 @@ const Register: React.FC = () => {
 
   // Step in the registration flow
   const [registrationStep, setRegistrationStep] = useState(1);
+
+  const { canPerformAction, triggerAction, countdown } = useRateLimit(60);
 
   // Function to generate a username from the backend
   const generateUsername = async () => {
@@ -156,7 +160,7 @@ const Register: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await register(email, password, {
-        name: generatedUsername,
+        name: generatedUsername, // This will be used as username in the backend
         gender,
         bio
       });
@@ -173,6 +177,32 @@ const Register: React.FC = () => {
       setShowToast(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!canPerformAction()) {
+      setToastMessage(`Please wait ${countdown} seconds before requesting another email`);
+      setShowToast(true);
+      return;
+    }
+    
+    try {
+      setIsResending(true);
+      const response = await apiService.makeRequest('/auth/resend-verification', 'POST', { email });
+      
+      if (response.success) {
+        triggerAction(); // Start cooldown
+        setToastMessage('Verification email resent! Please check your inbox.');
+      } else {
+        setToastMessage(response.message || 'Failed to resend verification email');
+      }
+    } catch (error) {
+      console.error('Error resending verification email:', error);
+      setToastMessage('Network error. Please try again later.');
+    } finally {
+      setIsResending(false);
+      setShowToast(true);
     }
   };
 
@@ -362,26 +392,59 @@ const Register: React.FC = () => {
       </IonCardHeader>
       <IonCardContent>
         <div className="verification-icon ghost-float">
-          <IonIcon icon="mail" color="primary" />
+          <IonIcon icon={mail} color="primary" />
         </div>
         <p className="verification-message">
           We've sent a verification email to <strong>{email}</strong>.
           Please check your inbox and click the verification link.
         </p>
         <div className="verification-actions">
-          <IonButton expand="block" onClick={() => history.push('/login')}>
+          <IonButton 
+            expand="block" 
+            onClick={() => {
+              // Check verification status before redirecting to login
+              setIsLoading(true);
+              apiService.makeRequest('/auth/check-verification', 'POST', { email })
+                .then(response => {
+                  if (response.success && response.isVerified) {
+                    setToastMessage('Email verified! You can now login.');
+                    setShowToast(true);
+                    setTimeout(() => {
+                      history.push('/login');
+                    }, 1000);
+                  } else {
+                    setToastMessage('Your email is not yet verified. Please check your inbox or request a new verification email.');
+                    setShowToast(true);
+                  }
+                })
+                .catch(error => {
+                  console.error('Error checking verification status:', error);
+                  setToastMessage('Could not verify your status. Please try again later.');
+                  setShowToast(true);
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }}
+          >
             Go to Login
           </IonButton>
           <IonButton expand="block" fill="outline" onClick={() => setRegistrationStep(1)}>
             Wrong Email?
           </IonButton>
-          <IonButton expand="block" fill="clear" onClick={() => {
-            // Implement resend verification logic
-            apiService.makeRequest('/auth/resend-verification', 'POST', { email });
-            setToastMessage('Verification email resent!');
-            setShowToast(true);
-          }}>
-            Resend Email
+          <IonButton 
+            expand="block" 
+            fill="clear" 
+            disabled={isResending || !canPerformAction()}
+            onClick={handleResendVerification}
+          >
+            {isResending ? (
+              <IonSpinner name="dots" />
+            ) : !canPerformAction() ? (
+              `Resend Email (${countdown}s)`
+            ) : (
+              'Resend Email'
+            )}
           </IonButton>
         </div>
       </IonCardContent>
@@ -415,3 +478,5 @@ const Register: React.FC = () => {
 };
 
 export default Register;
+// Add this with other state declarations
+

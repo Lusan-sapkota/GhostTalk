@@ -78,33 +78,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Enhanced login with remember me functionality
   const login = async (email: string, password: string, remember: boolean = false) => {
-    setIsLoading(true);
     try {
       const response = await apiService.login(email, password);
-      if (response.success && response.user) {
+      
+      if (response.success) {
+        // Check if user is verified
+        if (!response.user.isVerified) {
+          return {
+            success: false,
+            message: 'Please verify your email before logging in.',
+            needsVerification: true,
+            email
+          };
+        }
+        
+        // User is verified, proceed with login
+        apiService.setToken(response.token, remember);
         setCurrentUser(response.user);
-        
-        // Store token based on remember preference
-        if (remember) {
-          localStorage.setItem('authToken', response.token);
-        } else {
-          sessionStorage.setItem('authToken', response.token);
-        }
-        
-        // Send session notification
-        if (response.user.id) {
-          await apiService.sendSessionAlert(email, {
-            deviceInfo: navigator.userAgent,
-            time: new Date().toISOString(),
-            location: 'Unknown' // Or use geolocation if available
-          });
-        }
+        return {
+          success: true,
+          message: 'Login successful'
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Login failed'
+        };
       }
-      setIsLoading(false);
-      return response;
     } catch (error) {
-      setIsLoading(false);
-      throw error;
+      console.error('Login error:', error);
+      return {
+        success: false,
+        message: 'An error occurred during login'
+      };
     }
   };
   

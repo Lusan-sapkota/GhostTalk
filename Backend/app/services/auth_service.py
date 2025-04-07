@@ -5,6 +5,31 @@ from flask import current_app, url_for
 import datetime
 import jwt
 
+# Import the proper JWT libraries
+import jwt
+from datetime import datetime, timedelta
+
+def generate_token(user_id):
+    """Generate a JWT token for email verification or password reset"""
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.utcnow() + timedelta(minutes=10),  # 10 minute expiration
+        'iat': datetime.utcnow(),
+        'type': 'verification'
+    }
+    
+    # Use jwt.encode instead of directly calling encode on jwt
+    token = jwt.encode(
+        payload,
+        current_app.config['SECRET_KEY'],
+        algorithm='HS256'
+    )
+    
+    # In newer versions of PyJWT, encode returns a string directly
+    if isinstance(token, bytes):
+        return token.decode('utf-8')
+    return token
+
 class AuthService:
     def __init__(self):
         self.appwrite_service = AppwriteService()
@@ -14,7 +39,7 @@ class AuthService:
         try:
             # Check if user exists
             existing_user = self.appwrite_service.get_user_by_email(email)
-            if existing_user:
+            if (existing_user):
                 return {'success': False, 'message': 'Email already registered'}, 400
             
             # Create user with additional profile data
@@ -64,63 +89,77 @@ class AuthService:
             return {'success': False, 'message': str(e)}, 401
             
     def verify_email(self, token):
-        """Verify a user's email with the provided token"""
+        """Verify a user's email with the provided JWT token"""
         try:
             # Decode JWT token
-            payload = jwt.decode(
-                token, 
-                current_app.config['JWT_SECRET_KEY'], 
-                algorithms=['HS256']
-            )
+            import jwt
             
-            user_id = payload['sub']
-            
-            # Mark user as verified in your database
-            # self.appwrite_service.mark_user_verified(user_id)
-            
-            return {
-                'success': True,
-                'message': 'Email verified successfully',
-                'email': self.appwrite_service.get_user(user_id)['email']
-            }, 200
-        except jwt.ExpiredSignatureError:
-            return {'success': False, 'message': 'Verification link expired'}, 400
+            try:
+                payload = jwt.decode(
+                    token, 
+                    current_app.config['SECRET_KEY'],
+                    algorithms=['HS256']
+                )
+                
+                user_id = payload['user_id']
+                email = payload.get('email', '')
+                
+                # Mark user as verified in the database
+                self.appwrite_service.mark_user_verified(user_id)
+                
+                # Get user for the response
+                user = self.appwrite_service.get_user(user_id)
+                
+                return {
+                    'success': True,
+                    'message': 'Email verified successfully',
+                    'email': email or (user['email'] if user else '')
+                }, 200
+            except jwt.ExpiredSignatureError:
+                return {'success': False, 'message': 'Verification link has expired'}, 400
+            except jwt.InvalidTokenError:
+                return {'success': False, 'message': 'Invalid verification token'}, 400
+                
         except Exception as e:
-            return {'success': False, 'message': str(e)}, 400
+            print(f"Verification error: {str(e)}")
+            return {'success': False, 'message': f'Verification error: {str(e)}'}, 400
             
     def resend_verification(self, email):
-        """Resend verification email"""
+        """Resend verification email using Appwrite's built-in template"""
         try:
             # Get user
             user = self.appwrite_service.get_user_by_email(email)
             if not user:
                 return {'success': False, 'message': 'User not found'}, 404
                 
-            # Generate new token
-            token = generate_token(user['$id'])
-            
-            # Send verification email
-            # self._send_verification_email(email, token)
+            # Use Appwrite's native email verification
+            result = self.appwrite_service.send_verification_email(
+                email=email,
+                username=user.get('name', 'User')
+            )
             
             return {
                 'success': True,
                 'message': 'Verification email sent'
             }, 200
         except Exception as e:
+            print(f"Error in resend_verification: {str(e)}")
             return {'success': False, 'message': str(e)}, 500
             
     def _send_verification_email(self, email, token):
-        """Send verification email with JWT token"""
+        """Send verification email with JWT token using Appwrite templates"""
         # Construct verification URL with the JWT token
         verification_url = f"{current_app.config['FRONTEND_URL']}/verify-email/{token}"
         
-        # In production, send this URL to the user's email using your email service
-        # For development, just print the link
-        print(f"Verification link for {email}: {verification_url}")
-        print(f"This link will expire in 10 minutes.")
-        
-        # TODO: Implement sending email with this verification URL
-        # You'll need to configure an email service like SendGrid, Mailgun, etc.
+        try:
+            # Use Appwrite's built-in verification email system
+            url_param = f"?redirectUrl={verification_url}"
+            self.appwrite_service.create_verification(email, url_param)
+            
+            return True
+        except Exception as e:
+            print(f"Error sending verification email: {str(e)}")
+            return False
 
     def send_password_reset(self, email):
         """Send password reset email with JWT token"""
@@ -267,3 +306,44 @@ class AuthService:
             }, 200
         except Exception as e:
             return {'success': False, 'message': str(e)}, 500
+
+    def check_email_verification(self, email):
+        """Check if a user's email is verified"""
+        try:
+            # Get user
+            user = self.appwrite_service.get_user_by_email(email)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+                
+            # Get user document which contains verification status
+            user_doc = self.appwrite_service.get_user_document(user['$id'])
+            
+            # Check if verified
+            is_verified = user_doc and user_doc.get('isVerified', False)
+            
+            return {
+                'success': True,
+                'isVerified': is_verified,
+                'email': email
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def verify_email_appwrite(self, user_id, secret):
+        """Verify email with Appwrite's verification parameters"""
+        try:
+            # Mark the user as verified in your database
+            self.appwrite_service.mark_user_verified(user_id)
+            
+            # Get user information
+            user = self.appwrite_service.get_user(user_id)
+            email = user.get('email', '') if user else ''
+            
+            return {
+                'success': True,
+                'message': 'Email verified successfully',
+                'email': email
+            }, 200
+        except Exception as e:
+            print(f"Verification error: {str(e)}")
+            return {'success': False, 'message': f'Verification error: {str(e)}'}, 400

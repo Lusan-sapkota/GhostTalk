@@ -21,7 +21,10 @@ import {
   IonSearchbar,
   IonFooter,
   IonItemDivider,
-  IonToggle
+  IonToggle,
+  IonSelect,
+  IonSelectOption,
+  IonAlert
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 
@@ -45,7 +48,8 @@ import {
   logOutOutline,
   lockClosedOutline,
   globeOutline,
-  closeOutline
+  closeOutline,
+  phonePortraitOutline
 } from 'ionicons/icons';
 
 import Home from './pages/Home';
@@ -102,7 +106,8 @@ setupIonicReact();
 const SideMenu: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const { isAuthenticated, logout } = useAuth();
-  
+  const [showThemeInfo, setShowThemeInfo] = useState(false);
+
   useEffect(() => {
     const cleanup = themeService.onThemeChange((isDark) => {
       setDarkMode(isDark);
@@ -110,11 +115,80 @@ const SideMenu: React.FC = () => {
     
     return cleanup;
   }, []);
+
+  useEffect(() => {
+    // Apply initial system theme
+    themeService.applySystemTheme();
+  }, []);
+
+  const [currentTheme, setCurrentTheme] = useState(localStorage.getItem('themePreference') || 'system');
+
+  useEffect(() => {
+    // Get saved theme preference or default to system
+    const savedTheme = localStorage.getItem('themePreference') || 'system';
+    setCurrentTheme(savedTheme);
+    
+    // Apply the theme
+    if (savedTheme === 'dark') {
+      themeService.setDarkMode(true);
+    } else if (savedTheme === 'light') {
+      themeService.setDarkMode(false);
+    } else {
+      // For system theme, check the preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      themeService.setDarkMode(prefersDark);
+    }
+  }, []);
   
   const handleToggleTheme = () => {
     const isDark = themeService.toggleTheme();
     setDarkMode(isDark);
   };
+
+  const handleThemeChangeFromMenu = (value: string) => {
+    setCurrentTheme(value);
+    
+    // Add a visual indication of theme changing
+    document.body.classList.add('theme-transition');
+    
+    if (value === 'dark') {
+      themeService.setDarkMode(true);
+    } else if (value === 'light') {
+      themeService.setDarkMode(false);
+    } else {
+      // Handle system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      themeService.setDarkMode(prefersDark);
+    }
+    
+    // Persist the preference
+    localStorage.setItem('themePreference', value);
+    
+    // Add animation class
+    document.body.classList.add('theme-changing');
+    
+    // Remove animation class after transition
+    setTimeout(() => {
+      document.body.classList.remove('theme-changing');
+    }, 500);
+  };
+
+  useEffect(() => {
+    // Set up system theme preference change listener
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      if (currentTheme === 'system') {
+        themeService.setDarkMode(e.matches);
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    };
+  }, [currentTheme]);
 
   return (
     <IonMenu contentId="main" className="ghost-fade-in">
@@ -238,14 +312,19 @@ const SideMenu: React.FC = () => {
 
           <IonItemDivider className="menu-divider">Preferences</IonItemDivider>
           
-          <IonItem className="theme-toggle-item staggered-item">
-            <IonIcon slot="start" icon={darkMode ? moon : sunny} />
-            <IonLabel>{darkMode ? 'Dark Mode' : 'Light Mode'}</IonLabel>
-            <IonToggle 
-              checked={darkMode} 
-              onIonChange={handleToggleTheme} 
+          <IonItem className="theme-info-item staggered-item">
+            <IonIcon slot="start" icon={contrastOutline} />
+            <IonLabel>
+              system ({darkMode ? 'Dark' : 'Light'})
+            </IonLabel>
+            <IonButton 
+              fill="clear" 
               slot="end" 
-            />
+              onClick={() => setShowThemeInfo(true)}
+              className="info-button"
+            >
+              <IonIcon slot="icon-only" icon={informationCircleOutline} />
+            </IonButton>
           </IonItem>
 
           {isAuthenticated && (
@@ -256,10 +335,15 @@ const SideMenu: React.FC = () => {
           )}
         </IonList>
       </IonContent>
-      <IonFooter className="menu-footer">
-        <p>GhostTalk v1.0.0</p>
-        <p className="copyright">© {new Date().getFullYear()} GhostTalk</p>
-      </IonFooter>
+      
+      <IonAlert
+        isOpen={showThemeInfo}
+        onDidDismiss={() => setShowThemeInfo(false)}
+        header="System Theme"
+        message="GhostTalk follows your device's theme setting. To change between light and dark mode, update your system settings."
+        buttons={['Got it!']}
+      />
+      
     </IonMenu>
   );
 };
@@ -269,6 +353,33 @@ const App: React.FC = () => {
   useEffect(() => {
     const darkMode = themeService.getDarkMode();
     document.body.classList.toggle('dark', darkMode);
+  }, []);
+
+  // Apply initial theme more comprehensively
+  useEffect(() => {
+    const darkMode = themeService.getDarkMode();
+    
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+    
+    // Listen for changes in the system theme preference if using system setting
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      const currentTheme = localStorage.getItem('themePreference') || 'system';
+      if (currentTheme === 'system') {
+        themeService.setDarkMode(e.matches);
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    };
   }, []);
 
   const { isAuthenticated } = useAuth();

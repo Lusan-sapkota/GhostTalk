@@ -1,357 +1,26 @@
-.roaming-ghost {
+/* Reset existing classes first */
+.gt-roaming-ghost,
+.gt-roaming-ghost * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Namespace everything with gt- prefix */
+.gt-roaming-ghost {
   position: fixed;
   width: 40px;
   height: 45px;
-  z-index: 10;
-  pointer-events: all;
+  z-index: 50;
   opacity: 0.7;
   transition: opacity 0.3s ease, transform 0.3s ease;
   cursor: pointer;
   user-select: none;
   transform-origin: center;
-}
-
-.roaming-ghost:hover {
-  opacity: 0.95;
-  transform: scale(1.2);
-  z-index: 20;
-}
-
-/* Ghost body with better styling */
-.ghost-body {
-  width: 100%;
-  height: 70%;
-  background: linear-gradient(to bottom, 
-    rgba(255, 255, 255, 0.9) 20%, 
-    rgba(255, 255, 255, 0.7) 80%);
-  border-radius: 50% 50% 0 0;
-  position: relative;
-  box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
-  animation: floatUpDown 4s ease-in-out infinite;
-}
-
-/* Ghost face with better positioning */
-.ghost-face {
-  position: absolute;
-  top: 35%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 60%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Eyes with better spacing and animation */
-.ghost-eyes {
-  display: flex;
-  width: 100%;
-  justify-content: space-around;
-  margin-bottom: 5px;
-}
-
-.ghost-eye {
-  width: 6px;
-  height: 6px;
-  background-color: var(--ion-color-dark);
-  border-radius: 50%;
-  animation: blinkEyes 4s ease-in-out infinite;
-  transition: height 0.2s ease, width 0.2s ease;
-}
-
-/* Mouth with better shape and transition */
-.ghost-mouth {
-  width: 8px;
-  height: 4px;
-  background-color: var(--ion-color-dark);
-  border-radius: 0 0 50% 50%;
-  transform: translateY(2px);
-  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
-}
-
-/* Enhanced ghost tail with wavy animation */
-.ghost-tail {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 30%;
-  overflow: hidden;
-}
-
-.ghost-tail::before,
-.ghost-tail::after,
-.ghost-tail::before:last-of-type {
-  content: '';
-  position: absolute;
-  width: 33.33%;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(to bottom, 
-    rgba(255, 255, 255, 0.9) 20%, 
-    rgba(255, 255, 255, 0.7) 80%);
-  bottom: -10px;
-  animation: ghostTailWave 3s ease-in-out infinite;
-}
-
-.ghost-tail::before {
-  left: 0;
-  animation-delay: 0s;
-}
-
-.ghost-tail::after {
-  left: 33.33%;
-  animation-delay: 0.3s;
-}
-
-/* Add a third element for the right part of the tail */
-.ghost-tail-right {
-  position: absolute;
-  width: 33.33%;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(to bottom, 
-    rgba(255, 255, 255, 0.9) 20%, 
-    rgba(255, 255, 255, 0.7) 80%);
-  left: 66.67%;
-  bottom: -10px;
-  animation: ghostTailWave 3s ease-in-out infinite;
-  animation-delay: 0.6s;
-}
-
-/* New ghost shadow for 3D effect */
-.ghost-shadow {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 10px;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
-  border-radius: 50%;
-  animation: shadowPulse 4s ease-in-out infinite;
-  z-index: -1;
-}
-
-/* Speech bubble that appears on hover */
-.ghost-speech {
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: white;
-  color: var(--ion-color-dark);
-  padding: 8px 12px;
-  border-radius: 15px;
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  animation: speechAppear 0.3s forwards;
-  z-index: 30;
-  pointer-events: none;
-}
-
-.ghost-speech::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
-  background-color: white;
-  transform: rotate(45deg);
-}
-
-/* Emotional states */
-.ghost-happy .ghost-mouth {
-  width: 12px;
-  height: 6px;
-  border-radius: 0 0 100% 100%;
-}
-
-.ghost-sad .ghost-mouth {
-  width: 12px;
-  height: 6px;
-  border-radius: 100% 100% 0 0;
-  transform: translateY(6px);
-}
-
-.ghost-surprised .ghost-eye {
-  height: 8px;
-  width: 8px;
-  background-color: var(--ion-color-primary);
-}
-
-.ghost-surprised .ghost-mouth {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.ghost-excited .ghost-body {
-  animation: jumpAround 1s ease-in-out infinite;
-}
-
-.ghost-excited .ghost-eye {
-  background-color: var(--ion-color-primary);
-}
-
-.ghost-excited .ghost-mouth {
-  width: 14px;
-  height: 8px;
-  border-radius: 0 0 100% 100%;
-}
-
-/* Celebration animation */
-.ghost-celebrate {
-  animation: celebrate 2s ease-in-out;
-}
-
-/* Animations */
-@keyframes floatUpDown {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes blinkEyes {
-  0%, 45%, 55%, 100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(0.1);
-  }
-}
-
-@keyframes ghostTailWave {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes shadowPulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.2;
-    transform: translateX(-50%) scale(0.8);
-  }
-}
-
-@keyframes speechAppear {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.8) translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1) translateY(0);
-  }
-}
-
-@keyframes jumpAround {
-  0%, 100% {
-    transform: translateY(0) rotate(0);
-  }
-  25% {
-    transform: translateY(-12px) rotate(-5deg);
-  }
-  75% {
-    transform: translateY(-12px) rotate(5deg);
-  }
-}
-
-@keyframes celebrate {
-  0%, 100% {
-    transform: scale(1) rotate(0);
-  }
-  25% {
-    transform: scale(1.3) rotate(-15deg);
-  }
-  50% {
-    transform: scale(1.1) rotate(15deg);
-  }
-  75% {
-    transform: scale(1.3) rotate(-15deg);
-  }
-}
-
-/* Dark mode adjustments */
-:root.dark .ghost-body,
-:root.dark .ghost-tail::before,
-:root.dark .ghost-tail::after {
-  background: linear-gradient(to bottom, 
-    rgba(var(--ion-color-primary-rgb), 0.4) 20%, 
-    rgba(var(--ion-color-primary-rgb), 0.2) 80%);
-  box-shadow: 0 0 15px rgba(var(--ion-color-primary-rgb), 0.6);
-}
-
-:root.dark .ghost-eye,
-:root.dark .ghost-mouth {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-:root.dark .ghost-speech {
-  background-color: var(--ion-color-dark);
-  color: white;
-}
-
-:root.dark .ghost-speech::after {
-  background-color: var(--ion-color-dark);
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .roaming-ghost {
-    width: 35px;
-    height: 40px;
-  }
-  
-  .ghost-eye {
-    width: 5px;
-    height: 5px;
-  }
-  
-  .ghost-mouth {
-    width: 6px;
-    height: 3px;
-  }
-  
-  .ghost-speech {
-    padding: 5px 8px;
-    font-size: 10px;
-    top: -30px;
-  }
-}
-
-/* Unique prefixed class names to prevent conflicts */
-.gt-roaming-ghost {
-  position: fixed;
-  width: 40px;
-  height: 45px;
-  z-index: 50; /* Lower default z-index */
-  pointer-events: none; /* Change to none to prevent blocking content */
-  opacity: 0.7; /* Slightly more transparent by default */
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-  transform-origin: center;
   will-change: transform, opacity;
-  /* Ensure it doesn't interfere with scrolling */
-  touch-action: none;
-  /* Make sure it doesn't block text selection */
   pointer-events: auto;
+  /* Ensure it doesn't affect document flow */
+  contain: layout style;
 }
 
 /* Size variants */
@@ -365,23 +34,22 @@
   height: 55px;
 }
 
-/* Enable pointer events only on the body part of the ghost */
-.gt-roaming-ghost-body,
-.gt-roaming-ghost-face,
-.gt-roaming-ghost-tail {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-/* Hover effects */
+/* Ghost hover effect */
 .gt-roaming-ghost:hover {
   opacity: 1;
-  transform: scale(1.1) scaleX(1); /* Ensure scaleX doesn't get overridden */
-  z-index: 1001 !important;
-  filter: drop-shadow(0 0 8px rgba(var(--ion-color-primary-rgb), 0.4));
+  transform: scale(1.1) scaleX(1);
+  z-index: 999;
+  filter: drop-shadow(0 0 8px rgba(100, 149, 237, 0.4));
 }
 
-/* Cute ghost body */
+/* Main ghost body */
+.gt-roaming-ghost-body-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-origin: center;
+}
+
 .gt-roaming-ghost-body {
   width: 100%;
   height: 70%;
@@ -390,12 +58,12 @@
     rgba(255, 255, 255, 0.8) 100%);
   border-radius: 60% 60% 0 0;
   position: relative;
-  box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
+  box-shadow: 0 0 10px rgba(100, 149, 237, 0.3);
   animation: gtGhostFloat 4s ease-in-out infinite;
   overflow: visible;
 }
 
-/* Adorable ghost face */
+/* Ghost face elements */
 .gt-roaming-ghost-face {
   position: absolute;
   top: 35%;
@@ -409,7 +77,6 @@
   justify-content: center;
 }
 
-/* Cute eyes setup */
 .gt-roaming-ghost-eyes {
   display: flex;
   width: 100%;
@@ -420,23 +87,22 @@
 .gt-roaming-ghost-eye {
   width: 7px;
   height: 7px;
-  background-color: var(--ion-color-dark);
+  background-color: #333;
   border-radius: 50%;
   animation: gtBlinkEyes 4s ease-in-out infinite;
   transition: height 0.2s ease, width 0.2s ease, background-color 0.3s ease;
 }
 
-/* Cute mouth */
 .gt-roaming-ghost-mouth {
   width: 9px;
   height: 4px;
-  background-color: var(--ion-color-dark);
+  background-color: #333;
   border-radius: 0 0 50% 50%;
   transform: translateY(2px);
   transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
 }
 
-/* Wavy ghost tail */
+/* Ghost tail */
 .gt-roaming-ghost-tail {
   position: absolute;
   bottom: 0;
@@ -470,13 +136,21 @@
   animation-delay: 0.3s;
 }
 
-/* Using pseudo element for third part of tail */
-.gt-roaming-ghost-tail::before:last-child {
+.gt-roaming-ghost-tail-right {
+  position: absolute;
+  width: 33.33%;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.95) 20%, 
+    rgba(255, 255, 255, 0.8) 80%);
   left: 66.67%;
+  bottom: -10px;
+  animation: gtGhostTailWave 3s ease-in-out infinite;
   animation-delay: 0.6s;
 }
 
-/* Shadow effect for 3D appearance */
+/* Shadow effect */
 .gt-roaming-ghost-shadow {
   position: absolute;
   bottom: -10px;
@@ -490,16 +164,16 @@
   z-index: -1;
 }
 
-/* Cute sparkle effect */
+/* Sparkle effect */
 .gt-roaming-ghost-sparkle {
   position: absolute;
   width: 10px;
   height: 10px;
-  background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.9) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(100, 149, 237, 0.9) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   animation: gtSparkle 2s ease-out forwards;
-  pointer-events: none; /* Ensure sparkles don't block interactions */
+  pointer-events: none;
 }
 
 /* Speech bubble */
@@ -515,18 +189,15 @@
   font-size: 0.75rem;
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
   animation: gtSpeechAppear 0.3s forwards;
-  z-index: 60; /* Should be just above ghost but not too high */
+  z-index: 60;
   min-width: 100px;
   pointer-events: none;
   display: block !important;
-  direction: ltr; /* Ensure text direction is left-to-right */
-  text-align: center; /* Center the text for better appearance */
-  white-space: normal; /* Allow text to wrap properly */
-  max-width: 12rem;    /* Control speech bubble width */
+  text-align: center;
+  white-space: normal;
+  max-width: 12rem;
   word-break: normal;
   word-wrap: break-word;
-  unicode-bidi: embed; /* Force text direction */
-  transform-style: preserve-3d; /* Help isolate from parent transforms */
 }
 
 .gt-roaming-ghost-speech::after {
@@ -540,7 +211,7 @@
   background-color: white;
 }
 
-/* Emote display above ghost */
+/* Emote display */
 .gt-roaming-ghost-emote {
   position: absolute;
   top: -20px;
@@ -548,11 +219,11 @@
   transform: translateX(-50%);
   font-size: 16px;
   animation: gtEmotePopup 0.5s ease-out;
-  z-index: 1005;
+  z-index: 55;
   pointer-events: none;
 }
 
-/* Emotional state styles - Happy */
+/* Emotional states */
 .gt-roaming-ghost-happy .gt-roaming-ghost-mouth {
   width: 12px;
   height: 7px;
@@ -563,7 +234,6 @@
   transform: scale(1.1);
 }
 
-/* Sad ghost */
 .gt-roaming-ghost-sad .gt-roaming-ghost-mouth {
   width: 12px;
   height: 7px;
@@ -575,11 +245,10 @@
   transform: translateY(2px) scaleX(0.8);
 }
 
-/* Surprised ghost */
 .gt-roaming-ghost-surprised .gt-roaming-ghost-eye {
   height: 9px;
   width: 9px;
-  background-color: var(--ion-color-primary);
+  background-color: cornflowerblue;
 }
 
 .gt-roaming-ghost-surprised .gt-roaming-ghost-mouth {
@@ -588,13 +257,12 @@
   border-radius: 50%;
 }
 
-/* Excited ghost */
 .gt-roaming-ghost-excited .gt-roaming-ghost-body {
   animation: gtGhostJump 1s ease-in-out infinite;
 }
 
 .gt-roaming-ghost-excited .gt-roaming-ghost-eye {
-  background-color: var(--ion-color-primary);
+  background-color: cornflowerblue;
 }
 
 .gt-roaming-ghost-excited .gt-roaming-ghost-mouth {
@@ -603,39 +271,36 @@
   border-radius: 0 0 100% 100%;
 }
 
-/* Celebration animation */
+/* Animation classes */
 .gt-roaming-ghost-celebrate {
   animation: gtGhostCelebrate 2s ease-in-out;
 }
 
-/* Pop effect on click */
 .gt-roaming-ghost-pop {
   animation: gtGhostPop 0.3s ease-out;
 }
 
-/* Bump effect when hitting edges */
 .gt-roaming-ghost-bump {
   animation: gtGhostBump 0.3s ease-out;
 }
 
-/* Pause animation */
 .gt-roaming-ghost-pause {
   animation: gtGhostPause 1.5s ease-in-out;
 }
 
-/* Happy bounce animation */
 .gt-roaming-ghost-happy-bounce {
   animation: gtGhostHappyBounce 1.5s ease-in-out;
 }
 
-/* Dark mode adjustments */
+/* Dark mode theme */
 .gt-roaming-ghost-dark .gt-roaming-ghost-body,
 .gt-roaming-ghost-dark .gt-roaming-ghost-tail::before,
-.gt-roaming-ghost-dark .gt-roaming-ghost-tail::after {
+.gt-roaming-ghost-dark .gt-roaming-ghost-tail::after,
+.gt-roaming-ghost-dark .gt-roaming-ghost-tail-right {
   background: linear-gradient(135deg, 
-    rgba(var(--ion-color-primary-rgb), 0.5) 0%, 
-    rgba(var(--ion-color-primary-rgb), 0.3) 100%);
-  box-shadow: 0 0 15px rgba(var(--ion-color-primary-rgb), 0.6);
+    rgba(100, 149, 237, 0.5) 0%, 
+    rgba(100, 149, 237, 0.3) 100%);
+  box-shadow: 0 0 15px rgba(100, 149, 237, 0.6);
 }
 
 .gt-roaming-ghost-dark .gt-roaming-ghost-eye,
@@ -643,196 +308,20 @@
   background-color: rgba(255, 255, 255, 0.95);
 }
 
-.gt-roaming-ghost-dark .gt-roaming-ghost-speech {
-  background-color: var(--ion-color-dark);
+.gt-dark-speech {
+  background-color: #333;
   color: white;
 }
 
-.gt-roaming-ghost-dark .gt-roaming-ghost-speech::after {
-  background-color: var(--ion-color-dark);
+.gt-dark-speech::after {
+  background-color: #333;
 }
 
 .gt-roaming-ghost-dark .gt-roaming-ghost-sparkle {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
 }
 
-/* ANIMATIONS */
-
-/* Basic floating animation */
-@keyframes gtGhostFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-/* Eye blinking animation */
-@keyframes gtBlinkEyes {
-  0%, 44%, 56%, 100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(0.1);
-  }
-}
-
-/* Tail wave animation */
-@keyframes gtGhostTailWave {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Shadow pulse animation */
-@keyframes gtShadowPulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.2;
-    transform: translateX(-50%) scale(0.8);
-  }
-}
-
-/* Sparkle animation */
-@keyframes gtSparkle {
-  0% {
-    transform: scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2) rotate(180deg);
-    opacity: 0;
-  }
-}
-
-/* Speech bubble appear animation */
-@keyframes gtSpeechAppear {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.8) translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1) translateY(0);
-  }
-}
-
-/* Jump animation for excited state */
-@keyframes gtGhostJump {
-  0%, 100% {
-    transform: translateY(0) rotate(0);
-  }
-  25% {
-    transform: translateY(-12px) rotate(-5deg);
-  }
-  75% {
-    transform: translateY(-12px) rotate(5deg);
-  }
-}
-
-/* Celebration animation */
-@keyframes gtGhostCelebrate {
-  0%, 100% {
-    transform: scale(1) rotate(0);
-  }
-  25% {
-    transform: scale(1.3) rotate(-15deg);
-  }
-  50% {
-    transform: scale(1.1) rotate(15deg);
-  }
-  75% {
-    transform: scale(1.3) rotate(-15deg);
-  }
-}
-
-/* Pop animation when clicked */
-@keyframes gtGhostPop {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-}
-
-/* Bump animation for edge collisions */
-@keyframes gtGhostBump {
-  0%, 100% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(0.8);
-  }
-  60% {
-    transform: scale(1.1);
-  }
-}
-
-/* Pause animation */
-@keyframes gtGhostPause {
-  0%, 100% {
-    opacity: 0.75;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Happy bounce animation */
-@keyframes gtGhostHappyBounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  20%, 60% {
-    transform: translateY(-15px);
-  }
-  40%, 80% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Emote popup animation */
-@keyframes gtEmotePopup {
-  0% {
-    transform: translateX(-50%) scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: translateX(-50%) scale(1.5);
-  }
-  100% {
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
-  }
-}
-
-/* Smooth movement transition */
-.gt-smooth-move {
-  transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), 
-              top 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-/* Ghost body wrapper to handle direction flipping separately */
-.gt-roaming-ghost-body-wrapper {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform-origin: center;
-  /* The scaleX will be applied to this wrapper only */
-}
-
-/* Ghost trail effect */
+/* Ghost trail */
 .gt-ghost-trail {
   position: absolute;
   width: 100%;
@@ -844,33 +333,145 @@
 }
 
 .gt-ghost-trail-particle {
-  position: fixed; /* Changed from absolute for proper positioning */
+  position: fixed;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.6); /* More visible */
+  background-color: rgba(255, 255, 255, 0.6);
   box-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
   opacity: 0;
-  animation: trailFadeOut 1.5s ease-out forwards;
+  animation: gtTrailFadeOut 1.5s ease-out forwards;
 }
 
-/* Page transition animation */
-@keyframes gtPageEnter {
+/* Animations */
+@keyframes gtGhostFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes gtBlinkEyes {
+  0%, 44%, 56%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+@keyframes gtGhostTailWave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes gtShadowPulse {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: translateX(-50%) scale(1);
+  }
+  50% { 
+    opacity: 0.2;
+    transform: translateX(-50%) scale(0.8);
+  }
+}
+
+@keyframes gtSparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% { opacity: 0.8; }
+  100% {
+    transform: scale(2) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gtSpeechAppear {
   0% {
     opacity: 0;
-    transform: translateY(20px) scale(0.9);
+    transform: translateX(-50%) scale(0.8) translateY(10px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(-50%) scale(1) translateY(0);
   }
 }
 
-.gt-page-enter {
-  animation: gtPageEnter 0.4s ease-out forwards;
+@keyframes gtGhostJump {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25% { transform: translateY(-12px) rotate(-5deg); }
+  75% { transform: translateY(-12px) rotate(5deg); }
 }
 
-/* Comprehensive responsive adjustments using media queries */
+@keyframes gtGhostCelebrate {
+  0%, 100% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.3) rotate(-15deg); }
+  50% { transform: scale(1.1) rotate(15deg); }
+  75% { transform: scale(1.3) rotate(-15deg); }
+}
+
+@keyframes gtGhostPop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes gtGhostBump {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(0.8); }
+  60% { transform: scale(1.1); }
+}
+
+@keyframes gtGhostPause {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes gtGhostHappyBounce {
+  0%, 100% { transform: translateY(0); }
+  20%, 60% { transform: translateY(-15px); }
+  40%, 80% { transform: translateY(-5px); }
+}
+
+@keyframes gtEmotePopup {
+  0% {
+    transform: translateX(-50%) scale(0);
+    opacity: 0;
+  }
+  50% { transform: translateX(-50%) scale(1.5); }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes gtTrailFadeOut {
+  0% { opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+/* Smooth movement */
+.gt-smooth-move {
+  transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), 
+              top 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Debug styling */
+.gt-debug {
+  outline: 1px dashed red;
+}
+
+.gt-ghost-debug {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px;
+  font-size: 9px;
+  border-radius: 3px;
+  width: 120px;
+  pointer-events: none;
+}
+
+/* Responsive styles */
 @media (max-width: 1024px) {
   .gt-roaming-ghost {
     transform-origin: center bottom;
@@ -882,8 +483,6 @@
     font-size: 0.7rem;
     top: -2.8rem;
     padding: 0.4rem 0.6rem;
-    white-space: normal;
-    text-align: center;
   }
 }
 
@@ -893,7 +492,7 @@
     height: 2rem;
   }
   
-  .gt-roaming-ghost-medium {
+  .gt-roaming-ghost {
     width: 2.25rem;
     height: 2.5rem;
   }
@@ -926,7 +525,7 @@
 
 @media (max-width: 480px) {
   .gt-roaming-ghost {
-    opacity: 0.6; /* More transparent on small screens */
+    opacity: 0.6;
   }
   
   .gt-roaming-ghost-small {
@@ -934,7 +533,7 @@
     height: 1.7rem;
   }
   
-  .gt-roaming-ghost-medium {
+  .gt-roaming-ghost {
     width: 1.75rem;
     height: 2rem;
   }
@@ -956,18 +555,8 @@
     top: -1rem;
   }
   
-  /* Simplify animations on small screens for performance */
   .gt-roaming-ghost-body {
     animation-duration: 6s;
-  }
-}
-
-/* Improved hover behavior across devices */
-@media (hover: hover) {
-  .gt-roaming-ghost:hover {
-    opacity: 1;
-    transform: scale(1.1) scaleX(1);
-    z-index: 60;
   }
 }
 
@@ -980,16 +569,5 @@
   .gt-roaming-ghost:active {
     transform: scale(1.2);
     opacity: 1;
-  }
-}
-
-/* ...existing animation keyframes and other styles remain unchanged... */
-
-/* Fix for Safari mobile compatibility */
-@supports (-webkit-touch-callout: none) {
-  .gt-roaming-ghost {
-    /* Improve touch target size for Safari */
-    min-width: 44px;
-    min-height: 44px;
   }
 }

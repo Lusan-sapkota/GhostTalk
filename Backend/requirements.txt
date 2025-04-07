@@ -4,4 +4,4 @@ appwrite
 requests
 python-dotenv
 werkzeug
-jwt
+pyjwt

@@ -29,41 +29,36 @@ import {
   logoGithub
 } from 'ionicons/icons';
 import './Home.css';
-import { useState, useEffect } from 'react';
-import { themeService } from '../services/ThemeService';
+import { useState, useEffect, useRef } from 'react';
 import HeaderComponent from '../components/HeaderComponent';
-// import RoamingGhost from '../components/RoamingGhost';
+import RoamingGhost from '../components/RoamingGhost';
 
 const Home: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const [searchText, setSearchText] = useState('');
-
-  // Update dark mode state when theme changes
-  useEffect(() => {
-    const cleanup = themeService.onThemeChange((isDark) => {
-      setDarkMode(isDark);
-    });
-    
-    return cleanup;
-  }, []);
+  const [themeChanging, setThemeChanging] = useState(false);
+  
+  // Add this ref to get direct access to the content element
+  const contentRef = useRef<HTMLIonContentElement>(null);
 
   const handleSearchChange = (value: string) => {
     setSearchText(value);
-    // Implement search functionality here
     console.log("Searching for:", value);
   };
 
   return (
-    <IonPage className="ghost-appear">
+    <IonPage className={`ghost-appear ${themeChanging ? 'theme-changing' : ''}`}>
       <HeaderComponent 
         title="GhostTalk" 
         onSearchChange={handleSearchChange} 
         searchPlaceholder="Search ghostly things..."
       />
       
-      <IonContent fullscreen id="home-content">
-        {/* Add the roaming ghost with proper containment */}
-        {/* <RoamingGhost 
+      <IonContent fullscreen id="home-content" ref={contentRef}>
+        {/* Ghost Trail Container - required for trails to work */}
+        <div className="gt-ghost-trail"></div>
+        
+        {/* The roaming ghost with correct configuration */}
+        <RoamingGhost 
           pageId="home" 
           behavior="roam"
           mood="happy"
@@ -71,9 +66,8 @@ const Home: React.FC = () => {
           size="medium"
           sparkleEffect={true}
           containerId="home-content"
-          disableInteraction={false} 
-          zIndex={30}
-        /> */}
+          zIndex={999}
+        />
         
         {/* Hero Section with ghost animation */}
         <div className="hero-section ghost-appear">

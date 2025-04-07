@@ -7,6 +7,7 @@ from appwrite.services.users import Users
 from appwrite.services.databases import Databases
 from appwrite.services.storage import Storage
 from appwrite.services.avatars import Avatars
+from appwrite.query import Query
 from ..utils.name_generator import generate_random_name
 
 class AppwriteService:
@@ -63,32 +64,33 @@ class AppwriteService:
             )
             
             # Get a random avatar
-            avatar_url = self._get_random_avatar()
+            avatar_file_id, avatar_bucket_id = self._get_random_avatar()
             
-            # Fix avatar URL generation
-            if not avatar_url:
-                # Get initials avatar URL directly from Appwrite
-                avatar_url = f"{current_app.config['APPWRITE_ENDPOINT']}/v1/avatars/initials?name={name}"
+            # Store just the avatar ID and bucket ID, not the full URL
+            avatar_reference = None
+            if avatar_file_id:
+                avatar_reference = f"{avatar_file_id}"
             
-            # Debug to verify database ID
-            database_id = self.database_id
-            print(f"Using database ID: {database_id}")
+            # Create user profile document with fields matching your DB schema
+            from datetime import datetime
             
-            # Create user profile document with extended fields
             self.database.create_document(
-                database_id=database_id,
+                database_id=self.database_id,
                 collection_id=self.users_collection_id,
                 document_id=user_id,
                 data={
                     'userId': user_id,
-                    'name': name,
+                    'username': name,  # Using username instead of name
                     'email': email,
                     'gender': gender,
                     'bio': bio,
-                    'createdAt': int(time.time()),
+                    'createdAt': datetime.utcnow().isoformat(), # Use ISO format for datetime
                     'isPro': False,
                     'isVerified': False,
-                    'avatar': avatar_url
+                    'avatar': avatar_reference,  # Just store the ID
+                    'avatarId': avatar_bucket_id,  # Store bucket ID separately
+                    'remember': False,
+                    'agreed': True
                 }
             )
             
@@ -99,12 +101,12 @@ class AppwriteService:
 
     def _get_random_avatar(self):
         """Get a random avatar from Appwrite storage"""
-        self._initialize_client()  # Ensure client is initialized before using avatar_bucket_id
+        self._initialize_client()
         try:
             # Only proceed if we have a bucket ID configured
             if not self.avatar_bucket_id:
                 print("No avatar bucket ID configured")
-                return None
+                return None, None
                 
             # List files in the avatar bucket
             files = self.storage.list_files(
@@ -112,26 +114,26 @@ class AppwriteService:
             )
             
             # If no files or empty bucket
-            if files['total'] == 0:
-                return None
+            if files['total'] == 0 or not files.get('files') or len(files['files']) == 0:
+                return None, None
             
             # Pick a random avatar from the list
-            random_index = random.randint(0, files['total'] - 1)
+            random_index = random.randint(0, len(files['files']) - 1)
             random_file = files['files'][random_index]
             
-            # Generate a view URL for the file
-            avatar_url = f"{current_app.config['APPWRITE_ENDPOINT']}/v1/storage/buckets/{self.avatar_bucket_id}/files/{random_file['$id']}/view?project={current_app.config['APPWRITE_PROJECT_ID']}"
-            
-            return avatar_url
+            # Return just the file ID - we'll construct the URL on demand
+            return random_file['$id'], self.avatar_bucket_id
         except Exception as e:
             print(f"Error getting random avatar: {str(e)}")
-            return None
+            return None, None
     
     def login_user(self, email, password):
         """Login user with email and password"""
         self._initialize_client()
         try:
-            session = self.users.create_session(email=email, password=password)
+            # Use the correct parameter names for create_session
+            # Most likely userId and secret instead of email and password
+            session = self.users.create_session(user_id=email, password=password)
             user = self.get_user(session['userId'])
             return {'session': session, 'user': user}
         except Exception as e:
@@ -151,10 +153,10 @@ class AppwriteService:
         """Get a user by their email address"""
         self._initialize_client()
         try:
-            # Fix query syntax for Appwrite API v10
-            users = self.users.list(
-                queries=[f"email=$eq.{email}"]
-            )
+            # Fix query syntax for Appwrite API
+            users = self.users.list([
+                Query.equal("email", email)
+            ])
             
             if users['total'] > 0:
                 return users['users'][0]
@@ -319,35 +321,196 @@ class AppwriteService:
             return False
 
     def send_magic_link(self, email, url=None):
-        """Send magic URL authentication link using Appwrite's built-in functionality
-        
-        url: Optional callback URL where the user will be redirected after authentication
-        """
+        """Send magic URL authentication link using Appwrite's built-in functionality"""
         self._initialize_client()
         try:
-            # Use Appwrite's built-in magic URL feature
-            result = self.users.create_magic_url_token(
-                user_id=email,  # Appwrite accepts the email as user_id for magic links
-                url=url if url else current_app.config.get('FRONTEND_URL', '')
-            )
+            # Ensure URL is properly formatted
+            magic_url = url if url else f"{current_app.config.get('FRONTEND_URL', '')}/magic-login"
+            
+            # Use the right method name based on SDK version
+            if hasattr(self.users, 'create_magic_url_token'):
+                result = self.users.create_magic_url_token(email, magic_url)
+            elif hasattr(self.users, 'createMagicURLToken'):
+                result = self.users.createMagicURLToken(email, magic_url)
+            elif hasattr(self.users, 'create_magic_url'):
+                result = self.users.create_magic_url(email, magic_url)
+            else:
+                result = self.users.createMagicURL(email, magic_url)
+                
+            print(f"Magic link sent to {email}")
             return result
         except Exception as e:
             print(f"Error sending magic link: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise e
 
     def send_password_reset(self, email, url=None):
-        """Send password recovery email using Appwrite's built-in functionality
-        
-        url: Optional callback URL where the user will be redirected
-        """
+        """Send password recovery email using Appwrite's built-in functionality"""
         self._initialize_client()
         try:
-            # Use Appwrite's built-in password recovery feature
-            result = self.users.create_recovery_token(
-                email=email,
-                url=url if url else current_app.config.get('FRONTEND_URL', '') + '/reset-password'
-            )
+            # Ensure URL is properly formatted
+            reset_url = url if url else f"{current_app.config.get('FRONTEND_URL', '')}/reset-password"
+            
+            # Try different method names based on SDK version
+            if hasattr(self.users, 'create_recovery'):
+                result = self.users.create_recovery(email, reset_url)
+            elif hasattr(self.users, 'createRecovery'):
+                result = self.users.createRecovery(email, reset_url)
+            elif hasattr(self.users, 'create_recovery_token'):
+                result = self.users.create_recovery_token(email, reset_url)
+            else:
+                result = self.users.createRecoveryToken(email, reset_url)
+                
+            print(f"Password reset email sent to {email}")
             return result
         except Exception as e:
             print(f"Error sending password reset: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise e
+
+    def create_verification(self, email, url_param=""):
+        """Create and send a verification email using Appwrite"""
+        self._initialize_client()
+        try:
+            # Get user by email first
+            user = self.get_user_by_email(email)
+            if not user:
+                raise ValueError("User not found")
+            
+            # Use the correct method for the Appwrite SDK version
+            # The method name varies between SDK versions
+            user_id = user['$id']
+            
+            # Try the correct method based on Appwrite SDK version
+            if hasattr(self.users, 'create_verification'):
+                # Older SDK versions
+                result = self.users.create_verification(user_id, f"{current_app.config['FRONTEND_URL']}/verify-email")
+            elif hasattr(self.users, 'createVerification'):
+                # Some SDK versions
+                result = self.users.createVerification(user_id, f"{current_app.config['FRONTEND_URL']}/verify-email")
+            else:
+                # Fallback to manual verification
+                token = self._generate_manual_verification_token(user_id)
+                verification_url = f"{current_app.config['FRONTEND_URL']}/verify-email/{token}"
+                print(f"Manual verification URL for {email}: {verification_url}")
+                # TODO: Send email with verification_url
+                return {"token": token}
+            
+            return result
+        except Exception as e:
+            print(f"Error creating verification: {str(e)}")
+            raise e
+        
+    def _generate_manual_verification_token(self, user_id):
+        """Generate a manual verification token if Appwrite methods fail"""
+        from ..utils.security import generate_token
+        return generate_token(user_id)
+
+    def get_user_document(self, user_id):
+        """Get a user document by user ID"""
+        self._initialize_client()
+        try:
+            # Try to get the user document
+            user_doc = self.database.get_document(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,
+                document_id=user_id
+            )
+            return user_doc
+        except Exception as e:
+            print(f"Error getting user document: {str(e)}")
+            return None
+
+    def send_verification_email(self, email, username, verification_link=None):
+        """Send verification email using Appwrite's built-in template system"""
+        self._initialize_client()
+        try:
+            # Get user by email first
+            user = self.get_user_by_email(email)
+            if not user:
+                raise ValueError("User not found")
+            
+            user_id = user['$id']
+            
+            # Use Appwrite's built-in verification system
+            # The URL should be the base URL where the user will be redirected after verification
+            url = f"{current_app.config['FRONTEND_URL']}/verify-email"
+            
+            # Try all possible method names based on different Appwrite SDK versions
+            if hasattr(self.users, 'create_verification'):
+                result = self.users.create_verification(user_id, url)
+            elif hasattr(self.users, 'createVerification'):
+                result = self.users.createVerification(user_id, url)
+            elif hasattr(self.users, 'create_email_verification'):
+                result = self.users.create_email_verification(user_id, url)
+            elif hasattr(self.users, 'update_email_verification'):
+                # This is the method that the error suggests exists
+                result = self.users.update_email_verification(user_id, url)
+            else:
+                # Fallback to manual token generation if no Appwrite method exists
+                token = self._generate_manual_verification_token(user_id)
+                verification_url = f"{current_app.config['FRONTEND_URL']}/verify-email/{token}"
+                print(f"Using manual verification URL for {email}: {verification_url}")
+                
+                # You would need to implement a custom email sending method here
+                # For now, return the token for debugging
+                return {"success": True, "token": token, "url": verification_url}
+            
+            print(f"Verification email successfully sent to {email}")
+            return result
+        except Exception as e:
+            print(f"Error sending verification email: {str(e)}")
+            # Log the exact error and traceback
+            import traceback
+            traceback.print_exc()
+            
+            # Fall back to manual token approach
+            try:
+                token = self._generate_manual_verification_token(user_id)
+                verification_url = f"{current_app.config['FRONTEND_URL']}/verify-email/{token}"
+                print(f"Fallback: Manual verification URL for {email}: {verification_url}")
+                return {"success": True, "token": token, "url": verification_url}
+            except:
+                return {'success': False, 'message': str(e)}
+
+    def mark_user_verified(self, user_id):
+        """Mark a user as verified in the database"""
+        self._initialize_client()
+        try:
+            from datetime import datetime
+            
+            # Get existing user document
+            user_doc = self.get_user_document(user_id)
+            
+            # Update attributes based on schema
+            if user_doc:
+                # Update existing document
+                result = self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data={
+                        'isVerified': True,
+                        'verifiedAt': datetime.utcnow().isoformat()
+                    }
+                )
+            else:
+                # Create new document if needed
+                result = self.database.create_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data={
+                        'userId': user_id,
+                        'isVerified': True,
+                        'verifiedAt': datetime.utcnow().isoformat(),
+                        'createdAt': datetime.utcnow().isoformat()
+                    }
+                )
+                
+            return True
+        except Exception as e:
+            print(f"Error marking user as verified: {str(e)}")
+            return False

@@ -48,12 +48,14 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation for both methods
     if (!email) {
       setToastMessage('Please enter your email address');
       setShowToast(true);
       return;
     }
     
+    // Only validate password for password login method
     if (loginMethod === 'password' && !password) {
       setToastMessage('Please enter your password');
       setShowToast(true);
@@ -64,14 +66,23 @@ const Login: React.FC = () => {
       setIsLoading(true);
       
       if (loginMethod === 'magic') {
-        // Send magic link email
+        // Magic link logic
         const response = await apiService.sendMagicLink(email);
         
         if (response.success) {
-          setToastMessage('Magic link sent to your email!');
+          setToastMessage('Magic link sent to your email');
           setShowToast(true);
-          // Show a different screen to inform user to check their email
-          history.push('/magic-link-sent', { email });
+          
+          // Check if the user needs verification
+          if (response.needsVerification) {
+            // Handle unverified users similarly to password login
+            setTimeout(() => {
+              history.push('/verification-needed', { email });
+            }, 2000);
+          } else {
+            // Redirect to magic link sent confirmation page
+            history.push('/magic-link-sent', { email });
+          }
         } else {
           setToastMessage(response.message || 'Failed to send magic link');
           setShowToast(true);
@@ -83,18 +94,23 @@ const Login: React.FC = () => {
         if (response.success) {
           setToastMessage('Login successful!');
           setShowToast(true);
+          history.replace(from);
+        } else if (response.needsVerification) {
+          // Handle unverified users
+          setToastMessage('Please verify your email first');
+          setShowToast(true);
           
-          // Redirect after a short delay to show success message
+          // Option to redirect to verification resend screen
           setTimeout(() => {
-            history.replace(from);
-          }, 1000);
+            history.push('/verification-needed', { email: response.email });
+          }, 2000);
         } else {
           setToastMessage(response.message || 'Login failed');
           setShowToast(true);
         }
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error details:', error);
       setToastMessage('An error occurred during login');
       setShowToast(true);
     } finally {
