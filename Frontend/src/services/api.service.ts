@@ -83,6 +83,30 @@ class ApiService {
   async getCurrentUserProfile() {
     return this.makeRequest('/auth/me', 'GET');
   }
+
+  async sendMagicLink(email: string) {
+    return this.makeRequest('/auth/magic-link', 'POST', { email });
+  }
+
+  async forgotPassword(email: string) {
+    return this.makeRequest('/auth/forgot-password', 'POST', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.makeRequest('/auth/reset-password', 'POST', { token, password: newPassword });
+  }
+
+  async verifyMagicLink(token: string) {
+    const response = await this.makeRequest('/auth/verify-magic-link', 'POST', { token });
+    if (response.success && response.token) {
+      this.setToken(response.token);
+    }
+    return response;
+  }
+
+  async sendSessionAlert(email: string, sessionData: any) {
+    return this.makeRequest('/auth/session-alert', 'POST', { email, sessionData });
+  }
 }
 
 export const apiService = new ApiService();

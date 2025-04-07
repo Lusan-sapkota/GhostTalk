@@ -45,13 +45,7 @@ class AuthService:
             # Try to login with Appwrite
             result = self.appwrite_service.login_user(email, password)
             
-            # Check if user is verified
-            # If you're tracking verification in your own database:
-            # is_verified = self.appwrite_service.check_user_verified(result['user']['$id'])
-            # if not is_verified:
-            #    return {'success': False, 'message': 'Please verify your email before logging in'}, 401
-            
-            # Generate JWT token
+            # Generate our own JWT token instead of using Appwrite's
             token = generate_token(result['user']['$id'])
             
             return {
@@ -67,7 +61,7 @@ class AuthService:
                 'token': token
             }, 200
         except Exception as e:
-            return {'success': False, 'message': 'Invalid email or password'}, 401
+            return {'success': False, 'message': str(e)}, 401
             
     def verify_email(self, token):
         """Verify a user's email with the provided token"""
@@ -127,3 +121,149 @@ class AuthService:
         
         # TODO: Implement sending email with this verification URL
         # You'll need to configure an email service like SendGrid, Mailgun, etc.
+
+    def send_password_reset(self, email):
+        """Send password reset email with JWT token"""
+        try:
+            # Get user
+            user = self.appwrite_service.get_user_by_email(email)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+                
+            # Generate token with 10-minute expiry
+            token = generate_token(user['$id'])
+            
+            # Construct reset URL with the JWT token
+            reset_url = f"{current_app.config['FRONTEND_URL']}/reset-password/{token}"
+            
+            # Send verification email with this reset URL
+            print(f"Password reset link for {email}: {reset_url}")
+            print(f"This link will expire in 10 minutes.")
+            
+            # TODO: Implement sending email with this reset URL
+            # You'll need to configure an email service like SendGrid, Mailgun, etc.
+            
+            return {
+                'success': True,
+                'message': 'Password reset email sent'
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def reset_password(self, token, new_password):
+        """Reset user password with JWT token"""
+        try:
+            # Verify token
+            try:
+                payload = jwt.decode(
+                    token, 
+                    current_app.config['JWT_SECRET_KEY'],
+                    algorithms=['HS256']
+                )
+                user_id = payload['sub']
+            except jwt.ExpiredSignatureError:
+                return {'success': False, 'message': 'Token expired'}, 401
+            except jwt.InvalidTokenError:
+                return {'success': False, 'message': 'Invalid token'}, 401
+            
+            # Update password in Appwrite
+            self.appwrite_service.update_user_password(user_id, new_password)
+            
+            return {
+                'success': True,
+                'message': 'Password reset successfully'
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def send_magic_link(self, email):
+        """Send magic link for passwordless login using Appwrite's built-in system"""
+        try:
+            # Get user
+            user = self.appwrite_service.get_user_by_email(email)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+                
+            # Use Appwrite's native magic URL functionality
+            magic_link_url = current_app.config.get('FRONTEND_URL', '') + '/magic-login'
+            self.appwrite_service.send_magic_link(email, magic_link_url)
+            
+            return {
+                'success': True,
+                'message': 'Magic link email sent'
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def verify_magic_link(self, token):
+        """Verify magic link token and log in the user"""
+        try:
+            # Verify token
+            try:
+                payload = jwt.decode(
+                    token, 
+                    current_app.config['JWT_SECRET_KEY'],
+                    algorithms=['HS256']
+                )
+                user_id = payload['sub']
+            except jwt.ExpiredSignatureError:
+                return {'success': False, 'message': 'Magic link expired'}, 401
+            except jwt.InvalidTokenError:
+                return {'success': False, 'message': 'Invalid magic link'}, 401
+            
+            # Get user
+            user = self.appwrite_service.get_user(user_id)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+            
+            # Generate JWT token for authentication
+            auth_token = generate_token(user_id)
+            
+            return {
+                'success': True,
+                'message': 'Magic link login successful',
+                'user': {
+                    'id': user['$id'],
+                    'email': user['email'],
+                    'name': user['name'],
+                    'isPro': False,  # You'll want to retrieve this from your database
+                    'isVerified': True  # Auto-verified if magic link is used
+                },
+                'token': auth_token
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def send_session_alert(self, email, session_data):
+        """Send an alert about a new login session using Appwrite's native session alerts"""
+        try:
+            # Get user
+            user = self.appwrite_service.get_user_by_email(email)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+                
+            # Appwrite handles session notifications automatically when enabled
+            # We don't need to trigger them manually
+            
+            return {'success': True, 'message': 'Session alert system active'}, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+    def forgot_password(self, email):
+        """Send password reset email using Appwrite's built-in system"""
+        try:
+            # Get user
+            user = self.appwrite_service.get_user_by_email(email)
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
+                
+            # Use Appwrite's native password recovery functionality
+            reset_url = current_app.config.get('FRONTEND_URL', '') + '/reset-password'
+            self.appwrite_service.send_password_reset(email, reset_url)
+            
+            return {
+                'success': True,
+                'message': 'Password reset email sent'
+            }, 200
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500

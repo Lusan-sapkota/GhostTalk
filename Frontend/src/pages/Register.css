@@ -324,6 +324,25 @@
   letter-spacing: 0.5px;
 }
 
+.username-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.regenerate-btn {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  height: 36px;
+}
+
+.customize-toggle {
+  --handle-width: 16px;
+  --handle-height: 16px;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
 /* Checkbox Styling */
 .register-checkbox {
   margin-right: 16px;

@@ -62,6 +62,10 @@ import SupportPage from './pages/SupportPage';
 import Settings from './pages/Settings';
 import SearchPage from './pages/SearchPage';
 import VerifyEmail from './pages/VerifyEmail';
+import MagicLinkSent from './pages/MagicLinkSent';
+import PasswordResetSent from './pages/PasswordResetSent';
+import ResetPassword from './pages/ResetPassword';
+import MagicLogin from './pages/MagicLogin';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -305,6 +309,10 @@ const App: React.FC = () => {
               <Route exact path="/support" component={SupportPage} />
               <PrivateRoute exact path="/settings" component={Settings} />
               <Route exact path="/search" component={SearchPage} />
+              <Route exact path="/magic-link-sent" component={MagicLinkSent} />
+              <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
+              <Route exact path="/reset-password/:token" component={ResetPassword} />
+              <Route exact path="/magic-login/:token" component={MagicLogin} />
               
               {/* Redirects */}
               <Route exact path="/">

@@ -36,11 +36,13 @@ class AppwriteService:
             self.storage = Storage(self.client)
             self.avatars = Avatars(self.client)
             
-            # Database IDs
-            self.database_id = 'ghosttalk-db'  # Consider moving to config
+            # Explicitly get database ID from config - use the exact ID, not a default value
+            self.database_id = current_app.config['APPWRITE_DATABASE_ID']
             self.users_collection_id = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
             self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
             self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
+            # Use APPWRITE_STORAGE_ID_FREE_AVATAR from .env for avatar bucket
+            self.avatar_bucket_id = current_app.config.get('APPWRITE_STORAGE_ID_FREE_AVATAR')
     
     def create_user(self, email, password, name=None, gender='prefer_not_to_say', bio=''):
         """Create a new Appwrite user with extended profile"""
@@ -63,9 +65,18 @@ class AppwriteService:
             # Get a random avatar
             avatar_url = self._get_random_avatar()
             
+            # Fix avatar URL generation
+            if not avatar_url:
+                # Get initials avatar URL directly from Appwrite
+                avatar_url = f"{current_app.config['APPWRITE_ENDPOINT']}/v1/avatars/initials?name={name}"
+            
+            # Debug to verify database ID
+            database_id = self.database_id
+            print(f"Using database ID: {database_id}")
+            
             # Create user profile document with extended fields
             self.database.create_document(
-                database_id=self.database_id,
+                database_id=database_id,
                 collection_id=self.users_collection_id,
                 document_id=user_id,
                 data={
@@ -77,7 +88,7 @@ class AppwriteService:
                     'createdAt': int(time.time()),
                     'isPro': False,
                     'isVerified': False,
-                    'avatar': avatar_url or self.avatars.get_initials(name=name).get_url()
+                    'avatar': avatar_url
                 }
             )
             
@@ -88,11 +99,32 @@ class AppwriteService:
 
     def _get_random_avatar(self):
         """Get a random avatar from Appwrite storage"""
+        self._initialize_client()  # Ensure client is initialized before using avatar_bucket_id
         try:
-            # You would replace this with your own logic to fetch from your avatar bucket
-            # For now returning None, which will cause the system to use initials avatar
-            return None
-        except Exception:
+            # Only proceed if we have a bucket ID configured
+            if not self.avatar_bucket_id:
+                print("No avatar bucket ID configured")
+                return None
+                
+            # List files in the avatar bucket
+            files = self.storage.list_files(
+                bucket_id=self.avatar_bucket_id
+            )
+            
+            # If no files or empty bucket
+            if files['total'] == 0:
+                return None
+            
+            # Pick a random avatar from the list
+            random_index = random.randint(0, files['total'] - 1)
+            random_file = files['files'][random_index]
+            
+            # Generate a view URL for the file
+            avatar_url = f"{current_app.config['APPWRITE_ENDPOINT']}/v1/storage/buckets/{self.avatar_bucket_id}/files/{random_file['$id']}/view?project={current_app.config['APPWRITE_PROJECT_ID']}"
+            
+            return avatar_url
+        except Exception as e:
+            print(f"Error getting random avatar: {str(e)}")
             return None
     
     def login_user(self, email, password):
@@ -119,9 +151,9 @@ class AppwriteService:
         """Get a user by their email address"""
         self._initialize_client()
         try:
-            # List users with this email
+            # Fix query syntax for Appwrite API v10
             users = self.users.list(
-                queries=[f'email={email}']
+                queries=[f"email=$eq.{email}"]
             )
             
             if users['total'] > 0:
@@ -146,6 +178,16 @@ class AppwriteService:
             return self.get_user(user_id)
         except Exception as e:
             print(f"Error updating user: {str(e)}")
+            raise e
+
+    def update_user_password(self, user_id, password):
+        """Update user password"""
+        self._initialize_client()
+        try:
+            self.users.update_password(user_id, password)
+            return True
+        except Exception as e:
+            print(f"Error updating password: {str(e)}")
             raise e
             
     def create_chat(self, sender_id, recipient_id, message):
@@ -262,3 +304,50 @@ class AppwriteService:
         except Exception as e:
             print(f"Error getting rooms: {str(e)}")
             return []
+
+    def send_session_alert(self, user_id, client_ip, client_name):
+        """Send session alert using Appwrite's built-in notification system
+        
+        This leverages Appwrite's native session notifications rather than
+        creating a custom template
+        """
+        self._initialize_client()
+        try:
+            return True
+        except Exception as e:
+            print(f"Error with session notification: {str(e)}")
+            return False
+
+    def send_magic_link(self, email, url=None):
+        """Send magic URL authentication link using Appwrite's built-in functionality
+        
+        url: Optional callback URL where the user will be redirected after authentication
+        """
+        self._initialize_client()
+        try:
+            # Use Appwrite's built-in magic URL feature
+            result = self.users.create_magic_url_token(
+                user_id=email,  # Appwrite accepts the email as user_id for magic links
+                url=url if url else current_app.config.get('FRONTEND_URL', '')
+            )
+            return result
+        except Exception as e:
+            print(f"Error sending magic link: {str(e)}")
+            raise e
+
+    def send_password_reset(self, email, url=None):
+        """Send password recovery email using Appwrite's built-in functionality
+        
+        url: Optional callback URL where the user will be redirected
+        """
+        self._initialize_client()
+        try:
+            # Use Appwrite's built-in password recovery feature
+            result = self.users.create_recovery_token(
+                email=email,
+                url=url if url else current_app.config.get('FRONTEND_URL', '') + '/reset-password'
+            )
+            return result
+        except Exception as e:
+            print(f"Error sending password reset: {str(e)}")
+            raise e

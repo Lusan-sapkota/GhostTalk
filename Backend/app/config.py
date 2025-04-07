@@ -17,6 +17,9 @@ class Config:
     APPWRITE_ENDPOINT = os.environ.get('APPWRITE_ENDPOINT')
     APPWRITE_PROJECT_ID = os.environ.get('APPWRITE_PROJECT_ID')
     APPWRITE_API_KEY = os.environ.get('APPWRITE_API_KEY')
+    APPWRITE_DATABASE_ID = os.environ.get('APPWRITE_DATABASE_ID')
+    APPWRITE_STORAGE_ID_FREE_AVATAR = os.environ.get('APPWRITE_AVATAR_BUCKET_ID', 
+                                                     os.environ.get('APPWRITE_STORAGE_ID_FREE_AVATAR'))
     
     # Collection IDs
     APPWRITE_COLLECTION_ID_AUTH = os.environ.get('APPWRITE_COLLECTION_ID_AUTH')

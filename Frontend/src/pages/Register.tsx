@@ -17,9 +17,10 @@ import {
   IonTextarea,
   IonLoading,
   IonToggle,
-  IonList
+  IonList,
+  IonSpinner
 } from '@ionic/react';
-import { personAdd, eye, eyeOff, checkmarkCircle, closeCircle, alertCircle } from 'ionicons/icons';
+import { personAdd, eye, eyeOff, checkmarkCircle, closeCircle, alertCircle, refreshCircleOutline } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import './Register.css';
@@ -216,6 +217,33 @@ const Register: React.FC = () => {
       <IonCardContent>
         <form onSubmit={handleRegister}>
           <IonItem className="register-form-item staggered-item">
+            <IonLabel className="register-form-label">Username*</IonLabel>
+            <IonInput 
+              className="register-input"
+              type="text" 
+              value={generatedUsername} 
+              disabled={true}  // Always disabled - users can't edit
+              placeholder={generatingUsername ? "Generating..." : ""}
+              required
+            />
+            <div slot="end">
+              <IonButton 
+                fill="clear"
+                onClick={generateUsername}
+                disabled={generatingUsername}
+                className="refresh-username-btn"
+              >
+                <span>Refresh Username</span>
+                <IonIcon slot="icon-only" icon={refreshCircleOutline} />
+                {generatingUsername ? 
+                  <IonSpinner name="dots" className="refresh-spinner" /> : 
+                  <IonIcon slot="icon-only" icon={refreshCircleOutline} />
+                }
+              </IonButton>
+            </div>
+          </IonItem>
+
+          <IonItem className="register-form-item staggered-item">
             <IonLabel className="register-form-label">Email*</IonLabel>
             <IonInput 
               className="register-input"
@@ -225,6 +253,8 @@ const Register: React.FC = () => {
               required
             />
           </IonItem>
+
+
           
           <IonItem className="register-form-item staggered-item password-item">
             <IonLabel className="register-form-label">Password*</IonLabel>

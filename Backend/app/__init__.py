@@ -1,6 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
 from .config import Config
+
+load_dotenv()  # Make sure this is called before creating the Flask app
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -8,6 +12,10 @@ def create_app(config_class=Config):
     
     # Enable CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+    
+    # Debug output to verify configuration loading
+    print(f"Loaded database ID: {app.config.get('APPWRITE_DATABASE_ID')}")
+    print(f"Loaded avatar bucket ID: {app.config.get('APPWRITE_STORAGE_ID_FREE_AVATAR')}")
     
     with app.app_context():
         # Register blueprints 

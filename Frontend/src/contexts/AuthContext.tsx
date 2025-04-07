@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string, remember?: boolean) => Promise<any>;
   register: (email: string, password: string, profileData?: any) => Promise<any>;
   logout: () => void;
+  setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>; // Add this line
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false }),
   register: async () => ({ success: false }),
   logout: async () => {},
+  setCurrentUser: () => {}, // Add this line with default implementation
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -88,6 +90,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           sessionStorage.setItem('authToken', response.token);
         }
+        
+        // Send session notification
+        if (response.user.id) {
+          await apiService.sendSessionAlert(email, {
+            deviceInfo: navigator.userAgent,
+            time: new Date().toISOString(),
+            location: 'Unknown' // Or use geolocation if available
+          });
+        }
       }
       setIsLoading(false);
       return response;
@@ -118,6 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         register,
         logout,
+        setCurrentUser, // Add this line
       }}
     >
       {children}
