@@ -1,20 +1,15 @@
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
-  IonButton,
-  IonIcon,
   IonCard,
   IonCardContent,
   IonItem,
   IonLabel,
   IonList,
   IonListHeader,
-  IonBadge
+  IonBadge,
+  IonIcon,
+  IonButton
 } from '@ionic/react';
 import { 
   informationCircle, 
@@ -24,38 +19,24 @@ import {
   bookmarks,
   mail,
   logoGithub,
-  logoTwitter,
-  ellipsisVertical
+  logoTwitter
 } from 'ionicons/icons';
-import { useState } from 'react';
 import './About.css';
-import { themeService } from '../services/ThemeService';
+import BackHeaderComponent from '../components/BackHeaderComponent';
+// import RoamingGhost from '../components/RoamingGhost';
 
 const About: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
-
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
-
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>About GhostTalk</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleToggleTheme}>
-              <IonIcon slot="icon-only" icon={ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent fullscreen>
+    <IonPage className="ghost-appear">
+      <BackHeaderComponent title="About GhostTalk" />
+      
+      <IonContent fullscreen id="about-content">
+        {/* <RoamingGhost 
+          pageId="about" 
+          containerId="about-content"
+          zIndex={500}
+        /> */}
+        
         <div className="about-content">
           <div className="app-logo">
             <img src="assets/icon/icon.png" alt="GhostTalk Logo" />
@@ -63,7 +44,7 @@ const About: React.FC = () => {
             <IonBadge color="primary">v1.0.0</IonBadge>
           </div>
 
-          <IonCard>
+          <IonCard className="ghost-shadow">
             <IonCardContent>
               <p className="app-description">
                 GhostTalk is an anonymous chat platform that lets you connect with strangers around the world,
@@ -72,32 +53,32 @@ const About: React.FC = () => {
             </IonCardContent>
           </IonCard>
 
-          <IonCard>
+          <IonCard className="ghost-shadow">
             <IonListHeader>
               <IonIcon icon={informationCircle} color="primary" />
               <h2>Key Features</h2>
             </IonListHeader>
             <IonList lines="none">
-              <IonItem>
+              <IonItem className="staggered-item">
                 <IonIcon icon={globe} slot="start" color="primary" />
                 <IonLabel>Random Anonymous Chats</IonLabel>
               </IonItem>
-              <IonItem>
+              <IonItem className="staggered-item">
                 <IonIcon icon={bookmarks} slot="start" color="primary" />
                 <IonLabel>Topic-Based Chat Rooms</IonLabel>
               </IonItem>
-              <IonItem>
+              <IonItem className="staggered-item">
                 <IonIcon icon={lockClosed} slot="start" color="primary" />
                 <IonLabel>Secure Private Messaging</IonLabel>
               </IonItem>
-              <IonItem>
+              <IonItem className="staggered-item">
                 <IonIcon icon={heart} slot="start" color="primary" />
                 <IonLabel>Lightweight & Fast Experience</IonLabel>
               </IonItem>
             </IonList>
           </IonCard>
 
-          <IonCard>
+          <IonCard className="ghost-shadow">
             <IonListHeader>
               <h2>Privacy Policy</h2>
             </IonListHeader>
@@ -106,13 +87,13 @@ const About: React.FC = () => {
                 GhostTalk respects your privacy and is committed to protecting your personal data.
                 We collect minimal information necessary for the app to function.
               </p>
-              <IonButton expand="block" fill="outline" className="privacy-button">
+              <IonButton expand="block" fill="outline" routerLink="/privacy" className="privacy-button">
                 Read Full Privacy Policy
               </IonButton>
             </IonCardContent>
           </IonCard>
 
-          <IonCard>
+          <IonCard className="ghost-shadow">
             <IonListHeader>
               <h2>Contact Us</h2>
             </IonListHeader>
@@ -133,7 +114,7 @@ const About: React.FC = () => {
           </IonCard>
 
           <div className="app-footer">
-            <p>© 2023 GhostTalk App. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} GhostTalk App. All rights reserved.</p>
             <p>Made with <IonIcon icon={heart} color="danger" /> by the GhostTalk Team</p>
           </div>
         </div>

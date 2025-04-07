@@ -86,6 +86,22 @@
   transition: opacity 300ms;
 }
 
+/* Add these page transition effects */
+.ion-page {
+  animation: pageTransitionIn 0.3s ease-out forwards;
+}
+
+@keyframes pageTransitionIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Animation utility classes */
 .ghost-appear {
   animation: ghostAppear 0.5s ease-out forwards;
@@ -105,10 +121,6 @@
 
 .ghost-wiggle {
   animation: ghostWiggle 2s ease-in-out infinite;
-}
-
-.ghost-shadow {
-  animation: ghostShadow 3s ease-in-out infinite;
 }
 
 /* Staggered animations for lists */

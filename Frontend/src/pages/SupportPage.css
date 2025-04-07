@@ -1,0 +1,76 @@
+.support-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.support-container h2 {
+  text-align: center;
+  color: var(--ion-color-primary);
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+}
+
+.support-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.support-card {
+  flex: 1;
+  min-width: 250px;
+  text-align: center;
+  padding: 10px;
+}
+
+.support-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(var(--ion-color-primary-rgb), 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px;
+}
+
+.support-icon ion-icon {
+  color: var(--ion-color-primary);
+  font-size: 30px;
+}
+
+.support-card h3 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.support-card p {
+  color: var(--ion-color-medium);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.faq-title {
+  text-align: center;
+  color: var(--ion-color-primary);
+  margin: 30px 0;
+  font-size: 1.5rem;
+}
+
+.faq-section {
+  margin-bottom: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+@media (max-width: 576px) {
+  .support-options {
+    flex-direction: column;
+  }
+  
+  .support-card {
+    min-width: 100%;
+  }
+}

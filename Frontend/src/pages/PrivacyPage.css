@@ -1,0 +1,34 @@
+.privacy-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.privacy-card {
+  margin-bottom: 20px;
+}
+
+.last-updated {
+  color: var(--ion-color-medium);
+  font-style: italic;
+  margin-bottom: 30px;
+}
+
+.privacy-section {
+  margin-bottom: 30px;
+}
+
+.privacy-section h3 {
+  color: var(--ion-color-primary);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.privacy-section ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.privacy-section li {
+  margin-bottom: 8px;
+}

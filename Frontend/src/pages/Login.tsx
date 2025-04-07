@@ -1,16 +1,11 @@
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonItem,
   IonLabel,
   IonInput,
   IonButton,
   IonCheckbox,
-  IonButtons,
-  IonBackButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -19,16 +14,18 @@ import {
   IonToast,
   IonLoading
 } from '@ionic/react';
-import { logIn, person } from 'ionicons/icons';
+import { logIn, person, eye, eyeOff } from 'ionicons/icons';
 import { useState } from 'react';
 import './Login.css';
 import { useAuth } from '../contexts/AuthContext';
 import { useHistory, useLocation } from 'react-router-dom';
+import BackHeaderComponent from '../components/BackHeaderComponent';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +36,10 @@ const Login: React.FC = () => {
   
   // Get redirect URL if available
   const { from } = location.state as { from: { pathname: string } } || { from: { pathname: '/home' } };
+  
+  const handleTogglePassword = () => {
+    setShowPassword(!showPassword);
+  };
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +52,7 @@ const Login: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await login(email, password);
+      const response = await login(email, password, remember);
       
       if (response.success) {
         setToastMessage('Login successful!');
@@ -76,14 +77,8 @@ const Login: React.FC = () => {
 
   return (
     <IonPage className="ghost-appear">
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/home" />
-          </IonButtons>
-          <IonTitle>Login</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <BackHeaderComponent title="Login" />
+      
       <IonContent fullscreen>
         <div className="login-container">
           <IonCard className="login-card ghost-shadow">
@@ -96,9 +91,10 @@ const Login: React.FC = () => {
             
             <IonCardContent>
               <form onSubmit={handleLogin}>
-                <IonItem className="staggered-item">
-                  <IonLabel position="floating">Email address</IonLabel>
+                <IonItem className="login-form-item staggered-item">
+                  <IonLabel className="login-form-label">Email address</IonLabel>
                   <IonInput 
+                    className="login-input"
                     type="email" 
                     value={email} 
                     onIonChange={e => setEmail(e.detail.value!)} 
@@ -106,23 +102,33 @@ const Login: React.FC = () => {
                   />
                 </IonItem>
                 
-                <IonItem className="staggered-item">
-                  <IonLabel position="floating">Password</IonLabel>
+                <IonItem className="login-form-item staggered-item login-password-item">
+                  <IonLabel className="login-form-label">Password</IonLabel>
                   <IonInput 
-                    type="password" 
+                    className="login-input"
+                    type={showPassword ? "text" : "password"}
                     value={password} 
                     onIonChange={e => setPassword(e.detail.value!)} 
                     required
                   />
+                  <IonButton 
+                    fill="clear" 
+                    slot="end" 
+                    onClick={handleTogglePassword}
+                    className="login-password-toggle-btn"
+                  >
+                    <IonIcon slot="icon-only" icon={showPassword ? eye : eyeOff} />
+                  </IonButton>
                 </IonItem>
                 
-                <IonItem lines="none" className="remember-me staggered-item">
+                <div className="login-remember-item">
                   <IonCheckbox 
+                    className="login-checkbox"
                     checked={remember} 
                     onIonChange={e => setRemember(e.detail.checked)} 
                   />
-                  <IonLabel>Remember me</IonLabel>
-                </IonItem>
+                  <span>Remember me</span>
+                </div>
                 
                 <div className="login-buttons staggered-item">
                   <IonButton 

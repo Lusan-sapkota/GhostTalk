@@ -56,6 +56,12 @@ import About from './pages/About';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import SupportPage from './pages/SupportPage';
+import Settings from './pages/Settings';
+import SearchPage from './pages/SearchPage';
+import VerifyEmail from './pages/VerifyEmail';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -261,6 +267,22 @@ const App: React.FC = () => {
     document.body.classList.toggle('dark', darkMode);
   }, []);
 
+  const { isAuthenticated } = useAuth();
+
+  // Protected route component
+  const PrivateRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>; [x: string]: any }) => (
+    <Route 
+      {...rest} 
+      render={props => 
+        isAuthenticated ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to={{ pathname: '/login', state: { from: props.location } }} />
+        )
+      } 
+    />
+  );
+
   return (
     <AuthProvider>
       <IonApp>
@@ -272,24 +294,33 @@ const App: React.FC = () => {
               <Route exact path="/home" component={Home} />
               <Route exact path="/random-chat" component={RandomChat} />
               <Route exact path="/chat-room" component={ChatRoom} />
-              <Route exact path="/chat-individual" component={ChatIndividual} />
+              <PrivateRoute exact path="/chat-individual" component={ChatIndividual} />
               <Route exact path="/about" component={About} />
-              <Route exact path="/profile" component={Profile} />
+              <PrivateRoute exact path="/profile" component={Profile} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/register" component={Register} />
+              <Route exact path="/verify-email/:token" component={VerifyEmail} />
+              <Route exact path="/terms" component={TermsPage} />
+              <Route exact path="/privacy" component={PrivacyPage} />
+              <Route exact path="/support" component={SupportPage} />
+              <PrivateRoute exact path="/settings" component={Settings} />
+              <Route exact path="/search" component={SearchPage} />
+              
+              {/* Redirects */}
               <Route exact path="/">
                 <Redirect to="/home" />
               </Route>
             </IonRouterOutlet>
             
+            {isAuthenticated && (
             <IonTabBar slot="bottom" className="ghost-shadow">
               <IonTabButton tab="home" href="/home">
                 <IonIcon icon={homeOutline} />
                 <IonLabel>Home</IonLabel>
               </IonTabButton>
-              <IonTabButton tab="randomChat" href="/random-chat">
-                <IonIcon icon={compassOutline} />
-                <IonLabel>Random</IonLabel>
+              <IonTabButton tab="privatechat" href="/chat-individual">
+                <IonIcon icon={chatbubblesOutline} />
+                <IonLabel>Chat</IonLabel>
               </IonTabButton>
               <IonTabButton tab="chatRoom" href="/chat-room">
                 <IonIcon icon={peopleOutline} />
@@ -300,6 +331,7 @@ const App: React.FC = () => {
                 <IonLabel>Profile</IonLabel>
               </IonTabButton>
             </IonTabBar>
+            )}
           </IonTabs>
         </IonReactRouter>
       </IonApp>

@@ -1,25 +1,281 @@
 .login-container {
   max-width: 500px;
-  margin: 20px auto;
-  padding: 0 20px;
+  margin: 40px auto;
+  padding: 20px;
 }
 
 .login-icon-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  margin-bottom: 24px;
 }
 
 .login-icon-container ion-icon {
-  font-size: 64px;
+  font-size: 72px;
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  border-radius: 50%;
+  padding: 16px;
+  color: white;
+  box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.3);
 }
 
 ion-card-header {
   text-align: center;
 }
 
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
 .login-button {
   margin-top: 20px;
+}
+
+/* Enhanced Card Styling */
+.login-card {
+  margin: 0;
+  overflow: visible;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(var(--ion-color-light-rgb), 0.7);
+}
+
+.login-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.login-card-header {
+  text-align: center;
+  padding: 32px 16px 16px;
+}
+
+.login-card-title {
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  color: var(--ion-color-dark);
+}
+
+/* Form Element Base Styles - Vertical Layout */
+.login-form-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --highlight-height: 2px;
+  margin-bottom: 22px;
+  --min-height: 70px;
+  --background: transparent;
+  --highlight-color-focused: var(--ion-color-primary);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Force column layout by overriding Ionic defaults */
+.login-form-item::part(native) {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100%;
+}
+
+/* Vertical Label Styling */
+.login-form-label {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+  transform: none !important;
+  position: relative !important;
+}
+
+.login-form-item.item-has-focus .login-form-label {
+  color: var(--ion-color-primary);
+  font-weight: 600;
+  opacity: 1;
+  text-shadow: 0 0 0.5px rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+/* Elegant Input Styling */
+.login-input {
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --padding-start: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  --color: var(--ion-color-dark);
+  transition: all 0.25s ease;
+  --placeholder-opacity: 0.6;
+  --placeholder-font-weight: 400;
+  --placeholder-color: var(--ion-color-medium-shade);
+  border-radius: 8px;
+  --background: rgba(var(--ion-color-light-rgb), 0.5);
+  width: 100%;
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+}
+
+.login-input:hover::part(native) {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.03);
+}
+
+.login-form-item.item-has-focus .login-input::part(native) {
+  animation: login-gentle-highlight 0.5s forwards;
+}
+
+@keyframes login-gentle-highlight {
+  0% { background-color: rgba(var(--ion-color-primary-rgb), 0); }
+  50% { background-color: rgba(var(--ion-color-primary-rgb), 0.06); }
+  100% { background-color: rgba(var(--ion-color-primary-rgb), 0.03); }
+}
+
+/* Password Toggle Fixes */
+.login-password-item {
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.login-password-toggle-btn {
+  position: absolute !important;
+  right: 5px !important;
+  top: 45px !important;
+  transform: translateY(-50%) !important;
+  height: 40px !important;
+  width: 40px !important;
+  z-index: 2;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 50%;
+  margin: 0 !important;
+}
+
+.login-password-toggle-btn:hover {
+  opacity: 1;
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.login-password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95) !important;
+}
+
+.login-password-toggle-btn ion-icon {
+  font-size: 18px;
+  color: var(--ion-color-primary);
+  transition: all 0.2s ease;
+}
+
+/* Remember me Checkbox Styling */
+.login-checkbox {
+  margin-right: 16px;
+  --border-radius: 4px;
+  --size: 22px;
+  --border-width: 2px;
+  --border-color: var(--ion-color-medium);
+  --border-color-checked: var(--ion-color-primary);
+  --background-checked: var(--ion-color-primary);
+  --checkmark-color: white;
+  --checkmark-width: 3px;
+  --transition: transform 0.3s, opacity 0.2s;
+  opacity: 0.9;
+}
+
+.login-checkbox:hover {
+  --border-color: var(--ion-color-primary);
+  opacity: 1;
+}
+
+.login-checkbox.checkbox-checked {
+  --border-color: var(--ion-color-primary);
+  animation: login-checkbox-pop 0.3s forwards;
+}
+
+@keyframes login-checkbox-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Remember me styling */
+.login-remember-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  margin: 16px 0;
+}
+
+.login-remember-item span {
+  margin-left: 8px;
+}
+
+/* Button styling */
+.login-button {
+  --border-radius: 10px;
+  height: 52px;
+  font-weight: 600;
+  font-size: 16px;
+  --box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.3);
+  margin: 10px 0;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  width: 100%;
+}
+
+.login-buttons {
+  margin-top: 20px;
+}
+
+/* Authentication Links */
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.auth-links ion-button {
+  --color: var(--ion-color-primary);
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+  --ripple-color: rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.auth-links ion-button:hover {
+  --color: var(--ion-color-primary-shade);
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .login-container {
+    padding: 12px;
+    margin: 20px auto;
+  }
+  
+  .login-card {
+    border-radius: 12px;
+  }
+  
+  .login-card-title {
+    font-size: 24px;
+  }
+  
+  .auth-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 .register-link {

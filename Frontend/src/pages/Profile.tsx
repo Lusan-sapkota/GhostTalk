@@ -37,6 +37,7 @@ import {
 import { useState } from 'react';
 import './Profile.css';
 import { themeService } from '../services/ThemeService';
+import BackHeaderComponent from '../components/BackHeaderComponent';
 
 const Profile: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
@@ -63,27 +64,13 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Profile</IonTitle>
-          <IonButtons slot="end">
-            {isEditing ? (
-              <IonButton onClick={handleSaveProfile}>
-                Save
-              </IonButton>
-            ) : (
-              <IonButton onClick={() => setIsEditing(true)}>
-                Edit
-              </IonButton>
-            )}
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-
+    <IonPage className="ghost-appear">
+      <BackHeaderComponent 
+        title="Profile" 
+        showOptions={true}
+        onOptionsClick={() => setIsEditing(!isEditing)}
+      />
+      
       <IonContent fullscreen>
         <div className="profile-header">
           <div className="avatar-upload">
@@ -104,7 +91,7 @@ const Profile: React.FC = () => {
         </div>
 
         <div className="profile-content">
-          <IonCard>
+          <IonCard className="ghost-shadow">
             <IonCardHeader>
               <h3>
                 <IonIcon icon={person} color="primary" />
@@ -142,7 +129,7 @@ const Profile: React.FC = () => {
             </IonCardContent>
           </IonCard>
 
-          <IonList>
+          <IonList className="ghost-shadow">
             <IonItemDivider>Settings</IonItemDivider>
 
             <IonItem>
@@ -182,7 +169,7 @@ const Profile: React.FC = () => {
             </IonItem>
           </IonList>
 
-          <IonCard className="upgrade-card">
+          <IonCard className="upgrade-card ghost-shadow">
             <IonCardHeader>
               <h3>Upgrade to GhostTalk Pro</h3>
             </IonCardHeader>

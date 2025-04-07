@@ -42,8 +42,8 @@ class AppwriteService:
             self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
             self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
     
-    def create_user(self, email, password, name=None):
-        """Create a new Appwrite user"""
+    def create_user(self, email, password, name=None, gender='prefer_not_to_say', bio=''):
+        """Create a new Appwrite user with extended profile"""
         self._initialize_client()
         try:
             # Generate random name if not provided
@@ -60,7 +60,10 @@ class AppwriteService:
                 name=name
             )
             
-            # Create user profile document
+            # Get a random avatar
+            avatar_url = self._get_random_avatar()
+            
+            # Create user profile document with extended fields
             self.database.create_document(
                 database_id=self.database_id,
                 collection_id=self.users_collection_id,
@@ -69,8 +72,12 @@ class AppwriteService:
                     'userId': user_id,
                     'name': name,
                     'email': email,
+                    'gender': gender,
+                    'bio': bio,
                     'createdAt': int(time.time()),
-                    'avatar': self.avatars.get_initials(name=name).get_url()
+                    'isPro': False,
+                    'isVerified': False,
+                    'avatar': avatar_url or self.avatars.get_initials(name=name).get_url()
                 }
             )
             
@@ -78,6 +85,15 @@ class AppwriteService:
         except Exception as e:
             print(f"Error creating user: {str(e)}")
             raise e
+
+    def _get_random_avatar(self):
+        """Get a random avatar from Appwrite storage"""
+        try:
+            # You would replace this with your own logic to fetch from your avatar bucket
+            # For now returning None, which will cause the system to use initials avatar
+            return None
+        except Exception:
+            return None
     
     def login_user(self, email, password):
         """Login user with email and password"""

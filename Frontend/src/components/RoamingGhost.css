@@ -1,29 +1,36 @@
 .roaming-ghost {
   position: fixed;
   width: 40px;
-  height: 40px;
+  height: 45px;
   z-index: 10;
   pointer-events: all;
-  opacity: 0.6;
-  transition: all 7s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.3s ease;
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   cursor: pointer;
+  user-select: none;
+  transform-origin: center;
 }
 
 .roaming-ghost:hover {
-  opacity: 0.8;
+  opacity: 0.95;
   transform: scale(1.2);
+  z-index: 20;
 }
 
+/* Ghost body with better styling */
 .ghost-body {
   width: 100%;
   height: 70%;
-  background-color: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.9) 20%, 
+    rgba(255, 255, 255, 0.7) 80%);
   border-radius: 50% 50% 0 0;
   position: relative;
   box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
   animation: floatUpDown 4s ease-in-out infinite;
 }
 
+/* Ghost face with better positioning */
 .ghost-face {
   position: absolute;
   top: 35%;
@@ -37,6 +44,7 @@
   justify-content: center;
 }
 
+/* Eyes with better spacing and animation */
 .ghost-eyes {
   display: flex;
   width: 100%;
@@ -50,44 +58,127 @@
   background-color: var(--ion-color-dark);
   border-radius: 50%;
   animation: blinkEyes 4s ease-in-out infinite;
+  transition: height 0.2s ease, width 0.2s ease;
 }
 
+/* Mouth with better shape and transition */
 .ghost-mouth {
   width: 8px;
   height: 4px;
   background-color: var(--ion-color-dark);
   border-radius: 0 0 50% 50%;
   transform: translateY(2px);
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
 }
 
+/* Enhanced ghost tail with wavy animation */
 .ghost-tail {
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 0;
   width: 100%;
   height: 30%;
+  overflow: hidden;
 }
 
 .ghost-tail::before,
-.ghost-tail::after {
+.ghost-tail::after,
+.ghost-tail::before:last-of-type {
   content: '';
   position: absolute;
-  background-color: rgba(255, 255, 255, 0.8);
-  height: 12px;
-  width: 12px;
+  width: 33.33%;
+  height: 20px;
   border-radius: 50%;
-  bottom: 0;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.9) 20%, 
+    rgba(255, 255, 255, 0.7) 80%);
+  bottom: -10px;
+  animation: ghostTailWave 3s ease-in-out infinite;
 }
 
 .ghost-tail::before {
-  left: 6px;
+  left: 0;
+  animation-delay: 0s;
 }
 
 .ghost-tail::after {
-  left: 22px;
+  left: 33.33%;
+  animation-delay: 0.3s;
 }
 
-/* Add a surprised animation for when the ghost is clicked */
+/* Add a third element for the right part of the tail */
+.ghost-tail-right {
+  position: absolute;
+  width: 33.33%;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.9) 20%, 
+    rgba(255, 255, 255, 0.7) 80%);
+  left: 66.67%;
+  bottom: -10px;
+  animation: ghostTailWave 3s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+/* New ghost shadow for 3D effect */
+.ghost-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 10px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  animation: shadowPulse 4s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Speech bubble that appears on hover */
+.ghost-speech {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: var(--ion-color-dark);
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  animation: speechAppear 0.3s forwards;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.ghost-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background-color: white;
+  transform: rotate(45deg);
+}
+
+/* Emotional states */
+.ghost-happy .ghost-mouth {
+  width: 12px;
+  height: 6px;
+  border-radius: 0 0 100% 100%;
+}
+
+.ghost-sad .ghost-mouth {
+  width: 12px;
+  height: 6px;
+  border-radius: 100% 100% 0 0;
+  transform: translateY(6px);
+}
+
 .ghost-surprised .ghost-eye {
   height: 8px;
   width: 8px;
@@ -98,6 +189,25 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
+}
+
+.ghost-excited .ghost-body {
+  animation: jumpAround 1s ease-in-out infinite;
+}
+
+.ghost-excited .ghost-eye {
+  background-color: var(--ion-color-primary);
+}
+
+.ghost-excited .ghost-mouth {
+  width: 14px;
+  height: 8px;
+  border-radius: 0 0 100% 100%;
+}
+
+/* Celebration animation */
+.ghost-celebrate {
+  animation: celebrate 2s ease-in-out;
 }
 
 /* Animations */
@@ -119,15 +229,767 @@
   }
 }
 
+@keyframes ghostTailWave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shadowPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateX(-50%) scale(0.8);
+  }
+}
+
+@keyframes speechAppear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+@keyframes jumpAround {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-12px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-12px) rotate(5deg);
+  }
+}
+
+@keyframes celebrate {
+  0%, 100% {
+    transform: scale(1) rotate(0);
+  }
+  25% {
+    transform: scale(1.3) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(15deg);
+  }
+  75% {
+    transform: scale(1.3) rotate(-15deg);
+  }
+}
+
 /* Dark mode adjustments */
 :root.dark .ghost-body,
 :root.dark .ghost-tail::before,
 :root.dark .ghost-tail::after {
-  background-color: rgba(var(--ion-color-primary-rgb), 0.3);
-  box-shadow: 0 0 12px rgba(var(--ion-color-primary-rgb), 0.4);
+  background: linear-gradient(to bottom, 
+    rgba(var(--ion-color-primary-rgb), 0.4) 20%, 
+    rgba(var(--ion-color-primary-rgb), 0.2) 80%);
+  box-shadow: 0 0 15px rgba(var(--ion-color-primary-rgb), 0.6);
 }
 
 :root.dark .ghost-eye,
 :root.dark .ghost-mouth {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+:root.dark .ghost-speech {
+  background-color: var(--ion-color-dark);
+  color: white;
+}
+
+:root.dark .ghost-speech::after {
+  background-color: var(--ion-color-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .roaming-ghost {
+    width: 35px;
+    height: 40px;
+  }
+  
+  .ghost-eye {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .ghost-mouth {
+    width: 6px;
+    height: 3px;
+  }
+  
+  .ghost-speech {
+    padding: 5px 8px;
+    font-size: 10px;
+    top: -30px;
+  }
+}
+
+/* Unique prefixed class names to prevent conflicts */
+.gt-roaming-ghost {
+  position: fixed;
+  width: 40px;
+  height: 45px;
+  z-index: 50; /* Lower default z-index */
+  pointer-events: none; /* Change to none to prevent blocking content */
+  opacity: 0.7; /* Slightly more transparent by default */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+  /* Ensure it doesn't interfere with scrolling */
+  touch-action: none;
+  /* Make sure it doesn't block text selection */
+  pointer-events: auto;
+}
+
+/* Size variants */
+.gt-roaming-ghost-small {
+  width: 30px;
+  height: 35px;
+}
+
+.gt-roaming-ghost-large {
+  width: 50px;
+  height: 55px;
+}
+
+/* Enable pointer events only on the body part of the ghost */
+.gt-roaming-ghost-body,
+.gt-roaming-ghost-face,
+.gt-roaming-ghost-tail {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Hover effects */
+.gt-roaming-ghost:hover {
+  opacity: 1;
+  transform: scale(1.1) scaleX(1); /* Ensure scaleX doesn't get overridden */
+  z-index: 1001 !important;
+  filter: drop-shadow(0 0 8px rgba(var(--ion-color-primary-rgb), 0.4));
+}
+
+/* Cute ghost body */
+.gt-roaming-ghost-body {
+  width: 100%;
+  height: 70%;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(255, 255, 255, 0.8) 100%);
+  border-radius: 60% 60% 0 0;
+  position: relative;
+  box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: gtGhostFloat 4s ease-in-out infinite;
+  overflow: visible;
+}
+
+/* Adorable ghost face */
+.gt-roaming-ghost-face {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cute eyes setup */
+.gt-roaming-ghost-eyes {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  margin-bottom: 5px;
+}
+
+.gt-roaming-ghost-eye {
+  width: 7px;
+  height: 7px;
+  background-color: var(--ion-color-dark);
+  border-radius: 50%;
+  animation: gtBlinkEyes 4s ease-in-out infinite;
+  transition: height 0.2s ease, width 0.2s ease, background-color 0.3s ease;
+}
+
+/* Cute mouth */
+.gt-roaming-ghost-mouth {
+  width: 9px;
+  height: 4px;
+  background-color: var(--ion-color-dark);
+  border-radius: 0 0 50% 50%;
+  transform: translateY(2px);
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+}
+
+/* Wavy ghost tail */
+.gt-roaming-ghost-tail {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30%;
+  overflow: hidden;
+}
+
+.gt-roaming-ghost-tail::before,
+.gt-roaming-ghost-tail::after {
+  content: '';
+  position: absolute;
+  width: 33.33%;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.95) 20%, 
+    rgba(255, 255, 255, 0.8) 80%);
+  bottom: -10px;
+  animation: gtGhostTailWave 3s ease-in-out infinite;
+}
+
+.gt-roaming-ghost-tail::before {
+  left: 0;
+  animation-delay: 0s;
+}
+
+.gt-roaming-ghost-tail::after {
+  left: 33.33%;
+  animation-delay: 0.3s;
+}
+
+/* Using pseudo element for third part of tail */
+.gt-roaming-ghost-tail::before:last-child {
+  left: 66.67%;
+  animation-delay: 0.6s;
+}
+
+/* Shadow effect for 3D appearance */
+.gt-roaming-ghost-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 12px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  animation: gtShadowPulse 4s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Cute sparkle effect */
+.gt-roaming-ghost-sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.9) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: gtSparkle 2s ease-out forwards;
+  pointer-events: none; /* Ensure sparkles don't block interactions */
+}
+
+/* Speech bubble */
+.gt-roaming-ghost-speech {
+  position: absolute;
+  top: -3rem;
+  left: 50%;
+  transform: translateX(-50%);
   background-color: white;
+  color: #333;
+  padding: 0.5rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+  animation: gtSpeechAppear 0.3s forwards;
+  z-index: 60; /* Should be just above ghost but not too high */
+  min-width: 100px;
+  pointer-events: none;
+  display: block !important;
+  direction: ltr; /* Ensure text direction is left-to-right */
+  text-align: center; /* Center the text for better appearance */
+  white-space: normal; /* Allow text to wrap properly */
+  max-width: 12rem;    /* Control speech bubble width */
+  word-break: normal;
+  word-wrap: break-word;
+  unicode-bidi: embed; /* Force text direction */
+  transform-style: preserve-3d; /* Help isolate from parent transforms */
+}
+
+.gt-roaming-ghost-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background-color: white;
+}
+
+/* Emote display above ghost */
+.gt-roaming-ghost-emote {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  animation: gtEmotePopup 0.5s ease-out;
+  z-index: 1005;
+  pointer-events: none;
+}
+
+/* Emotional state styles - Happy */
+.gt-roaming-ghost-happy .gt-roaming-ghost-mouth {
+  width: 12px;
+  height: 7px;
+  border-radius: 0 0 100% 100%;
+}
+
+.gt-roaming-ghost-happy .gt-roaming-ghost-eye {
+  transform: scale(1.1);
+}
+
+/* Sad ghost */
+.gt-roaming-ghost-sad .gt-roaming-ghost-mouth {
+  width: 12px;
+  height: 7px;
+  border-radius: 100% 100% 0 0;
+  transform: translateY(6px);
+}
+
+.gt-roaming-ghost-sad .gt-roaming-ghost-eye {
+  transform: translateY(2px) scaleX(0.8);
+}
+
+/* Surprised ghost */
+.gt-roaming-ghost-surprised .gt-roaming-ghost-eye {
+  height: 9px;
+  width: 9px;
+  background-color: var(--ion-color-primary);
+}
+
+.gt-roaming-ghost-surprised .gt-roaming-ghost-mouth {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Excited ghost */
+.gt-roaming-ghost-excited .gt-roaming-ghost-body {
+  animation: gtGhostJump 1s ease-in-out infinite;
+}
+
+.gt-roaming-ghost-excited .gt-roaming-ghost-eye {
+  background-color: var(--ion-color-primary);
+}
+
+.gt-roaming-ghost-excited .gt-roaming-ghost-mouth {
+  width: 14px;
+  height: 8px;
+  border-radius: 0 0 100% 100%;
+}
+
+/* Celebration animation */
+.gt-roaming-ghost-celebrate {
+  animation: gtGhostCelebrate 2s ease-in-out;
+}
+
+/* Pop effect on click */
+.gt-roaming-ghost-pop {
+  animation: gtGhostPop 0.3s ease-out;
+}
+
+/* Bump effect when hitting edges */
+.gt-roaming-ghost-bump {
+  animation: gtGhostBump 0.3s ease-out;
+}
+
+/* Pause animation */
+.gt-roaming-ghost-pause {
+  animation: gtGhostPause 1.5s ease-in-out;
+}
+
+/* Happy bounce animation */
+.gt-roaming-ghost-happy-bounce {
+  animation: gtGhostHappyBounce 1.5s ease-in-out;
+}
+
+/* Dark mode adjustments */
+.gt-roaming-ghost-dark .gt-roaming-ghost-body,
+.gt-roaming-ghost-dark .gt-roaming-ghost-tail::before,
+.gt-roaming-ghost-dark .gt-roaming-ghost-tail::after {
+  background: linear-gradient(135deg, 
+    rgba(var(--ion-color-primary-rgb), 0.5) 0%, 
+    rgba(var(--ion-color-primary-rgb), 0.3) 100%);
+  box-shadow: 0 0 15px rgba(var(--ion-color-primary-rgb), 0.6);
+}
+
+.gt-roaming-ghost-dark .gt-roaming-ghost-eye,
+.gt-roaming-ghost-dark .gt-roaming-ghost-mouth {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.gt-roaming-ghost-dark .gt-roaming-ghost-speech {
+  background-color: var(--ion-color-dark);
+  color: white;
+}
+
+.gt-roaming-ghost-dark .gt-roaming-ghost-speech::after {
+  background-color: var(--ion-color-dark);
+}
+
+.gt-roaming-ghost-dark .gt-roaming-ghost-sparkle {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+}
+
+/* ANIMATIONS */
+
+/* Basic floating animation */
+@keyframes gtGhostFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Eye blinking animation */
+@keyframes gtBlinkEyes {
+  0%, 44%, 56%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* Tail wave animation */
+@keyframes gtGhostTailWave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Shadow pulse animation */
+@keyframes gtShadowPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateX(-50%) scale(0.8);
+  }
+}
+
+/* Sparkle animation */
+@keyframes gtSparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+/* Speech bubble appear animation */
+@keyframes gtSpeechAppear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+/* Jump animation for excited state */
+@keyframes gtGhostJump {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-12px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-12px) rotate(5deg);
+  }
+}
+
+/* Celebration animation */
+@keyframes gtGhostCelebrate {
+  0%, 100% {
+    transform: scale(1) rotate(0);
+  }
+  25% {
+    transform: scale(1.3) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(15deg);
+  }
+  75% {
+    transform: scale(1.3) rotate(-15deg);
+  }
+}
+
+/* Pop animation when clicked */
+@keyframes gtGhostPop {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+/* Bump animation for edge collisions */
+@keyframes gtGhostBump {
+  0%, 100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+}
+
+/* Pause animation */
+@keyframes gtGhostPause {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Happy bounce animation */
+@keyframes gtGhostHappyBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  20%, 60% {
+    transform: translateY(-15px);
+  }
+  40%, 80% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Emote popup animation */
+@keyframes gtEmotePopup {
+  0% {
+    transform: translateX(-50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.5);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Smooth movement transition */
+.gt-smooth-move {
+  transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), 
+              top 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Ghost body wrapper to handle direction flipping separately */
+.gt-roaming-ghost-body-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-origin: center;
+  /* The scaleX will be applied to this wrapper only */
+}
+
+/* Ghost trail effect */
+.gt-ghost-trail {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.gt-ghost-trail-particle {
+  position: fixed; /* Changed from absolute for proper positioning */
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6); /* More visible */
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+  opacity: 0;
+  animation: trailFadeOut 1.5s ease-out forwards;
+}
+
+/* Page transition animation */
+@keyframes gtPageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gt-page-enter {
+  animation: gtPageEnter 0.4s ease-out forwards;
+}
+
+/* Comprehensive responsive adjustments using media queries */
+@media (max-width: 1024px) {
+  .gt-roaming-ghost {
+    transform-origin: center bottom;
+  }
+  
+  .gt-roaming-ghost-speech {
+    width: max-content;
+    max-width: 12.5rem;
+    font-size: 0.7rem;
+    top: -2.8rem;
+    padding: 0.4rem 0.6rem;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .gt-roaming-ghost-small {
+    width: 1.75rem;
+    height: 2rem;
+  }
+  
+  .gt-roaming-ghost-medium {
+    width: 2.25rem;
+    height: 2.5rem;
+  }
+  
+  .gt-roaming-ghost-large {
+    width: 2.75rem;
+    height: 3rem;
+  }
+  
+  .gt-roaming-ghost-speech {
+    font-size: 0.65rem;
+    top: -2.5rem;
+    max-width: 9.375rem;
+  }
+  
+  .gt-roaming-ghost-eye {
+    width: 0.3125rem;
+    height: 0.3125rem;
+  }
+  
+  .gt-roaming-ghost-mouth {
+    width: 0.5rem;
+    height: 0.25rem;
+  }
+  
+  .gt-roaming-ghost-emote {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .gt-roaming-ghost {
+    opacity: 0.6; /* More transparent on small screens */
+  }
+  
+  .gt-roaming-ghost-small {
+    width: 1.5rem;
+    height: 1.7rem;
+  }
+  
+  .gt-roaming-ghost-medium {
+    width: 1.75rem;
+    height: 2rem;
+  }
+  
+  .gt-roaming-ghost-large {
+    width: 2.25rem;
+    height: 2.5rem;
+  }
+  
+  .gt-roaming-ghost-speech {
+    font-size: 0.6rem;
+    padding: 0.3rem 0.5rem;
+    top: -2.2rem;
+    max-width: 7.5rem;
+  }
+  
+  .gt-roaming-ghost-emote {
+    font-size: 0.8rem;
+    top: -1rem;
+  }
+  
+  /* Simplify animations on small screens for performance */
+  .gt-roaming-ghost-body {
+    animation-duration: 6s;
+  }
+}
+
+/* Improved hover behavior across devices */
+@media (hover: hover) {
+  .gt-roaming-ghost:hover {
+    opacity: 1;
+    transform: scale(1.1) scaleX(1);
+    z-index: 60;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .gt-roaming-ghost {
+    opacity: 0.8;
+  }
+  
+  .gt-roaming-ghost:active {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* ...existing animation keyframes and other styles remain unchanged... */
+
+/* Fix for Safari mobile compatibility */
+@supports (-webkit-touch-callout: none) {
+  .gt-roaming-ghost {
+    /* Improve touch target size for Safari */
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

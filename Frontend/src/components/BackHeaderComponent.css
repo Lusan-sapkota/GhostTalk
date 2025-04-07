@@ -1,0 +1,89 @@
+.back-header {
+  position: relative;
+  z-index: 10;
+}
+
+/* Ghostly shadow effect under the header */
+.back-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to bottom, 
+    rgba(var(--ion-color-primary-rgb), 0.1), 
+    transparent);
+  z-index: -1;
+  animation: ghostPulse 3s ease-in-out infinite;
+}
+
+.back-header ion-toolbar {
+  --border-width: 0;
+  --background: linear-gradient(135deg, 
+    var(--ion-color-primary) 0%, 
+    var(--ion-color-primary-shade) 100%);
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated mist effect over the toolbar */
+.back-header ion-toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%, 
+    rgba(255, 255, 255, 0.2) 0%, 
+    transparent 70%);
+  opacity: 0;
+  animation: ghostMist 8s ease-in-out infinite;
+}
+
+/* Header title styling */
+.back-header .header-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+
+/* Back button hover effect */
+.back-button {
+  opacity: 0.9;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.back-button:hover {
+  opacity: 1;
+  transform: translateX(-3px);
+}
+
+/* Dark mode adjustments */
+:root.dark .back-header::after {
+  background: linear-gradient(to bottom, 
+    rgba(var(--ion-color-primary-rgb), 0.15), 
+    transparent);
+}
+
+/* Responsive adaptations */
+@media (max-width: 576px) {
+  .back-header .header-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .back-header .header-title {
+    font-size: 0.9rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

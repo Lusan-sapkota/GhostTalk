@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from ..services.auth_service import AuthService
+from ..utils.name_generator import generate_random_name
 
 auth_bp = Blueprint('auth', __name__)
 auth_service = AuthService()
@@ -21,8 +22,10 @@ def register():
     email = data.get('email')
     password = data.get('password')
     name = data.get('name')
+    gender = data.get('gender', 'prefer_not_to_say')
+    bio = data.get('bio', '')
     
-    response, status_code = auth_service.register_user(email, password, name)
+    response, status_code = auth_service.register_user(email, password, name, gender, bio)
     return jsonify(response), status_code
 
 @auth_bp.route('/login', methods=['POST'])
@@ -44,3 +47,41 @@ def login():
     
     response, status_code = auth_service.login_user(email, password)
     return jsonify(response), status_code
+
+@auth_bp.route('/generate-username', methods=['GET'])
+def get_username():
+    """Generate a random unique username"""
+    username = generate_random_name()
+    return jsonify({
+        'success': True,
+        'username': username
+    }), 200
+
+@auth_bp.route('/verify-email', methods=['POST'])
+def verify_email():
+    """Verify a user's email with a token"""
+    data = request.get_json()
+    
+    if not data or 'token' not in data:
+        return jsonify({'success': False, 'message': 'No token provided'}), 400
+    
+    token = data.get('token')
+    response, status_code = auth_service.verify_email(token)
+    return jsonify(response), status_code
+
+@auth_bp.route('/resend-verification', methods=['POST'])
+def resend_verification():
+    """Resend verification email"""
+    data = request.get_json()
+    
+    if not data or 'email' not in data:
+        return jsonify({'success': False, 'message': 'No email provided'}), 400
+    
+    email = data.get('email')
+    response, status_code = auth_service.resend_verification(email)
+    return jsonify(response), status_code
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """Log out a user"""
+    return jsonify({'success': True, 'message': 'Logged out successfully'}), 200

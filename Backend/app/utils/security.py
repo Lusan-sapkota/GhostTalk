@@ -4,9 +4,9 @@ from functools import wraps
 from flask import current_app, request, jsonify
 
 def generate_token(user_id):
-    """Generate JWT token for authentication"""
+    """Generate JWT token for authentication with 10-minute expiration"""
     payload = {
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=current_app.config['JWT_ACCESS_TOKEN_EXPIRES']),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
         'iat': datetime.datetime.utcnow(),
         'sub': user_id
     }

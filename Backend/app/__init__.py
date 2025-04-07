@@ -7,7 +7,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Enable CORS
-    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     
     with app.app_context():
         # Register blueprints 

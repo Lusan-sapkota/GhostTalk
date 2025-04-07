@@ -32,7 +32,7 @@ import './Home.css';
 import { useState, useEffect } from 'react';
 import { themeService } from '../services/ThemeService';
 import HeaderComponent from '../components/HeaderComponent';
-import RoamingGhost from '../components/RoamingGhost';
+// import RoamingGhost from '../components/RoamingGhost';
 
 const Home: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
@@ -61,9 +61,19 @@ const Home: React.FC = () => {
         searchPlaceholder="Search ghostly things..."
       />
       
-      <IonContent fullscreen>
-        {/* Add the roaming ghost */}
-        <RoamingGhost pageId="home" />
+      <IonContent fullscreen id="home-content">
+        {/* Add the roaming ghost with proper containment */}
+        {/* <RoamingGhost 
+          pageId="home" 
+          behavior="roam"
+          mood="happy"
+          speed="normal"
+          size="medium"
+          sparkleEffect={true}
+          containerId="home-content"
+          disableInteraction={false} 
+          zIndex={30}
+        /> */}
         
         {/* Hero Section with ghost animation */}
         <div className="hero-section ghost-appear">
