@@ -2,6 +2,7 @@
 .ghost-header {
   position: relative;
   z-index: 10;
+  padding-top: var(--ion-safe-area-top, 0);
 }
 
 /* Ghostly shadow effect under the header */
@@ -27,6 +28,9 @@
   box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s ease;
+  --min-height: 56px; /* Standard Android toolbar height */
+  padding-top: var(--ion-safe-area-top, 0);
 }
 
 /* Animated mist effect over the toolbar */
@@ -291,4 +295,9 @@ ion-menu-button:hover {
   50% {
     transform: translateY(-4px);
   }
+}
+
+/* For Android, add padding to ensure content doesn't go under the status bar */
+.ion-page .ghost-header ion-toolbar {
+  --padding-top: var(--ion-safe-area-top);
 }

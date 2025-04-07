@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route, useHistory } from 'react-router-dom';
 import {
   IonApp,
   IonRouterOutlet,
@@ -70,7 +70,7 @@ import MagicLinkSent from './pages/MagicLinkSent';
 import PasswordResetSent from './pages/PasswordResetSent';
 import ResetPassword from './pages/ResetPassword';
 import MagicLogin from './pages/MagicLogin';
-
+import Onboarding from './pages/Onboarding';
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
 
@@ -100,8 +100,26 @@ import themeService from './services/ThemeService';
 import { AuthProvider } from './contexts/AuthContext';
 import { apiService } from './services/api.service';
 import { useAuth } from './contexts/AuthContext';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { isPlatform } from '@ionic/react';
 
 setupIonicReact();
+
+const setupStatusBar = async () => {
+  // Only run on actual devices, not in browser
+  if (isPlatform('android') || isPlatform('ios')) {
+    try {
+      // Check if StatusBar plugin is available before using it
+      if (typeof StatusBar.setStyle === 'function') {
+        await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setBackgroundColor({ color: '#6736e9' });
+        await StatusBar.setOverlaysWebView({ overlay: false });
+      }
+    } catch (err) {
+      console.error('Error setting up status bar', err);
+    }
+  }
+};
 
 const SideMenu: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
@@ -139,39 +157,6 @@ const SideMenu: React.FC = () => {
       themeService.setDarkMode(prefersDark);
     }
   }, []);
-  
-  const handleToggleTheme = () => {
-    const isDark = themeService.toggleTheme();
-    setDarkMode(isDark);
-  };
-
-  const handleThemeChangeFromMenu = (value: string) => {
-    setCurrentTheme(value);
-    
-    // Add a visual indication of theme changing
-    document.body.classList.add('theme-transition');
-    
-    if (value === 'dark') {
-      themeService.setDarkMode(true);
-    } else if (value === 'light') {
-      themeService.setDarkMode(false);
-    } else {
-      // Handle system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      themeService.setDarkMode(prefersDark);
-    }
-    
-    // Persist the preference
-    localStorage.setItem('themePreference', value);
-    
-    // Add animation class
-    document.body.classList.add('theme-changing');
-    
-    // Remove animation class after transition
-    setTimeout(() => {
-      document.body.classList.remove('theme-changing');
-    }, 500);
-  };
 
   useEffect(() => {
     // Set up system theme preference change listener
@@ -349,6 +334,9 @@ const SideMenu: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  // Move useHistory to the top level of the component
+  const history = useHistory();
+
   // Apply initial theme
   useEffect(() => {
     const darkMode = themeService.getDarkMode();
@@ -382,6 +370,48 @@ const App: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // Only attempt to use statusbar on mobile platforms
+    if (isPlatform('android') || isPlatform('ios')) {
+      setupStatusBar();
+    }
+    // Rest of your existing useEffect code...
+  }, []);
+
+  useEffect(() => {
+    // No need to call useHistory here anymore
+    // Listen for navigation events from native code
+    const handleInitialLoad = (event: Event) => {
+      try {
+        const customEvent = event as CustomEvent;
+        const data = JSON.parse(customEvent.detail);
+        if (data && data.initialPath) {
+          // Navigate to the path specified by native code
+          history.replace(data.initialPath);
+        }
+      } catch (error) {
+        console.error('Failed to parse initial load event', error);
+      }
+    };
+    
+    window.addEventListener('initialLoad', handleInitialLoad as EventListener);
+    
+    return () => {
+      window.removeEventListener('initialLoad', handleInitialLoad as EventListener);
+    };
+  }, [history]); // Add history to dependencies array
+
+  useEffect(() => {
+    // Check for the force onboarding flag on component mount
+    const forceOnboarding = localStorage.getItem('forceOnboarding');
+    if (forceOnboarding === 'true') {
+      console.log('Force onboarding flag detected, redirecting to onboarding');
+      history.replace('/onboarding');
+      // Clear the flag after redirecting
+      localStorage.removeItem('forceOnboarding');
+    }
+  }, [history]);
+
   const { isAuthenticated } = useAuth();
 
   // Protected route component
@@ -406,6 +436,10 @@ const App: React.FC = () => {
           
           <IonTabs>
             <IonRouterOutlet id="main">
+              {/* Make the onboarding route higher priority */}
+              <Route path="/onboarding" component={Onboarding} exact={true} />
+              
+              {/* Other routes */}
               <Route exact path="/home" component={Home} />
               <Route exact path="/random-chat" component={RandomChat} />
               <Route exact path="/chat-room" component={ChatRoom} />
@@ -414,6 +448,7 @@ const App: React.FC = () => {
               <PrivateRoute exact path="/profile" component={Profile} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/register" component={Register} />
+              <Route path="/onboarding" component={Onboarding} exact={true} />
               <Route exact path="/verify-email/:token" component={VerifyEmail} />
               <Route exact path="/terms" component={TermsPage} />
               <Route exact path="/privacy" component={PrivacyPage} />
@@ -426,9 +461,15 @@ const App: React.FC = () => {
               <Route exact path="/magic-login/:token" component={MagicLogin} />
               
               {/* Redirects */}
-              <Route exact path="/">
-                <Redirect to="/home" />
-              </Route>
+              <Route exact path="/" render={() => {
+                // Check if we should show onboarding based on URL hash
+                const hash = window.location.hash;
+                if (hash && hash.includes('/onboarding')) {
+                  console.log('Found onboarding in hash, redirecting');
+                  return <Redirect to="/onboarding" />;
+                }
+                return <Redirect to="/home" />;
+              }} />
             </IonRouterOutlet>
             
             {isAuthenticated && (

@@ -1,0 +1,72 @@
+.ghost-refresher ion-spinner {
+  color: var(--ion-color-primary);
+}
+
+.ghost-refresher .refresher-pulling-text,
+.ghost-refresher .refresher-refreshing-text {
+  color: var(--ion-color-medium);
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+/* Ghost animation for the refresher */
+@keyframes ghostFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Ghost appearance animation for refresher */
+@keyframes ghostAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spin animation for the refresh icon */
+@keyframes ghostSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ghost-refresher ion-spinner {
+  animation: ghostFloat 1.5s infinite ease-in-out;
+}
+
+/* Custom ghost icon styling for pulling state */
+.ghost-refresher .refresher-pulling-icon {
+  color: var(--ion-color-primary);
+  font-size: 24px;
+  animation: ghostSpin 1.5s infinite ease-in-out;
+}
+
+/* Adding ghost-like glow effect to the pulling icon */
+.ghost-refresher .refresher-pulling-icon {
+  filter: drop-shadow(0 0 3px rgba(var(--ion-color-primary-rgb), 0.7));
+}
+
+/* Styling for the refreshing text */
+.ghost-refresher .refresher-refreshing-text {
+  animation: ghostAppear 0.3s ease-out forwards;
+}
+
+/* Only show this component on Android */
+@media not all and (-webkit-min-device-pixel-ratio: 0) {
+  .ghost-refresher {
+    display: none;
+  }
+}

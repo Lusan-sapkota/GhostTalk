@@ -1,6 +1,7 @@
 .back-header {
   position: relative;
   z-index: 10;
+  padding-top: var(--ion-safe-area-top, 0);
 }
 
 /* Ghostly shadow effect under the header */
@@ -26,6 +27,11 @@
   box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
+}
+
+ion-header.back-header ion-toolbar {
+  --min-height: 56px;
+  padding-top: var(--ion-safe-area-top, 0);
 }
 
 /* Animated mist effect over the toolbar */

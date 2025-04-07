@@ -34,3 +34,22 @@ ion-menu ion-footer {
   bottom: 0;
   width: 100%;
 }
+
+/* Add these rules at the end of your App.css */
+
+/* Android-specific styles */
+.md ion-content {
+  --padding-top: var(--ion-safe-area-top, 0);
+  --padding-bottom: var(--ion-safe-area-bottom, 0);
+}
+
+/* Fix for Android status bar */
+html.md {
+  --ion-safe-area-top: env(safe-area-inset-top);
+  --ion-safe-area-bottom: env(safe-area-inset-bottom);
+}
+
+/* Fix for bottom tab bar on Android */
+ion-tabs ion-tab-bar {
+  padding-bottom: var(--ion-safe-area-bottom, 0);
+}

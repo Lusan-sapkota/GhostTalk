@@ -11,8 +11,10 @@ import {
   IonCol,
   IonIcon,
   IonFooter,
-  IonBadge
+  IonBadge,
+  isPlatform
 } from '@ionic/react';
+import { RefresherEventDetail } from '@ionic/core';
 import { 
   chatbubbles, 
   people, 
@@ -32,10 +34,12 @@ import './Home.css';
 import { useState, useEffect, useRef } from 'react';
 import HeaderComponent from '../components/HeaderComponent';
 import RoamingGhost from '../components/RoamingGhost';
+import PullToRefresh from '../components/PullToRefresh';
 
 const Home: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [themeChanging, setThemeChanging] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Add this ref to get direct access to the content element
   const contentRef = useRef<HTMLIonContentElement>(null);
@@ -43,6 +47,19 @@ const Home: React.FC = () => {
   const handleSearchChange = (value: string) => {
     setSearchText(value);
     console.log("Searching for:", value);
+  };
+
+  // Add this function to handle refresh
+  const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
+    console.log('Begin refresh operation');
+    setRefreshing(true);
+    
+    // Simulate data refresh - replace with actual API calls
+    setTimeout(() => {
+      console.log('Refresh complete');
+      setRefreshing(false);
+      event.detail.complete();
+    }, 1500);
   };
 
   return (
@@ -54,6 +71,13 @@ const Home: React.FC = () => {
       />
       
       <IonContent fullscreen id="home-content" ref={contentRef}>
+        {/* Pull to refresh component with full page refresh */}
+        <PullToRefresh 
+          pullingText="Pull to summon fresh content..."
+          refreshingText="Summoning the spirits..."
+          fullPageRefresh={true}
+        />
+        
         {/* Ghost Trail Container - required for trails to work */}
         <div className="gt-ghost-trail"></div>
         
@@ -242,36 +266,40 @@ const Home: React.FC = () => {
         </div>
         
         {/* App Download Section */}
-        <div className="section app-download-section">
-          <div className="section-header">
-            <h2>Get Our App</h2>
-            <p>Download GhostTalk for a better mobile experience</p>
-          </div>
-          
-          <div className="app-download-container">
-            <div className="app-info">
-              <h3>Enhanced Mobile Experience</h3>
-              <ul className="app-features-list">
-                <li><IonIcon icon={flash} /> Faster performance</li>
-                <li><IonIcon icon={lockClosed} /> Enhanced security</li>
-                <li><IonIcon icon={chatbubbles} /> Push notifications</li>
-                <li><IonIcon icon={people} /> More chat features</li>
-              </ul>
-              <div className="store-buttons">
-                <IonButton className="playstore-btn" href="https://play.google.com/store" target="_blank">
-                  <IonIcon slot="start" icon={logoGooglePlaystore} />
-                  Get it on Google Play
-                </IonButton>
-              </div>
+        {!isPlatform('android') && (
+          <div className="section app-download-section">
+            <div className="section-header">
+              <h2>Get Our App</h2>
+              <p>Download GhostTalk for a better mobile experience</p>
             </div>
             
-            <div className="app-image">
-              <img src="assets/app-preview.png" alt="GhostTalk App Preview" />
+            <div className="app-download-container">
+              <div className="app-info">
+                <h3>Enhanced Mobile Experience</h3>
+                <ul className="app-features-list">
+                  <li><IonIcon icon={flash} /> Faster performance</li>
+                  <li><IonIcon icon={lockClosed} /> Enhanced security</li>
+                  <li><IonIcon icon={chatbubbles} /> Push notifications</li>
+                  <li><IonIcon icon={people} /> More chat features</li>
+                </ul>
+                <div className="store-buttons">
+                  <IonButton className="playstore-btn" href="https://play.google.com/store" target="_blank">
+                    <IonIcon slot="start" icon={logoGooglePlaystore} />
+                    Get it on Google Play
+                  </IonButton>
+                </div>
+              </div>
+              
+              <div className="app-image">
+                <img src="assets/app-preview.png" alt="GhostTalk App Preview" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
         {/* Footer Section */}
-        <IonFooter className="home-footer">
+        {!isPlatform('android') && (
+          <IonFooter className="home-footer">
             <div className="footer-content">
               <div className="footer-section">
                 <h3>GhostTalk</h3>
@@ -302,7 +330,8 @@ const Home: React.FC = () => {
             <div className="copyright">
               <p>© {new Date().getFullYear()} GhostTalk. All rights reserved.</p>
             </div>
-        </IonFooter>
+          </IonFooter>
+        )}
       </IonContent>
     </IonPage>
   );
