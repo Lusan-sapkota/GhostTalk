@@ -110,7 +110,7 @@ const Home: React.FC = () => {
 
         {/* Features Section */}
         <div className="section features-section">
-          <div className="section-header ghost-appear">
+          <div className="section-header-home ghost-appear">
             <h2>Key Features</h2>
             <p>Discover what makes GhostTalk special</p>
           </div>
@@ -121,7 +121,7 @@ const Home: React.FC = () => {
               <IonCol size="12" sizeMd="4" className="staggered-item">
                 <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon ghost-float">
+                    <div className="feature-icon-home ghost-float">
                       <IonIcon icon={chatbubbles} />
                     </div>
                     <IonCardTitle>Random Chat</IonCardTitle>
@@ -139,7 +139,7 @@ const Home: React.FC = () => {
               <IonCol size="12" sizeMd="4" className="staggered-item">
                 <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon ghost-float">
+                    <div className="feature-icon-home ghost-float">
                       <IonIcon icon={people} />
                     </div>
                     <IonCardTitle>Chat Rooms</IonCardTitle>
@@ -157,7 +157,7 @@ const Home: React.FC = () => {
               <IonCol size="12" sizeMd="4" className="staggered-item">
                 <IonCard className="feature-card ghost-shadow">
                   <IonCardHeader>
-                    <div className="feature-icon ghost-float">
+                    <div className="feature-icon-home ghost-float">
                       <IonIcon icon={lockClosed} />
                     </div>
                     <IonCardTitle>Private Chat</IonCardTitle>
@@ -193,7 +193,7 @@ const Home: React.FC = () => {
                   <IonCol size="12" sizeMd="6">
                     <div className="pro-features">
                       <div className="pro-feature-item">
-                        <div className="feature-icon-container">
+                        <div className="feature-icon-home-container">
                           <IonIcon icon={rocket} />
                         </div>
                         <div className="feature-text">
@@ -203,7 +203,7 @@ const Home: React.FC = () => {
                       </div>
                       
                       <div className="pro-feature-item">
-                        <div className="feature-icon-container">
+                        <div className="feature-icon-home-container">
                           <IonIcon icon={flash} />
                         </div>
                         <div className="feature-text">
@@ -213,7 +213,7 @@ const Home: React.FC = () => {
                       </div>
                       
                       <div className="pro-feature-item">
-                        <div className="feature-icon-container">
+                        <div className="feature-icon-home-container">
                           <IonIcon icon={star} />
                         </div>
                         <div className="feature-text">
@@ -223,7 +223,7 @@ const Home: React.FC = () => {
                       </div>
                       
                       <div className="pro-feature-item">
-                        <div className="feature-icon-container">
+                        <div className="feature-icon-home-container">
                           <IonIcon icon={person} />
                         </div>
                         <div className="feature-text">
@@ -265,10 +265,10 @@ const Home: React.FC = () => {
           </IonCard>
         </div>
         
-        {/* App Download Section */}
+        {/* Move the App Download Section here */}
         {!isPlatform('android') && (
           <div className="section app-download-section">
-            <div className="section-header">
+            <div className="section-header-home">
               <h2>Get Our App</h2>
               <p>Download GhostTalk for a better mobile experience</p>
             </div>
@@ -296,17 +296,22 @@ const Home: React.FC = () => {
             </div>
           </div>
         )}
+        
+        {/* Add some padding at the bottom to ensure content isn't covered by footer */}
+        <div className="footer-spacer"></div>
+      </IonContent>
 
-        {/* Footer Section */}
-        {!isPlatform('android') && (
-          <IonFooter className="home-footer">
-            <div className="footer-content">
-              <div className="footer-section">
+      {/* Replace the custom div with a proper IonFooter */}
+      {!isPlatform('android') && (
+        <IonFooter className="ghost-footer-wrapper">
+          <div className="ghost-footer ion-no-border">
+            <div className="ghost-footer-content">
+              <div className="ghost-footer-section">
                 <h3>GhostTalk</h3>
                 <p>Connect anonymously, chat freely, be yourself.</p>
               </div>
               
-              <div className="footer-section">
+              <div className="ghost-footer-section">
                 <h3>Links</h3>
                 <ul>
                   <li><a href="/about">About Us</a></li>
@@ -316,9 +321,9 @@ const Home: React.FC = () => {
                 </ul>
               </div>
               
-              <div className="footer-section">
+              <div className="ghost-footer-section">
                 <h3>Connect With Us</h3>
-                <div className="social-icons">
+                <div className="ghost-social-icons">
                   <a href="#"><IonIcon icon={logoTwitter} /></a>
                   <a href="#"><IonIcon icon={logoFacebook} /></a>
                   <a href="#"><IonIcon icon={logoInstagram} /></a>
@@ -327,12 +332,12 @@ const Home: React.FC = () => {
               </div>
             </div>
             
-            <div className="copyright">
+            <div className="ghost-copyright">
               <p>© {new Date().getFullYear()} GhostTalk. All rights reserved.</p>
             </div>
-          </IonFooter>
-        )}
-      </IonContent>
+          </div>
+        </IonFooter>
+      )}
     </IonPage>
   );
 };

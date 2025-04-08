@@ -70,19 +70,19 @@
   margin: 0 auto;
 }
 
-.section-header {
+.section-header-home {
   text-align: center;
   margin-bottom: 40px;
 }
 
-.section-header h2 {
+.section-header-home h2 {
   font-size: 2rem;
   font-weight: 600;
   margin-bottom: 10px;
   color: var(--ion-color-primary);
 }
 
-.section-header p {
+.section-header-home p {
   font-size: 1.1rem;
   color: var(--ion-color-medium);
 }
@@ -118,13 +118,13 @@
   box-shadow: var(--ghost-shadow-medium);
 }
 
-.feature-icon {
+.feature-icon-home {
   display: flex;
   justify-content: center;
   margin-bottom: 15px;
 }
 
-.feature-icon ion-icon {
+.feature-icon-home ion-icon {
   font-size: 48px;
   color: var(--ion-color-primary);
   filter: drop-shadow(0 0 5px rgba(var(--ion-color-primary-rgb), 0.5));
@@ -237,7 +237,7 @@ ion-card-title {
   color: green;
 }
 
-.feature-icon-container {
+.feature-icon-home-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -249,7 +249,7 @@ ion-card-title {
   flex-shrink: 0;
 }
 
-.feature-icon-container ion-icon {
+.feature-icon-home-container ion-icon {
   font-size: 24px;
   color: var(--ion-color-primary);
 }
@@ -625,7 +625,7 @@ ion-app, ion-page {
     padding: 40px 20px;
   }
   
-  .section-header h2 {
+  .section-header-home h2 {
     font-size: 1.8rem;
   }
   
@@ -662,4 +662,442 @@ ion-footer {
 /* Fix content overflow */
 ion-content::part(scroll) {
   padding-bottom: 20px;
+}
+
+/* New Footer Styles with unique class names */
+.ghost-home-footer {
+  background-color: var(--ion-color-dark);
+  color: var(--ion-color-light);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  margin-top: 20px;
+}
+
+.ghost-footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 40px 20px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ghost-footer-section {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 30px;
+  padding: 0 15px;
+}
+
+.ghost-footer-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+  color: var(--ion-color-light);
+}
+
+.ghost-footer-section h3:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background-color: var(--ion-color-primary);
+}
+
+.ghost-footer-section p {
+  line-height: 1.6;
+  opacity: 0.8;
+  color: var(--ion-color-light);
+}
+
+.ghost-footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ghost-footer-section ul li {
+  margin-bottom: 10px;
+}
+
+.ghost-footer-section ul li a {
+  color: var(--ion-color-light);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.ghost-footer-section ul li a:hover {
+  opacity: 1;
+}
+
+.ghost-social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.ghost-social-icons a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease;
+  color: var(--ion-color-light);
+}
+
+.ghost-social-icons a:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.ghost-social-icons ion-icon {
+  font-size: 20px;
+}
+
+/* Ensure copyright part is visible with unique class */
+.ghost-copyright {
+  width: 100%;
+  text-align: center;
+  padding: 15px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+}
+
+.ghost-copyright p {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-light);
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+/* Fix for IonFooter to ensure it's fully visible */
+ion-footer.ghost-home-footer {
+  position: relative;
+  height: auto;
+  contain: none;
+}
+
+@media (max-width: 768px) {
+  .ghost-footer-section {
+    flex: 1 0 100%;
+    min-width: 200px;
+  }
+  
+  .ghost-copyright {
+    padding: 12px 10px;
+  }
+  
+  .ghost-copyright p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Add this to create space for the footer */
+.footer-spacer {
+  height: 40px;
+  width: 100%;
+}
+
+/* Updated Footer Styles with proper dark/light mode support */
+.ghost-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  background-color: #333333; /* Dark default for better contrast */
+  color: white;
+}
+
+/* Light mode styles */
+@media (prefers-color-scheme: light) {
+  .ghost-footer {
+    background-color: #2d2d2d;
+    color: white;
+  }
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .ghost-footer {
+    background-color: #151515;
+    color: #f4f4f4;
+  }
+}
+
+/* Manual dark class for theme toggle support */
+:root.dark .ghost-footer {
+  background-color: #151515;
+  color: #f4f4f4;
+}
+
+:root.light .ghost-footer {
+  background-color: #2d2d2d;
+  color: white;
+}
+
+.ghost-footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 40px 20px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ghost-footer-section {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 30px;
+  padding: 0 15px;
+  box-sizing: border-box;
+}
+
+.ghost-footer-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+  color: inherit;
+}
+
+.ghost-footer-section h3:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background-color: var(--ion-color-primary);
+}
+
+.ghost-footer-section p {
+  line-height: 1.6;
+  opacity: 0.8;
+  color: inherit;
+}
+
+.ghost-footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ghost-footer-section ul li {
+  margin-bottom: 10px;
+}
+
+.ghost-footer-section ul li a {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.ghost-footer-section ul li a:hover {
+  opacity: 1;
+  color: var(--ion-color-primary);
+}
+
+.ghost-social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.ghost-social-icons a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: inherit;
+}
+
+.ghost-social-icons a:hover {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.3);
+  color: var(--ion-color-primary);
+}
+
+.ghost-social-icons ion-icon {
+  font-size: 20px;
+}
+
+/* Copyright section with guaranteed visibility */
+.ghost-copyright {
+  width: 100%;
+  text-align: center;
+  padding: 15px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+}
+
+/* Light mode copyright */
+@media (prefers-color-scheme: light) {
+  .ghost-copyright {
+    background-color: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Dark mode copyright */
+@media (prefers-color-scheme: dark) {
+  .ghost-copyright {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Manual theme classes */
+:root.dark .ghost-copyright {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+:root.light .ghost-copyright {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ghost-copyright p {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: white;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .ghost-footer-section {
+    flex: 1 0 100%;
+    min-width: 200px;
+  }
+  
+  .ghost-copyright {
+    padding: 12px 10px;
+  }
+  
+  .ghost-copyright p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Add these new rules to fix the footer visibility */
+.ghost-footer-wrapper {
+  display: block !important;
+  position: relative !important;
+  height: auto !important;
+  contain: none !important;
+  z-index: 10;
+  bottom: auto !important;
+  margin-top: auto !important;
+}
+
+/* Force footer to show at the bottom with correct styling */
+.ghost-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #222222;
+  color: white;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Improved footer background colors for dark/light modes */
+@media (prefers-color-scheme: light) {
+  .ghost-footer {
+    background-color: #2d2d2d;
+    color: white;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ghost-footer {
+    background-color: #151515;
+    color: #f4f4f4;
+  }
+}
+
+/* Ensure the footer sticks properly on all page types */
+ion-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Increase spacing before footer */
+.footer-spacer {
+  height: 60px;
+  width: 100%;
+}
+
+/* Make sure copyright stands out properly */
+.ghost-copyright {
+  width: 100%;
+  text-align: center;
+  padding: 15px 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ghost-copyright p {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: white;
+  opacity: 0.8;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Footer visibility fix */
+.ghost-footer-wrapper {
+  position: static !important; 
+  box-shadow: none !important;
+  contain: style layout !important;
+  z-index: 10;
+}
+
+ion-footer.ghost-footer-wrapper::part(background) {
+  background: transparent !important;
+}
+
+ion-footer.ghost-footer-wrapper::part(shadow) {
+  display: none !important;
+}
+
+.ghost-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #222222;
+  color: white;
+}
+
+/* Add padding to prevent content from being hidden */
+ion-content::part(scroll) {
+  padding-bottom: 60px;
 }

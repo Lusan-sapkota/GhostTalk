@@ -1,7 +1,7 @@
 .privacy-container {
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
 }
 
 .privacy-card {
@@ -11,11 +11,12 @@
 .last-updated {
   color: var(--ion-color-medium);
   font-style: italic;
-  margin-bottom: 30px;
+  margin-top: 8px;
 }
 
 .privacy-section {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+  scroll-margin-top: 70px;
 }
 
 .privacy-section h3 {
@@ -31,4 +32,225 @@
 
 .privacy-section li {
   margin-bottom: 8px;
+}
+
+.privacy-header {
+  text-align: center;
+  padding: 32px 16px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background-color: var(--ion-color-light);
+}
+
+.privacy-icon {
+  margin: 0 auto 16px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.privacy-icon ion-icon {
+  font-size: 32px;
+  color: #ffffff;
+  animation: ghost-float 3s infinite ease-in-out;
+}
+
+.section-icon {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--ion-color-dark);
+}
+
+h3 {
+  color: var(--ion-color-dark);
+  font-size: 1.1rem;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+.privacy-callout {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.1);
+  border-left: 4px solid var(--ion-color-primary);
+  border-radius: 4px;
+  padding: 16px;
+  margin: 24px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.privacy-callout ion-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+  margin-top: 2px;
+}
+
+.privacy-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-icon ion-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.summary-icon.green {
+  background-color: var(--ion-color-success);
+}
+
+.summary-icon.blue {
+  background-color: var(--ion-color-primary);
+}
+
+.summary-icon.purple {
+  background-color: var(--ion-color-tertiary);
+}
+
+.summary-icon.orange {
+  background-color: var(--ion-color-warning);
+}
+
+.privacy-summary-item h3 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+}
+
+.privacy-summary-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.usage-purpose {
+  margin-bottom: 24px;
+}
+
+.usage-purpose h3 {
+  margin-bottom: 12px;
+  color: var(--ion-color-dark);
+}
+
+.retention-table {
+  border: 1px solid var(--ion-color-light);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+.retention-row {
+  display: flex;
+  border-bottom: 1px solid var(--ion-color-light);
+}
+
+.retention-row:last-child {
+  border-bottom: none;
+}
+
+.retention-row > div {
+  padding: 12px 16px;
+}
+
+.retention-row > div:first-child {
+  width: 40%;
+  background-color: rgba(var(--ion-color-light-rgb), 0.5);
+}
+
+.retention-row > div:last-child {
+  width: 60%;
+}
+
+.rights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.rights-item {
+  background-color: rgba(var(--ion-color-light-rgb), 0.7);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.rights-item h3 {
+  color: var(--ion-color-primary);
+  margin: 0 0 12px 0;
+}
+
+.rights-item p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.contact-method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.contact-method ion-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+}
+
+.contact-button {
+  margin-top: 16px;
+}
+
+/* Ghost animation effect */
+@keyframes ghost-float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .privacy-container {
+    padding: 12px;
+  }
+  
+  .retention-row {
+    flex-direction: column;
+  }
+  
+  .retention-row > div:first-child,
+  .retention-row > div:last-child {
+    width: 100%;
+  }
+  
+  .rights-grid {
+    grid-template-columns: 1fr;
+  }
 }

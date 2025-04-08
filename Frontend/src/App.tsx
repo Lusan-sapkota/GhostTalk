@@ -71,6 +71,9 @@ import PasswordResetSent from './pages/PasswordResetSent';
 import ResetPassword from './pages/ResetPassword';
 import MagicLogin from './pages/MagicLogin';
 import Onboarding from './pages/Onboarding';
+import DocsPage from './pages/DocsPage';
+import ContactPage from './pages/ContactPage';
+
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
 
@@ -521,12 +524,16 @@ const App: React.FC = () => {
               <Route exact path="/terms" component={TermsPage} />
               <Route exact path="/privacy" component={PrivacyPage} />
               <Route exact path="/support" component={SupportPage} />
+              <Route exact path="/contact" component={ContactPage} />
               <PrivateRoute exact path="/settings" component={Settings} />
               <Route exact path="/search" component={SearchPage} />
               <Route exact path="/magic-link-sent" component={MagicLinkSent} />
               <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
               <Route exact path="/reset-password/:token" component={ResetPassword} />
               <Route exact path="/magic-login/:token" component={MagicLogin} />
+              <Route exact path="/docs" component={DocsPage} />
+              
+              {/* Add more routes as needed */}
               
               {/* Redirects */}
               <Route exact path="/" render={() => {

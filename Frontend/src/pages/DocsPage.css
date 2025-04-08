@@ -1,0 +1,140 @@
+.docs-container {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.docs-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.docs-subtitle {
+  color: var(--ion-color-medium);
+  max-width: 600px;
+  margin: 8px auto 24px;
+  line-height: 1.5;
+}
+
+.docs-section {
+  margin-bottom: 32px;
+  scroll-margin-top: 70px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header ion-icon {
+  font-size: 24px;
+}
+
+.docs-tip, .docs-note {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.1);
+  border-left: 4px solid var(--ion-color-primary);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 24px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.docs-tip ion-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+  margin-top: 2px;
+}
+
+.docs-note {
+  background-color: rgba(var(--ion-color-warning-rgb), 0.1);
+  border-left-color: var(--ion-color-warning);
+}
+
+.docs-toc {
+  margin-bottom: 32px;
+}
+
+.docs-toc ion-item {
+  --padding-start: 8px;
+}
+
+h3 {
+  color: var(--ion-color-dark);
+  font-size: 1.2rem;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+ul, ol {
+  padding-left: 20px;
+}
+
+ul li, ol li {
+  margin-bottom: 8px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.feature-item {
+  background-color: rgba(var(--ion-color-light-rgb), 0.7);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.feature-item p {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.contact-support {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.contact-support ion-button {
+  margin-top: 16px;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Animation for hover effects */
+ion-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+ion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Ghost animation effect for certain elements */
+@keyframes ghost-float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+.section-header ion-icon {
+  animation: ghost-float 3s infinite ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .feature-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .docs-container {
+    padding: 12px;
+  }
+}

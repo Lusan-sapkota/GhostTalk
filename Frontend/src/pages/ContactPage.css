@@ -1,0 +1,57 @@
+.contact-container {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-form-card, .contact-info-card, .success-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.contact-item {
+  --padding-start: 0;
+}
+
+.submit-button {
+  margin-top: 20px;
+}
+
+.success-card {
+  background: linear-gradient(145deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+  color: white;
+}
+
+.success-content {
+  text-align: center;
+  padding: 30px 16px;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+  font-size: 0.8rem;
+  margin: 4px 0 0 16px;
+}
+
+/* Ghost animation for cards */
+.ghost-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
