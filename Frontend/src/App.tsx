@@ -102,6 +102,9 @@ import { apiService } from './services/api.service';
 import { useAuth } from './contexts/AuthContext';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { isPlatform } from '@ionic/react';
+import { Capacitor } from '@capacitor/core';
+import { fixAndroidPaths } from './utils/androidPathFix';
+import FirstLaunch from './plugins/firstLaunch';
 
 setupIonicReact();
 
@@ -379,6 +382,35 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const setupStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: '#6736e9' });
+          
+          // Add extra handling for Android
+          if (isPlatform('android')) {
+            StatusBar.setOverlaysWebView({ overlay: false });
+          }
+        } catch (err) {
+          console.error('Error setting up status bar', err);
+        }
+      }
+    };
+    
+    setupStatusBar();
+  }, []);
+
+  useEffect(() => {
+    // Fix Android path issues
+    if (isPlatform('android') && Capacitor.isNativePlatform()) {
+      fixAndroidPaths();
+    }
+    
+    // Rest of your initialization code...
+  }, []);
+
+  useEffect(() => {
     // No need to call useHistory here anymore
     // Listen for navigation events from native code
     const handleInitialLoad = (event: Event) => {
@@ -404,11 +436,47 @@ const App: React.FC = () => {
   useEffect(() => {
     // Check for the force onboarding flag on component mount
     const forceOnboarding = localStorage.getItem('forceOnboarding');
+    
     if (forceOnboarding === 'true') {
       console.log('Force onboarding flag detected, redirecting to onboarding');
-      history.replace('/onboarding');
-      // Clear the flag after redirecting
-      localStorage.removeItem('forceOnboarding');
+      // Add small delay to ensure app is fully initialized
+      setTimeout(() => {
+        history.replace('/onboarding');
+      }, 100);
+      
+      // Don't remove the flag here - let the onboarding component remove it when complete
+    } else if (Capacitor.isNativePlatform()) {
+      // Check if we should show onboarding based on localStorage
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+      if (hasSeenOnboarding !== 'true') {
+        console.log('First time user detected, showing onboarding');
+        setTimeout(() => {
+          history.replace('/onboarding');
+        }, 100);
+      }
+    }
+  }, [history]);
+
+  useEffect(() => {
+    // Check if on native platform
+    if (Capacitor.isNativePlatform()) {
+      const checkFirstLaunch = async () => {
+        try {
+          // Call the FirstLaunch plugin
+          const result = await FirstLaunch.checkFirstLaunch();
+          
+          if (result.isFirstLaunch) {
+            console.log('First launch detected, showing onboarding');
+            // Use the history from react-router
+            history.replace('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking first launch status:', error);
+        }
+      };
+      
+      // Check on app load
+      checkFirstLaunch();
     }
   }, [history]);
 

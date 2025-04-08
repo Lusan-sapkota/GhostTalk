@@ -5,4 +5,5 @@ export interface FirstLaunchPlugin {
 }
 
 const FirstLaunch = registerPlugin<FirstLaunchPlugin>('FirstLaunch');
+
 export default FirstLaunch;

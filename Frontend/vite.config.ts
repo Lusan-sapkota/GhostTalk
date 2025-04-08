@@ -10,6 +10,22 @@ export default defineConfig({
     react(),
     legacy()
   ],
+  build: {
+    // Split chunks for better performance
+    chunkSizeWarningLimit: 1000,
+    // Minimize output
+    minify: 'terser',
+    // Optimize for slower devices
+    target: 'es2015',
+    // Improve source map performance
+    sourcemap: false
+  },
+  // Increase memory limit (if Node.js has enough memory)
+  server: {
+    hmr: {
+      overlay: false
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

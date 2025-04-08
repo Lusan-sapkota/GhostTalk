@@ -4,29 +4,32 @@
     <meta charset="utf-8" />
     <title>GhostTalk</title>
     
-    <base href="./" />
+    <base href="." /> <!-- Note: removed trailing slash -->
     
     <meta name="color-scheme" content="light dark" />
     <meta
       name="viewport"
-      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
     
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="manifest.json" /> <!-- Note: removed leading slash -->
     
-    <!-- Favicon - multiple sizes for better display -->
-    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
-    <link rel="icon" type="image/webp" sizes="16x16" href="./icons/icon-16.webp" />
-    <link rel="icon" type="image/webp" sizes="32x32" href="./icons/icon-32.webp" />
-    <link rel="icon" type="image/webp" sizes="96x96" href="./icons/icon-96.webp" />
-    <link rel="icon" type="image/webp" sizes="192x192" href="./icons/icon-192.webp" />
-    <link rel="icon" type="image/webp" sizes="512x512" href="./icons/icon-512.webp" />
-    
+    <!-- Favicon paths corrected -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/webp" sizes="16x16" href="icons/icon-16.webp" />
+    <link rel="icon" type="image/webp" sizes="32x32" href="icons/icon-32.webp" />
+    <link rel="icon" type="image/webp" sizes="96x96" href="icons/icon-96.webp" />
+    <link rel="icon" type="image/webp" sizes="192x192" href="icons/icon-192.webp" />
+    <link rel="icon" type="image/webp" sizes="512x512" href="icons/icon-512.webp" />
     
     <!-- Microsoft Tiles -->
     <meta name="msapplication-TileColor" content="#3880ff" />
+    
+    <!-- Additional meta tag for content security policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: gap: file: 'unsafe-inline' 'unsafe-eval'; style-src * 'self' 'unsafe-inline' file:; media-src *; img-src * 'self' data: content: file:;">
+    
   </head>
   <body>
     <div id="root"></div>

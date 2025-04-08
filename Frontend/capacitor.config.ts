@@ -5,11 +5,28 @@ const config: CapacitorConfig = {
   appName: 'GhostTalk',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'file',
+    iosScheme: 'ionic',
+    cleartext: true,
+    // This is key - don't use localhost
+    hostname: null
   },
   android: {
     webContentsDebuggingEnabled: true,
-    allowMixedContent: true
+    allowMixedContent: true,
+    initialFocus: false,
+    useLegacyBridge: false
+  },
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: true,
+      androidScaleType: 'CENTER_CROP'
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#6736e9',
+      overlaysWebView: false
+    }
   }
 };
 

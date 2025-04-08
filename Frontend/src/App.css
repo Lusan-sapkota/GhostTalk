@@ -53,3 +53,21 @@ html.md {
 ion-tabs ion-tab-bar {
   padding-bottom: var(--ion-safe-area-bottom, 0);
 }
+
+/* Add these at the end of your CSS file */
+
+/* Fix for Android asset paths */
+@media (max-width: 768px) {
+  /* Mobile-only fixes */
+  body.platform-android {
+    --ion-background-color: var(--ion-background-color);
+    --ion-text-color: var(--ion-text-color);
+  }
+  
+  /* Ensure onboarding page is visible */
+  .onboarding-page {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+  }
+}
