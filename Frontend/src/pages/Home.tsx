@@ -296,14 +296,9 @@ const Home: React.FC = () => {
             </div>
           </div>
         )}
-        
-        {/* Add some padding at the bottom to ensure content isn't covered by footer */}
-        <div className="footer-spacer"></div>
-      </IonContent>
 
-      {/* Replace the custom div with a proper IonFooter */}
-      {!isPlatform('android') && (
-        <IonFooter className="ghost-footer-wrapper">
+        {!isPlatform('android') && (
+        <footer className="ghost-footer-wrapper">
           <div className="ghost-footer ion-no-border">
             <div className="ghost-footer-content">
               <div className="ghost-footer-section">
@@ -336,8 +331,12 @@ const Home: React.FC = () => {
               <p>© {new Date().getFullYear()} GhostTalk. All rights reserved.</p>
             </div>
           </div>
-        </IonFooter>
+        </footer>
       )}
+      </IonContent>
+
+      {/* Footer */}
+
     </IonPage>
   );
 };

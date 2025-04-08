@@ -49,7 +49,9 @@ import {
   lockClosedOutline,
   globeOutline,
   closeOutline,
-  phonePortraitOutline
+  phonePortraitOutline,
+  moonOutline,
+  sunnyOutline,
 } from 'ionicons/icons';
 
 import Home from './pages/Home';
@@ -73,6 +75,7 @@ import MagicLogin from './pages/MagicLogin';
 import Onboarding from './pages/Onboarding';
 import DocsPage from './pages/DocsPage';
 import ContactPage from './pages/ContactPage';
+import CommunityPage from './pages/CommunityPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -303,19 +306,18 @@ const SideMenu: React.FC = () => {
 
           <IonItemDivider className="menu-divider">Preferences</IonItemDivider>
           
-          <IonItem className="theme-info-item staggered-item">
-            <IonIcon slot="start" icon={contrastOutline} />
+          <IonItem 
+            className="theme-info-item staggered-item" 
+            onClick={() => setShowThemeInfo(true)} 
+            style={{ cursor: 'pointer' }}
+          >
+            <IonIcon 
+              slot="start" 
+              icon={darkMode ? moonOutline : sunnyOutline} 
+            />
             <IonLabel>
               system ({darkMode ? 'Dark' : 'Light'})
             </IonLabel>
-            <IonButton 
-              fill="clear" 
-              slot="end" 
-              onClick={() => setShowThemeInfo(true)}
-              className="info-button"
-            >
-              <IonIcon slot="icon-only" icon={informationCircleOutline} />
-            </IonButton>
           </IonItem>
 
           {isAuthenticated && (
@@ -532,6 +534,7 @@ const App: React.FC = () => {
               <Route exact path="/reset-password/:token" component={ResetPassword} />
               <Route exact path="/magic-login/:token" component={MagicLogin} />
               <Route exact path="/docs" component={DocsPage} />
+              <Route exact path="/community" component={CommunityPage} />
               
               {/* Add more routes as needed */}
               

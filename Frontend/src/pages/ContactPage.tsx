@@ -21,11 +21,22 @@ import {
   IonSelect,
   IonSelectOption,
   IonList,
-  IonListHeader
+  IonListHeader,
+  IonFooter
 } from '@ionic/react';
-import { paperPlaneOutline, mailOutline, logoGithub, checkmarkCircleOutline } from 'ionicons/icons';
+import { 
+  paperPlaneOutline, 
+  mailOutline, 
+  logoGithub, 
+  checkmarkCircleOutline, 
+  helpCircleOutline,
+  alertCircleOutline,
+  sparklesOutline
+} from 'ionicons/icons';
 import { apiService } from '../services/api.service';
 import './ContactPage.css';
+import '../components/BackHeaderComponent.css';
+import BackHeaderComponent from '../components/BackHeaderComponent';
 
 const ContactPage: React.FC = () => {
   const [name, setName] = useState<string>('');
@@ -38,6 +49,7 @@ const ContactPage: React.FC = () => {
   const [toastColor, setToastColor] = useState<string>('success');
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
@@ -46,10 +58,11 @@ const ContactPage: React.FC = () => {
     if (!email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Email is invalid';
+      errors.email = 'Email address is invalid';
     }
     if (!subject.trim()) errors.subject = 'Subject is required';
     if (!message.trim()) errors.message = 'Message is required';
+    else if (message.trim().length < 10) errors.message = 'Message must be at least 10 characters';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -60,17 +73,16 @@ const ContactPage: React.FC = () => {
     
     if (!validateForm()) return;
     
+    setIsSubmitting(true);
+    
     try {
-      // Replace with your actual API call to submit tickets
-    //   await apiService.post('/support/ticket', {
-    //     name,
-    //     email,
-    //     subject,
-    //     category,
-    //     message
-    //   });
+      // Simulating API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setToastMessage('Your ticket has been submitted successfully!');
+      // Actual API call would go here
+      // await apiService.post('/support/ticket', { name, email, subject, category, message });
+      
+      setToastMessage('Your message has been sent successfully!');
       setToastColor('success');
       setShowToast(true);
       setFormSubmitted(true);
@@ -82,134 +94,184 @@ const ContactPage: React.FC = () => {
       setCategory('general');
       setMessage('');
     } catch (error) {
-      console.error('Failed to submit ticket:', error);
-      setToastMessage('Failed to submit your ticket. Please try again.');
+      console.error('Failed to submit contact form:', error);
+      setToastMessage('Failed to send your message. Please try again.');
       setToastColor('danger');
       setShowToast(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getCategoryIcon = (cat: string) => {
+    switch(cat) {
+      case 'bug': return alertCircleOutline;
+      case 'feature': return sparklesOutline;
+      case 'account': return helpCircleOutline;
+      default: return helpCircleOutline;
     }
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary" className="ghost-shadow">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/home" />
-          </IonButtons>
-          <IonTitle>Contact Us</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <IonPage className="contact-page">
+      <BackHeaderComponent title="Contact Us" defaultHref='/support' />
       
-      <IonContent>
+      <IonContent className="contact-content">
         <div className="contact-container">
+          <div className="contact-header">
+            <h1>Get in touch with us!</h1>
+            <p>Fill out the form below and we'll get back to you as soon as possible.</p>
+          </div>
+          
           {formSubmitted ? (
-            <IonCard className="success-card ghost-float">
-              <IonCardContent className="success-content">
-                <IonIcon icon={checkmarkCircleOutline} className="success-icon" />
+            <IonCard className="contact-success-card">
+              <div className="contact-success-glow"></div>
+              <IonCardContent className="contact-success-content">
+                <IonIcon icon={checkmarkCircleOutline} className="contact-success-icon" />
                 <h2>Thank You!</h2>
-                <p>Your ticket has been submitted successfully. Our team will get back to you soon.</p>
-                <IonButton expand="block" onClick={() => setFormSubmitted(false)}>Submit Another Ticket</IonButton>
+                <p>Your message has been sent successfully. Our team will get back to you soon.</p>
+                <IonButton 
+                  expand="block" 
+                  className="contact-new-message-btn"
+                  onClick={() => setFormSubmitted(false)}
+                >
+                  Send Another Message
+                </IonButton>
               </IonCardContent>
             </IonCard>
           ) : (
-            <IonCard className="contact-form-card ghost-float">
-              <IonCardHeader>
-                <IonCardTitle>Submit a Support Ticket</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <form onSubmit={handleSubmit}>
-                  <IonItem className={formErrors.name ? 'ion-invalid' : ''}>
-                    <IonLabel position="floating">Name</IonLabel>
-                    <IonInput 
-                      value={name} 
-                      onIonChange={e => setName(e.detail.value!)} 
-                      required
-                    />
-                    {formErrors.name && <div className="error-message">{formErrors.name}</div>}
-                  </IonItem>
-                  
-                  <IonItem className={formErrors.email ? 'ion-invalid' : ''}>
-                    <IonLabel position="floating">Email</IonLabel>
-                    <IonInput 
-                      type="email" 
-                      value={email} 
-                      onIonChange={e => setEmail(e.detail.value!)} 
-                      required
-                    />
-                    {formErrors.email && <div className="error-message">{formErrors.email}</div>}
-                  </IonItem>
-                  
-                  <IonItem>
-                    <IonLabel position="floating">Category</IonLabel>
-                    <IonSelect value={category} onIonChange={e => setCategory(e.detail.value)}>
-                      <IonSelectOption value="general">General Inquiry</IonSelectOption>
-                      <IonSelectOption value="bug">Bug Report</IonSelectOption>
-                      <IonSelectOption value="feature">Feature Request</IonSelectOption>
-                      <IonSelectOption value="account">Account Issues</IonSelectOption>
-                      <IonSelectOption value="other">Other</IonSelectOption>
-                    </IonSelect>
-                  </IonItem>
-                  
-                  <IonItem className={formErrors.subject ? 'ion-invalid' : ''}>
-                    <IonLabel position="floating">Subject</IonLabel>
-                    <IonInput 
-                      value={subject} 
-                      onIonChange={e => setSubject(e.detail.value!)} 
-                      required
-                    />
-                    {formErrors.subject && <div className="error-message">{formErrors.subject}</div>}
-                  </IonItem>
-                  
-                  <IonItem className={formErrors.message ? 'ion-invalid' : ''}>
-                    <IonLabel position="floating">Message</IonLabel>
-                    <IonTextarea 
-                      value={message} 
-                      onIonChange={e => setMessage(e.detail.value!)} 
-                      rows={6}
-                      required
-                    />
-                    {formErrors.message && <div className="error-message">{formErrors.message}</div>}
-                  </IonItem>
-                  
-                  <IonButton 
-                    expand="block" 
-                    type="submit" 
-                    className="submit-button"
-                  >
-                    <IonIcon slot="start" icon={paperPlaneOutline} />
-                    Submit Ticket
-                  </IonButton>
-                </form>
-              </IonCardContent>
-            </IonCard>
+            <div className="contact-form-wrapper">
+              <IonCard className="contact-form-card">
+                <IonCardHeader>
+                  <IonCardTitle>Get in Touch</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <form onSubmit={handleSubmit} className="contact-form">
+                    <div className="contact-form-row">
+                      <IonItem className={`contact-form-item ${formErrors.name ? 'contact-item-error' : ''}`}>
+                        <IonInput 
+                          value={name} 
+                          onIonChange={e => setName(e.detail.value!)} 
+                          placeholder="Your Ghostly Name"
+                        />
+                      </IonItem>
+                      {formErrors.name && <div className="contact-error-message">{formErrors.name}</div>}
+                    </div>
+                    
+                    <div className="contact-form-row">
+                      <IonItem className={`contact-form-item ${formErrors.email ? 'contact-item-error' : ''}`}>
+                        <IonInput 
+                          type="email" 
+                          value={email} 
+                          onIonChange={e => setEmail(e.detail.value!)} 
+                          placeholder="youremail@example.com"
+                        />
+                      </IonItem>
+                      {formErrors.email && <div className="contact-error-message">{formErrors.email}</div>}
+                    </div>
+                    
+                    <div className="contact-form-row">
+                      <IonItem className="contact-form-item">
+                        <IonSelect value={category} onIonChange={e => setCategory(e.detail.value)} placeholder='Choose One'>
+                          <IonSelectOption value="general">General Inquiry</IonSelectOption>
+                          <IonSelectOption value="bug">Bug Report</IonSelectOption>
+                          <IonSelectOption value="feature">Feature Request</IonSelectOption>
+                          <IonSelectOption value="account">Account Issues</IonSelectOption>
+                          <IonSelectOption value="other">Other (specify in Message)</IonSelectOption>
+                        </IonSelect>
+                      </IonItem>
+                    </div>
+                    
+                    <div className="contact-form-row">
+                      <IonItem className={`contact-form-item ${formErrors.subject ? 'contact-item-error' : ''}`}>
+                        <IonInput 
+                          value={subject} 
+                          onIonChange={e => setSubject(e.detail.value!)} 
+                          placeholder="Subject of Your Message"
+                        />
+                      </IonItem>
+                      {formErrors.subject && <div className="contact-error-message">{formErrors.subject}</div>}
+                    </div>
+                    
+                    <div className="contact-form-row">
+                      <IonItem className={`contact-form-item ${formErrors.message ? 'contact-item-error' : ''}`}>
+                        <IonTextarea 
+                          value={message} 
+                          onIonChange={e => setMessage(e.detail.value!)} 
+                          rows={6}
+                          autoGrow={true}
+                          placeholder="Write your message here..."
+                        />
+                      </IonItem>
+                      {formErrors.message && <div className="contact-error-message">{formErrors.message}</div>}
+                    </div>
+
+                    <div className="contact-form-row">
+                      <IonItem className={`contact-form-item ${formErrors.attachment ? 'contact-item-error' : ''}`}>
+                      <input
+                        type="file"
+                        id="attachment"
+                        className="contact-file-input"
+                        onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && file.size > 5 * 1024 * 1024) {
+                          setFormErrors({...formErrors, attachment: 'File size must be under 5MB'});
+                        } else if (file) {
+                          setFormErrors({...formErrors, attachment: ''});
+                          // Handle file storage in your state as needed
+                        }
+                        }}
+                      />
+                      <IonLabel position="stacked">Attachment (optional, max 5MB)</IonLabel>
+                      </IonItem>
+                      {formErrors.attachment && <div className="contact-error-message">{formErrors.attachment}</div>}
+                    </div>
+                    
+                    <IonButton 
+                      expand="block" 
+                      type="submit" 
+                      className="contact-submit-button"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="contact-submitting">Sending message...</span>
+                      ) : (
+                        <>
+                          <IonIcon slot="start" icon={paperPlaneOutline} />
+                          Send Message
+                        </>
+                      )}
+                    </IonButton>
+                  </form>
+                </IonCardContent>
+              </IonCard>
+
+              <IonCard className="contact-info-card">
+                <IonCardHeader>
+                  <IonCardTitle>Other Ways to Reach Us</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <IonList lines="none" className="contact-info-list">
+                    <IonItem href="mailto:support@ghosttalk.me" className="contact-info-item">
+                      <IonIcon icon={mailOutline} slot="start" className="contact-info-icon" />
+                      <IonLabel>
+                        <h2>Email Support</h2>
+                        <p>support@ghosttalk.me</p>
+                      </IonLabel>
+                    </IonItem>
+                    
+                    <IonItem href="https://github.com/Lusan-sapkota/GhostTalk" target="_blank" className="contact-info-item">
+                      <IonIcon icon={logoGithub} slot="start" className="contact-info-icon" />
+                      <IonLabel>
+                        <h2>GitHub Repository</h2>
+                        <p>Report issues or contribute</p>
+                      </IonLabel>
+                    </IonItem>
+                  </IonList>
+                </IonCardContent>
+              </IonCard>
+            </div>
           )}
-          
-          <IonCard className="contact-info-card ghost-float">
-            <IonCardHeader>
-              <IonCardTitle>Other Ways to Contact Us</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonList lines="none">
-                <IonListHeader>Direct Contact</IonListHeader>
-                <IonItem href="mailto:support@ghosttalk.app" className="contact-item">
-                  <IonIcon icon={mailOutline} slot="start" color="primary" />
-                  <IonLabel>
-                    <h2>Email Support</h2>
-                    <p>support@ghosttalk.app</p>
-                  </IonLabel>
-                </IonItem>
-                
-                <IonListHeader>Development</IonListHeader>
-                <IonItem href="https://github.com/yourusername/ghosttalk" target="_blank" className="contact-item">
-                  <IonIcon icon={logoGithub} slot="start" color="dark" />
-                  <IonLabel>
-                    <h2>GitHub Repository</h2>
-                    <p>Report issues or contribute to GhostTalk</p>
-                  </IonLabel>
-                </IonItem>
-              </IonList>
-            </IonCardContent>
-          </IonCard>
         </div>
         
         <IonToast
@@ -218,8 +280,16 @@ const ContactPage: React.FC = () => {
           message={toastMessage}
           duration={3000}
           color={toastColor}
+          position="top"
+          className="contact-toast"
         />
       </IonContent>
+      
+      <IonFooter className="contact-footer">
+        <div className="contact-footer-content">
+          <p>GhostTalk © {new Date().getFullYear()} - We're here to help</p>
+        </div>
+      </IonFooter>
     </IonPage>
   );
 };

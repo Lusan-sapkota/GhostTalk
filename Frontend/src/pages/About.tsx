@@ -366,8 +366,8 @@ const About: React.FC = () => {
                   <IonIcon icon={mail} className="contact-big-icon" />
                   <h3>Email Us</h3>
                   <p>Have questions or suggestions? We'd love to hear from you!</p>
-                  <IonButton expand="block" fill="outline" href="mailto:support@ghosttalk.com">
-                    support@ghosttalk.com
+                  <IonButton expand="block" fill="outline" href="mailto:support@ghosttalk.me">
+                    support@ghosttalk.me
                   </IonButton>
                 </IonCardContent>
               </IonCard>

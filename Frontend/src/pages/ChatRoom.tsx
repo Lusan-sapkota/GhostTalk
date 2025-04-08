@@ -6,21 +6,15 @@ import {
   IonLabel,
   IonList,
   IonItem,
-  IonBadge,
-  IonFab,
-  IonFabButton,
+  IonIcon,
+  IonButton,
   IonModal,
   IonInput,
   IonTextarea,
   IonSelect,
   IonSelectOption,
   IonToggle,
-  IonIcon,
-  IonButton,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons
+  IonSearchbar
 } from '@ionic/react';
 import { 
   chatbubble, 
@@ -28,17 +22,19 @@ import {
   add, 
   lockClosed,
   globe,
+  search,
+  personAdd
 } from 'ionicons/icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import './ChatRoom.css';
 import { themeService } from '../services/ThemeService';
 import LoginPrompt from '../components/LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api.service';
+import BackHeaderComponent from '../components/BackHeaderComponent';
 import HeaderComponent from '../components/HeaderComponent';
 
-// Interface definitions remain unchanged
 interface Room {
   id: string;
   name: string;
@@ -56,14 +52,23 @@ const ChatRoom: React.FC = () => {
   const history = useHistory();
   const { currentUser, isAuthenticated } = useAuth();
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
-  const [segment, setSegment] = useState<'public' | 'private'>('public');
+  const [activeSegment, setActiveSegment] = useState<'public' | 'private'>('public');
   const [searchText, setSearchText] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPublicRoomModal, setShowPublicRoomModal] = useState(false);
+  const [showPrivateRoomModal, setShowPrivateRoomModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState<boolean>(false);
-  const [createRoomData, setCreateRoomData] = useState({
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
+  const [publicRoomData, setPublicRoomData] = useState({
     name: '',
     description: '',
-    isPrivate: false,
+    requireLogin: false,
+    chatType: 'discussion'
+  });
+
+  const [privateRoomData, setPrivateRoomData] = useState({
+    name: '',
+    description: '',
     requireLogin: true,
     chatType: 'discussion'
   });
@@ -76,18 +81,16 @@ const ChatRoom: React.FC = () => {
     return cleanup;
   }, []);
 
-  // Handle segment change - show login prompt or modal when switching to private
+  // Handle segment change
   const handleSegmentChange = (value: 'public' | 'private') => {
-    setSegment(value);
-    
-    // If switching to private segment, check authentication
-    if (value === 'private') {
-      if (!isAuthenticated) {
-        setShowLoginPrompt(true);
-      }
+    if (value === 'private' && !isAuthenticated) {
+      setShowLoginPrompt(true);
+    } else {
+      setActiveSegment(value);
     }
   };
 
+  // Handle room click
   const handleRoomClick = (room: Room) => {
     if (room.isPrivate && !isAuthenticated) {
       setShowLoginPrompt(true);
@@ -95,46 +98,29 @@ const ChatRoom: React.FC = () => {
     }
     history.push(`/chat-room/${room.id}`);
   };
-  
-  // Reset form data when opening modal
-  const openCreateModal = (initialPrivate = false) => {
-    if (!isAuthenticated) {
-      setShowLoginPrompt(true);
-      return;
-    }
 
-    // Reset form data
-    setCreateRoomData({
-      name: '',
-      description: '',
-      isPrivate: initialPrivate,
-      requireLogin: true,
-      chatType: 'discussion'
-    });
-    
-    setIsModalOpen(true);
-  };
-
-  const handleCreateRoom = async () => {
-    if (!isAuthenticated) {
-      setShowLoginPrompt(true);
-      return;
-    }
-
+  // Handle public room creation
+  const handleCreatePublicRoom = async () => {
     try {
-      // Use our API service instead of direct Appwrite calls
       const response = await apiService.createRoom(
-        createRoomData.name,
-        createRoomData.description,
-        createRoomData.isPrivate,
-        createRoomData.requireLogin,
-        createRoomData.chatType
+        publicRoomData.name,
+        publicRoomData.description,
+        false, // not private
+        publicRoomData.requireLogin,
+        publicRoomData.chatType
       );
 
       if (response.success) {
-        setIsModalOpen(false);
-        // In a real app, we would refresh the list of rooms here
-        alert('Room created successfully!');
+        setShowPublicRoomModal(false);
+        // Reset form
+        setPublicRoomData({
+          name: '',
+          description: '',
+          requireLogin: false,
+          chatType: 'discussion'
+        });
+        // Success message or notification could be added here
+        alert('Public room created successfully!');
       } else {
         alert(`Failed to create room: ${response.message}`);
       }
@@ -144,26 +130,39 @@ const ChatRoom: React.FC = () => {
     }
   };
 
-  const handleInputChange = (e: any) => {
-    const { name, value, checked } = e.target;
-    
-    // Handle toggle inputs differently
-    if (name === 'isPrivate' || name === 'requireLogin') {
-      setCreateRoomData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setCreateRoomData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+  // Handle private room creation
+  const handleCreatePrivateRoom = async () => {
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
     }
-  };
 
-  const handleSearchChange = (value: string) => {
-    setSearchText(value);
-    // Filter results will happen automatically through filteredRooms
+    try {
+      const response = await apiService.createRoom(
+        privateRoomData.name,
+        privateRoomData.description,
+        true, // private
+        privateRoomData.requireLogin,
+        privateRoomData.chatType
+      );
+
+      if (response.success) {
+        setShowPrivateRoomModal(false);
+        // Reset form
+        setPrivateRoomData({
+          name: '',
+          description: '',
+          requireLogin: true,
+          chatType: 'discussion'
+        });
+        alert('Private room created successfully!');
+      } else {
+        alert(`Failed to create room: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      alert('Failed to create room due to a network error.');
+    }
   };
 
   // Sample rooms data
@@ -215,26 +214,50 @@ const ChatRoom: React.FC = () => {
     }
   ];
 
-  // Filter rooms based on search and segment
+  // Filter rooms based on segment and search
   const filteredRooms = roomsData
-    .filter(room => room.isPrivate === (segment === 'private'))
+    .filter(room => room.isPrivate === (activeSegment === 'private'))
     .filter(room => 
       searchText ? 
-        room.name.toLowerCase().includes(searchText.toLowerCase()) : 
+        room.name.toLowerCase().includes(searchText.toLowerCase()) || 
+        room.description.toLowerCase().includes(searchText.toLowerCase()) : 
         true
     );
 
+  // Handle search functionality
+  const handleSearchChange = (value: string): void => {
+    setIsSearchActive(!!value);
+    setSearchText(value);
+  };
+
   return (
-    <IonPage className="ghost-appear">
+    <IonPage className="chat-room-page">
       <HeaderComponent 
         title="Chat Rooms" 
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Search rooms..."
+        onSearchChange={handleSearchChange} 
+        searchPlaceholder="Search for rooms..."
       />
       
-      <IonContent fullscreen>
-        <div className="segment-container ghost-appear">
-          <IonSegment value={segment} onIonChange={e => handleSegmentChange(e.detail.value as 'public' | 'private')}>
+      <IonContent className="ion-padding-horizontal">
+        {isSearchActive && (
+          <div className="search-container">
+            <IonSearchbar
+              value={searchText}
+              onIonChange={e => setSearchText(e.detail.value!)}
+              placeholder="Search rooms..."
+              showCancelButton="always"
+              onIonCancel={() => {
+                setIsSearchActive(false);
+                setSearchText('');
+              }}
+              animated
+            />
+          </div>
+        )}
+
+        {/* Room Type Segment */}
+        <div className="segment-container">
+          <IonSegment value={activeSegment} onIonChange={e => handleSegmentChange(e.detail.value as 'public' | 'private')}>
             <IonSegmentButton value="public">
               <IonLabel>Public Rooms</IonLabel>
             </IonSegmentButton>
@@ -244,157 +267,335 @@ const ChatRoom: React.FC = () => {
           </IonSegment>
         </div>
 
+        {/* Create Room Button */}
+        <div className="create-button-container">
+          {activeSegment === 'public' ? (
+            <IonButton 
+              expand="block"
+              onClick={() => setShowPublicRoomModal(true)}
+              className="create-room-btn public"
+            >
+              <IonIcon slot="start" icon={add} />
+              Create Public Room
+            </IonButton>
+          ) : (
+            <IonButton 
+              expand="block"
+              onClick={() => isAuthenticated ? setShowPrivateRoomModal(true) : setShowLoginPrompt(true)}
+              className="create-room-btn private"
+            >
+              <IonIcon slot="start" icon={add} />
+              Create Private Room
+            </IonButton>
+          )}
+        </div>
+
+        {/* Room List */}
         {filteredRooms.length > 0 ? (
           <IonList className="room-list">
-            {filteredRooms.map((room, index) => (
+            {filteredRooms.map((room) => (
               <IonItem 
                 key={room.id} 
-                className="room-item staggered-item ghost-shadow" 
+                className={`room-item ${room.isPrivate ? 'private' : 'public'}`}
                 onClick={() => handleRoomClick(room)}
                 lines="none"
+                detail={false}
               >
                 <div className="room-content">
                   <div className="room-header">
-                    <h2>{room.name}</h2>
-                    {room.isPrivate && <IonIcon icon={lockClosed} color="medium" />}
+                    <h2 className="room-name">{room.name}</h2>
+                    {room.isPrivate && (
+                      <div className="room-status private">
+                        <IonIcon icon={lockClosed} />
+                        <span>Private</span>
+                      </div>
+                    )}
+                    {!room.isPrivate && (
+                      <div className="room-status public">
+                        <IonIcon icon={globe} />
+                        <span>Public</span>
+                      </div>
+                    )}
                   </div>
+                  
                   <p className="room-description">{room.description}</p>
-                  {room.lastMessage && <p className="room-last-message">{room.lastMessage}</p>}
-                  <div className="room-meta">
-                    <span className="member-count">
-                      <IonIcon icon={people} /> {room.members} members
-                    </span>
+                  
+                  {room.lastMessage && (
+                    <div className="room-message">
+                      <IonIcon icon={chatbubble} size="small" />
+                      <p>{room.lastMessage}</p>
+                    </div>
+                  )}
+                  
+                  <div className="room-footer">
+                    <div className="member-count">
+                      <IonIcon icon={people} />
+                      <span>{room.members} members</span>
+                    </div>
+                    <IonButton fill="clear" size="small" className="join-btn">
+                      Join
+                    </IonButton>
                   </div>
                 </div>
               </IonItem>
             ))}
           </IonList>
         ) : (
-          <div className="no-rooms-container ghost-appear">
+          <div className="empty-state">
             <IonIcon icon={chatbubble} />
-            <h4>No rooms found</h4>
-            <p>{segment === 'public' ? 'Create a new public room!' : 'Create a new private room!'}</p>
-            <IonButton 
-              className="create-first-room ghost-float"
-              onClick={() => openCreateModal(segment === 'private')}
-            >
-              <IonIcon slot="start" icon={add} />
-              Create Room
-            </IonButton>
+            <h3>No {activeSegment} rooms found</h3>
+            <p>
+              {activeSegment === 'public' 
+                ? 'Create a public room for everyone to join!' 
+                : 'Create a private room to chat securely with selected members.'}
+            </p>
           </div>
         )}
-
-        {/* FAB for creating new rooms */}
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton 
-            onClick={() => openCreateModal(segment === 'private')}
-            className="ghost-shadow"
-          >
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
-
-        {/* Create Room Modal */}
-        <IonModal isOpen={isModalOpen} onDidDismiss={() => setIsModalOpen(false)}>
-          <IonHeader>
-            <IonToolbar color="primary">
-              <IonTitle>Create New Room</IonTitle>
-              <IonButtons slot="end">
-                <IonButton onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </IonButton>
-              </IonButtons>
-            </IonToolbar>
-          </IonHeader>
-          
-          <IonContent className="ion-padding">
-            <div className="create-room-form">
-              <IonItem>
-                <IonLabel position="floating">Room Name*</IonLabel>
-                <IonInput 
-                  name="name"
-                  value={createRoomData.name} 
-                  onIonChange={handleInputChange}
-                  placeholder="Enter a name for your room"
-                  required
-                />
-              </IonItem>
-
-              <IonItem>
-                <IonLabel position="floating">Description</IonLabel>
-                <IonTextarea 
-                  name="description"
-                  value={createRoomData.description} 
-                  onIonChange={handleInputChange}
-                  rows={3}
-                  placeholder="What is this room about?"
-                />
-              </IonItem>
-
-              <IonItem className="privacy-toggle">
-                <IonLabel>Private Room</IonLabel>
-                <IonToggle 
-                  name="isPrivate"
-                  checked={createRoomData.isPrivate} 
-                  onIonChange={handleInputChange}
-                />
-              </IonItem>
-
-              <IonItem className="login-toggle">
-                <IonLabel>Require Login</IonLabel>
-                <IonToggle 
-                  name="requireLogin"
-                  checked={createRoomData.requireLogin} 
-                  onIonChange={handleInputChange}
-                />
-              </IonItem>
-
-              <IonItem>
-                <IonLabel>Chat Type</IonLabel>
-                <IonSelect 
-                  name="chatType"
-                  value={createRoomData.chatType} 
-                  onIonChange={handleInputChange}
-                >
-                  <IonSelectOption value="discussion">Discussion (Everyone can post)</IonSelectOption>
-                  <IonSelectOption value="notice">Notice (Only admins can post)</IonSelectOption>
-                </IonSelect>
-              </IonItem>
-
-              <div className="room-privacy-info">
-                {createRoomData.isPrivate ? (
-                  <p className="privacy-note">
-                    <IonIcon icon={lockClosed} />
-                    Private rooms are only visible to invited members
-                  </p>
-                ) : (
-                  <p className="privacy-note">
-                    <IonIcon icon={globe} />
-                    Public rooms are visible to everyone
-                  </p>
-                )}
+      </IonContent>
+      
+      {/* Public Room Creation Modal */}
+      <IonModal 
+        isOpen={showPublicRoomModal} 
+        onDidDismiss={() => setShowPublicRoomModal(false)}
+        className="ghost-create-room-modal public-room-modal"
+        backdropDismiss={false}
+      >
+        <BackHeaderComponent 
+          title="Create Public Room" 
+          onBack={() => setShowPublicRoomModal(false)} 
+          isModal={true}
+        />
+        
+        <IonContent className="ion-padding">
+          <div className="create-room-container">
+            <div className="gradient-blob public-blob"></div>
+            
+            <div className="modal-icon-wrapper public">
+              <div className="modal-icon-outer public-glow">
+                <div className="modal-icon public">
+                  <IonIcon icon={globe} />
+                </div>
+              </div>
+            </div>
+            
+            <h3 className="modal-title">New Public Room</h3>
+            
+            <p className="modal-description">
+              Create a public room that anyone can join and participate in discussions.
+            </p>
+            
+            <div className="form-container">
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Room Name*</h4>
+                </div>
+                <IonItem className="form-item animated-input">
+                  <IonInput 
+                    value={publicRoomData.name} 
+                    onIonChange={e => setPublicRoomData({...publicRoomData, name: e.detail.value || ''})}
+                  />
+                </IonItem>
               </div>
 
-              <IonButton 
-                expand="block" 
-                className="create-room-button ghost-shadow"
-                onClick={handleCreateRoom}
-                disabled={!createRoomData.name.trim()}
-              >
-                Create Room
-              </IonButton>
-            </div>
-          </IonContent>
-        </IonModal>
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Description</h4>
+                </div>
+                <IonItem className="form-item textarea animated-input">
+                  <IonTextarea 
+                    value={publicRoomData.description} 
+                    onIonChange={e => setPublicRoomData({...publicRoomData, description: e.detail.value || ''})}
+                    rows={3}
+                  />
+                </IonItem>
+              </div>
 
-        <LoginPrompt 
-          isOpen={showLoginPrompt}
-          onClose={() => setShowLoginPrompt(false)}
-          message={segment === 'private' ? 
-            "You need to be logged in to access private rooms." : 
-            "You need to be logged in to create a room."}
+              <div className="form-field toggle-field">
+                <div className="toggle-label">
+                  <h4>Require Login</h4>
+                  <p className="field-hint">When enabled, users must be logged in to access this room</p>
+                </div>
+                <IonToggle 
+                  checked={publicRoomData.requireLogin} 
+                  onIonChange={e => setPublicRoomData({...publicRoomData, requireLogin: e.detail.checked})}
+                  className="custom-toggle"
+                />
+              </div>
+
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Chat Type</h4>
+                </div>
+                <IonItem className="form-item select-item animated-input">
+                  <IonSelect 
+                    value={publicRoomData.chatType} 
+                    onIonChange={e => setPublicRoomData({...publicRoomData, chatType: e.detail.value})}
+                    interface="popover"
+                  >
+                    <IonSelectOption value="discussion">Discussion (Everyone can post)</IonSelectOption>
+                    <IonSelectOption value="notice">Notice (Only admins can post)</IonSelectOption>
+                  </IonSelect>
+                </IonItem>
+              </div>
+            </div>
+            
+            <div className="note-box public">
+              <div className="note-icon">
+                <IonIcon icon={globe} />
+              </div>
+              <div className="note-content">
+                <h5>Public Visibility</h5>
+                <p>This room will be listed in public directories and visible to all users</p>
+              </div>
+            </div>
+            
+            <IonButton 
+              expand="block" 
+              onClick={handleCreatePublicRoom}
+              disabled={!publicRoomData.name.trim()}
+              className="create-button public-button"
+            >
+              <div className="button-content">
+                <span>Create Public Room</span>
+                <IonIcon icon={add} />
+              </div>
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      {/* Private Room Creation Modal */}
+      <IonModal 
+        isOpen={showPrivateRoomModal} 
+        onDidDismiss={() => setShowPrivateRoomModal(false)}
+        className="ghost-create-room-modal private-room-modal"
+        backdropDismiss={false}
+      >
+        <BackHeaderComponent 
+          title="Create Private Room" 
+          onBack={() => setShowPrivateRoomModal(false)} 
+          isModal={true}
         />
-      </IonContent>
+        
+        <IonContent className="ion-padding">
+          <div className="create-room-container">
+            <div className="gradient-blob private-blob"></div>
+            
+            <div className="modal-icon-wrapper private">
+              <div className="modal-icon-outer private-glow">
+                <div className="modal-icon private">
+                  <IonIcon icon={lockClosed} />
+                </div>
+              </div>
+            </div>
+            
+            <h3 className="modal-title">New Private Room</h3>
+            
+            <p className="modal-description">
+              Create a private room that only invited members can join.
+            </p>
+            
+            <div className="form-container">
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Room Name*</h4>
+                </div>
+                <IonItem className="form-item animated-input">
+                  <IonInput 
+                    value={privateRoomData.name} 
+                    onIonChange={e => setPrivateRoomData({...privateRoomData, name: e.detail.value || ''})}
+                    placeholder="Enter a name for your room"
+                  />
+                </IonItem>
+              </div>
+
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Description</h4>
+                </div>
+                <IonItem className="form-item textarea animated-input">
+                  <IonTextarea 
+                    value={privateRoomData.description} 
+                    onIonChange={e => setPrivateRoomData({...privateRoomData, description: e.detail.value || ''})}
+                    rows={3}
+                    placeholder="What is this room about?"
+                  />
+                </IonItem>
+              </div>
+
+              <div className="form-field toggle-field">
+                <div className="toggle-label">
+                  <h4>Require Login</h4>
+                  <p className="field-hint">When enabled, users must be logged in to access this room</p>
+                </div>
+                <IonToggle 
+                  checked={privateRoomData.requireLogin}
+                  onIonChange={e => setPrivateRoomData({...privateRoomData, requireLogin: e.detail.checked})}
+                  className="custom-toggle"
+                />
+              </div>
+
+              <div className="form-field">
+                <div className="field-header">
+                  <h4>Chat Type</h4>
+                </div>
+                <IonItem className="form-item select-item animated-input">
+                  <IonSelect 
+                    value={privateRoomData.chatType} 
+                    onIonChange={e => setPrivateRoomData({...privateRoomData, chatType: e.detail.value})}
+                    interface="popover"
+                  >
+                    <IonSelectOption value="discussion">Discussion (Everyone can post)</IonSelectOption>
+                    <IonSelectOption value="notice">Notice (Only admins can post)</IonSelectOption>
+                  </IonSelect>
+                </IonItem>
+              </div>
+            </div>
+            
+            <div className="invite-section">
+              <div className="invite-header">
+                <div className="invite-icon">
+                  <IonIcon icon={personAdd} />
+                </div>
+                <h5>Invite Members</h5>
+              </div>
+              <p className="invite-text">You can invite members after creating the room</p>
+            </div>
+            
+            <div className="note-box private">
+              <div className="note-icon">
+                <IonIcon icon={lockClosed} />
+              </div>
+              <div className="note-content">
+                <h5>Private Access</h5>
+                <p>This room will only be visible to invited members</p>
+              </div>
+            </div>
+            
+            <IonButton 
+              expand="block" 
+              onClick={handleCreatePrivateRoom}
+              disabled={!privateRoomData.name.trim()}
+              className="create-button private-button"
+            >
+              <div className="button-content">
+                <span>Create Private Room</span>
+                <IonIcon icon={add} />
+              </div>
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonModal>
+
+      {/* Login Prompt - moved outside IonContent */}
+      <LoginPrompt 
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        message={activeSegment === 'private' ? 
+          "You need to be logged in to create a room." : 
+          "You need to be logged in to access private rooms."}
+        onExplorePublic={() => setActiveSegment('public')}
+      />
     </IonPage>
   );
 };

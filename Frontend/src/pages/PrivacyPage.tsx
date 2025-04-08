@@ -61,7 +61,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">📋</span> Privacy at a Glance
+                  <span className="section-icon-privacy-privacy">📋</span> Privacy at a Glance
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -123,7 +123,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">📊</span> Information We Collect
+                  <span className="section-icon-privacy">📊</span> Information We Collect
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -181,7 +181,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">🔍</span> How We Use Your Information
+                  <span className="section-icon-privacy">🔍</span> How We Use Your Information
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -233,7 +233,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">🛡️</span> Data Security & Retention
+                  <span className="section-icon-privacy">🛡️</span> Data Security & Retention
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -297,7 +297,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">🔄</span> Third Parties & Data Sharing
+                  <span className="section-icon-privacy">🔄</span> Third Parties & Data Sharing
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -348,7 +348,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">⚖️</span> Your Rights & Choices
+                  <span className="section-icon-privacy">⚖️</span> Your Rights & Choices
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -399,7 +399,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">👪</span> Children's Privacy
+                  <span className="section-icon-privacy">👪</span> Children's Privacy
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -410,7 +410,7 @@ const PrivacyPage: React.FC = () => {
                 </p>
                 <p>
                   If you are a parent or guardian and believe your child has provided us with personal 
-                  information without your consent, please contact us at privacy@ghosttalk.com.
+                  information without your consent, please contact us at privacy@ghosttalk.me.
                 </p>
               </IonCardContent>
             </IonCard>
@@ -420,7 +420,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">🔄</span> Changes to This Privacy Policy
+                  <span className="section-icon-privacy">🔄</span> Changes to This Privacy Policy
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -441,7 +441,7 @@ const PrivacyPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">✉️</span> Contact Us
+                  <span className="section-icon-privacy">✉️</span> Contact Us
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -451,12 +451,12 @@ const PrivacyPage: React.FC = () => {
                 <div className="contact-method">
                   <IonIcon icon={mailOutline} />
                   <div>
-                    <strong>Email:</strong> privacy@ghosttalk.com
+                    <strong>Email:</strong> support@ghosttalk.me
                   </div>
                 </div>
-                <IonButton expand="block" href="mailto:privacy@ghosttalk.com" className="contact-button">
+                <IonButton expand="block" href="/support" className="contact-button">
                   <IonIcon icon={mailOutline} slot="start" />
-                  Contact Privacy Team
+                  Contact Us
                 </IonButton>
               </IonCardContent>
             </IonCard>

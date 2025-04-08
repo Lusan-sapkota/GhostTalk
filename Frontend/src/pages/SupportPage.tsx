@@ -40,8 +40,8 @@ const SupportPage: React.FC = () => {
                 <p>
                   Reach out to our support team for personalized assistance with any issues you're experiencing.
                 </p>
-                <IonButton expand="block" href="mailto:support@ghosttalk.com">
-                  Email Support
+                <IonButton expand="block" href="/contact">
+                  Contact us 
                   <IonIcon slot="end" icon={arrowForward} />
                 </IonButton>
               </IonCardContent>

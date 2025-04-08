@@ -176,7 +176,8 @@ h1 {
   padding: 16px;
   margin: 24px 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
@@ -229,7 +230,7 @@ h1 {
 }
 
 .accordion-content {
-  background-color: white;
+  background-color: var(--ion-color-light);
   padding: 16px 24px 24px;
 }
 

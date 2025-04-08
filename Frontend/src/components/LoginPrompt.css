@@ -1,43 +1,198 @@
-.login-prompt-modal {
-  --height: auto;
-  --width: 90%;
-  --max-width: 400px;
-  --border-radius: 16px;
-  --backdrop-opacity: 0.6;
-}
-
 .login-prompt-container {
-  padding: 30px 20px;
+  padding: 28px 20px 40px;
   text-align: center;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
 }
 
-.login-prompt-icon {
-  margin: 0 auto 20px;
-  width: 70px;
-  height: 70px;
+/* Blob background */
+.login-prompt-blob {
+  position: absolute;
+  top: -70px;
+  left: -100px;
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.1), rgba(var(--ion-color-secondary-rgb), 0.1));
   border-radius: 50%;
-  background-color: var(--ion-color-primary);
+  filter: blur(40px);
+  z-index: -1;
+}
+
+/* Animated icon */
+.login-prompt-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.login-prompt-icon-outer {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.2) 0%, transparent 70%);
   display: flex;
   justify-content: center;
   align-items: center;
+  box-shadow: 0 0 32px rgba(var(--ion-color-primary-rgb), 0.3);
 }
 
-.login-prompt-icon ion-icon {
+.login-prompt-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
   color: white;
-  font-size: 35px;
+  font-size: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.5);
+  animation: iconGlow 2s infinite alternate;
 }
 
-.login-prompt-container h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
+/* Text styling */
+.login-prompt-title {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+  animation: slide-up 0.5s ease-out forwards;
 }
 
-.login-prompt-container p {
-  margin-bottom: 25px;
-  font-size: 1.1rem;
+.login-prompt-message {
+  margin: 0 auto 28px;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.7);
+  max-width: 280px;
+  line-height: 1.5;
+  animation: slide-up 0.5s 0.1s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.login-prompt-secondary {
-  margin-top: 20px;
-  opacity: 0.7;
+/* Button styling */
+.login-prompt-buttons {
+  animation: fade-in 0.5s 0.2s ease-out forwards;
+  opacity: 0;
+}
+
+.login-btn {
+  background: var(--ion-color-primary);
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(var(--ion-color-primary-rgb), 0.2);
+  margin-bottom: 16px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.register-btn {
+  border-radius: 12px;
+  border: 2px solid var(--ion-color-primary);
+  color: var(--ion-color-primary);
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+/* Explore section styling */
+.explore-container {
+  margin-top: 32px;
+  animation: fade-in 0.5s 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.2);
+}
+
+.separator span {
+  padding: 0 16px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+}
+
+.explore-btn {
+  color: var(--ion-color-medium);
+  font-weight: 500;
+  height: 48px;
+  overflow: hidden;
+}
+
+/* Animations */
+@keyframes iconGlow {
+  from {
+    box-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.4);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(var(--ion-color-primary-rgb), 0.7);
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Dark mode tweaks */
+@media (prefers-color-scheme: dark) {
+  .login-prompt-title {
+    color: white;
+  }
+
+  .login-prompt-message {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .login-prompt-blob {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--ion-color-primary-rgb), 0.2),
+      rgba(var(--ion-color-secondary-rgb), 0.2)
+    );
+  }
+
+  /* .login-prompt-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+  } */
+}
+
+
+/* Clean scroll edge on modal */
+.ghost-login-modal .modal-wrapper {
+  overflow: hidden;
+  border-radius: 16px;
 }

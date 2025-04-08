@@ -1,3 +1,77 @@
+/* Fix headers */
+.back-header {
+  z-index: 10 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Fix for blobs that might block content */
+.gradient-blob,
+.login-prompt-blob {
+  opacity: 0.1 !important;
+}
+
+/* Fix content padding */
+.ion-padding {
+  z-index: 5;
+  position: relative;
+}
+
+/* Fix for button content */
+.button-content {
+  display: flex !important;
+  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+
+/* Make container visible */
+.create-room-container,
+.login-prompt-container {
+  overflow: visible !important;
+  z-index: 1;
+}
+
+/* Fix for icons and other content */
+.modal-icon-wrapper,
+.login-prompt-icon-container {
+  animation: none !important;
+}
+
+/* Fix for blobs that might block content */
+.gradient-blob,
+.login-prompt-blob {
+  opacity: 0.2;
+}
+
+/* Make sure header is always visible */
+.back-header {
+  z-index: 10;
+}
+
+/* Fix for content being hidden behind elements */
+.ion-padding {
+  z-index: 5;
+  position: relative;
+}
+
+/* Ensure buttons are clickable */
+.create-button .button-content,
+.submit-btn,
+.login-btn, 
+.register-btn,
+.explore-btn {
+  opacity: 1 !important;
+}
+
+/* Ensure form elements are visible */
+.animated-input {
+  z-index: 2;
+  position: relative;
+}
+
 .room-avatar {
   display: flex;
   justify-content: center;
@@ -87,16 +161,6 @@
   color: var(--ion-color-primary);
 }
 
-ion-badge {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px;
-  border-radius: 50%;
-  min-width: 24px;
-  min-height: 24px;
-}
-
 /* Dark mode adjustments */
 :root.dark .privacy-note {
   background-color: rgba(var(--ion-color-medium-rgb), 0.2);
@@ -108,4 +172,1027 @@ ion-badge {
 
 :root.dark .no-rooms-card {
   background-color: rgba(var(--ion-color-dark-rgb), 0.8);
+}
+
+/* Main Layout */
+.chatroom-page {
+  --background: var(--ion-background-color);
+}
+
+.chatroom-content {
+  --background: var(--ion-background-color);
+}
+
+
+
+/* Segment styling */
+.chatroom-segment-container {
+  padding: 16px;
+  background-color: transparent;
+}
+
+.chatroom-segment {
+  --background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  padding: 4px;
+}
+
+.chatroom-segment-button {
+  --border-radius: 10px;
+  --background-checked: var(--ion-color-primary);
+  --color-checked: white;
+  --indicator-color: transparent;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  transition: all 0.3s ease;
+}
+
+/* Create room buttons */
+.chatroom-create-buttons {
+  padding: 0 16px 16px;
+}
+
+.create-public-button {
+  --background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+  --color: white;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
+  height: 50px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.create-private-button {
+  --background: linear-gradient(135deg, var(--ion-color-warning), var(--ion-color-warning-shade));
+  --color: white;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(var(--ion-color-warning-rgb), 0.3);
+  height: 50px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Room list styling */
+.chatroom-list-container {
+  padding: 0 10px;
+}
+
+.chatroom-room-list {
+  background: transparent;
+  padding: 0;
+}
+
+.chatroom-room-item {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  --background: rgba(var(--ion-color-light-rgb), 0.7);
+  --background-hover: rgba(var(--ion-color-light-rgb), 0.9);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.chatroom-room-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.chatroom-room-content {
+  width: 100%;
+  padding: 8px 0;
+}
+
+.chatroom-room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chatroom-room-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.chatroom-room-badge {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ion-color-warning);
+  background: rgba(var(--ion-color-warning-rgb), 0.1);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.chatroom-room-badge ion-icon {
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.chatroom-room-description {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.chatroom-room-last-message {
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: var(--ion-color-dark);
+  font-style: italic;
+  padding-left: 8px;
+  border-left: 2px solid rgba(var(--ion-color-primary-rgb), 0.4);
+}
+
+.chatroom-room-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.chatroom-member-count {
+  display: flex;
+  align-items: center;
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+}
+
+.chatroom-member-count ion-icon {
+  margin-right: 4px;
+}
+
+.chatroom-join-button {
+  --color: var(--ion-color-primary);
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.08);
+  --background-activated: rgba(var(--ion-color-primary-rgb), 0.12);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Empty state */
+.chatroom-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.chatroom-empty-icon {
+  font-size: 5rem;
+  color: rgba(var(--ion-color-medium-rgb), 0.3);
+  margin-bottom: 16px;
+}
+
+.chatroom-empty-state h3 {
+  font-size: 1.4rem;
+  color: var(--ion-color-dark);
+  margin: 0 0 8px;
+}
+
+.chatroom-empty-state p {
+  color: var(--ion-color-medium);
+  margin: 0 0 24px;
+  max-width: 300px;
+}
+
+/* Modal styling */
+.chatroom-modal {
+  --height: auto;
+  --width: 90%;
+  --max-width: 500px;
+  --border-radius: 16px;
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+}
+
+.chatroom-modal-content {
+  padding: 16px 0;
+}
+
+.chatroom-modal-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.chatroom-modal-icon ion-icon {
+  font-size: 3.5rem;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  padding: 16px;
+  border-radius: 50%;
+}
+
+.chatroom-modal-description {
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--ion-color-medium);
+  font-size: 0.95rem;
+  padding: 0 16px;
+}
+
+.chatroom-form-group {
+  margin-bottom: 24px;
+}
+
+.chatroom-form-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --highlight-height: 2px;
+  margin-bottom: 16px;
+  --background: transparent;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+.chatroom-room-note {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  padding: 12px;
+  background-color: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.chatroom-room-note ion-icon {
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.chatroom-create-button {
+  --border-radius: 10px;
+  height: 52px;
+  font-weight: 600;
+  font-size: 16px;
+  --box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.3);
+  margin: 24px 0 0;
+}
+
+.chatroom-invite-section {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+  margin-top: 24px;
+}
+
+.chatroom-invite-header {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.chatroom-invite-header ion-icon {
+  margin-right: 8px;
+  color: var(--ion-color-primary);
+}
+
+.chatroom-invite-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .chatroom-segment {
+    --background: transparent;
+    box-shadow: none;
+  }
+  
+  .chatroom-room-item {
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .chatroom-list-container {
+    padding: 0 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .chatroom-create-buttons {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .chatroom-segment-container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+/* Additional CSS for LoginPrompt */
+.explore-public-btn {
+  --color: var(--ion-color-medium);
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+/* CHAT ROOM PAGE */
+.chat-room-page {
+  --background: var(--ion-background-color);
+}
+
+/* Search Container */
+.search-container {
+  margin: 10px 0;
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+ion-searchbar {
+  --background: var(--ion-color-light);
+  --border-radius: 10px;
+  --box-shadow: none;
+  --placeholder-color: var(--ion-color-medium);
+  --icon-color: var(--ion-color-medium);
+  padding: 0;
+}
+
+/* Segment Toggle */
+.segment-container {
+  margin: 20px 0;
+}
+
+ion-segment {
+  --background: var(--ion-color-light);
+  border-radius: 10px;
+}
+
+ion-segment-button {
+  --background-checked: var(--ion-color-primary);
+  --color-checked: white;
+  --indicator-color: transparent;
+  --border-radius: 8px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+/* Create Button */
+.create-button-container {
+  margin: 20px 0;
+}
+
+.create-room-btn {
+  --border-radius: 10px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.create-room-btn.public {
+  --background: var(--ion-color-primary);
+  --background-activated: var(--ion-color-primary-shade);
+  --box-shadow: 0 5px 15px rgba(var(--ion-color-primary-rgb), 0.4);
+}
+
+.create-room-btn.private {
+  --background: var(--ion-color-warning);
+  --background-activated: var(--ion-color-warning-shade);
+  --box-shadow: 0 5px 15px rgba(var(--ion-color-warning-rgb), 0.4);
+}
+
+/* Room List */
+.room-list {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.room-item {
+  --background: transparent;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.room-item.public {
+  --background: rgba(var(--ion-color-primary-rgb), 0.05);
+  box-shadow: 0 2px 10px rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.room-item.private {
+  --background: rgba(var(--ion-color-warning-rgb), 0.05);
+  box-shadow: 0 2px 10px rgba(var(--ion-color-warning-rgb), 0.08);
+}
+
+.room-content {
+  width: 100%;
+  padding: 16px;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.room-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.room-status {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.room-status ion-icon {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+.room-status.public {
+  color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.room-status.private {
+  color: var(--ion-color-warning);
+  background: rgba(var(--ion-color-warning-rgb), 0.1);
+}
+
+.room-description {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.room-message {
+  display: flex;
+  align-items: flex-start;
+  background: rgba(var(--ion-color-light-rgb), 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.room-message ion-icon {
+  margin-right: 8px;
+  color: var(--ion-color-medium);
+}
+
+.room-message p {
+  margin: 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ion-color-dark);
+}
+
+.room-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.member-count {
+  display: flex;
+  align-items: center;
+  color: var(--ion-color-medium);
+  font-size: 13px;
+}
+
+.member-count ion-icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+.join-btn {
+  --color: var(--ion-color-primary);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  margin: 10px 0;
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 12px;
+}
+
+.empty-state ion-icon {
+  font-size: 60px;
+  color: var(--ion-color-medium);
+  opacity: 0.7;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  margin: 0 0 10px;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--ion-color-medium);
+  font-size: 16px;
+  max-width: 300px;
+}
+
+/* Modal Styling */
+.room-modal {
+  --border-radius: 16px;
+  --height: auto;
+  --width: 90%;
+  --max-width: 500px;
+}
+
+.modal-content {
+  padding: 20px 0 30px;
+}
+
+.modal-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.modal-icon ion-icon {
+  font-size: 40px;
+  padding: 15px;
+  border-radius: 50%;
+  color: white !important;
+}
+
+.modal-description {
+  text-align: center;
+  color: var(--ion-color-medium);
+  margin: 0 0 30px;
+  font-size: 16px;
+}
+
+.form-container {
+  margin-bottom: 25px;
+}
+
+.form-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --highlight-color-focused: var(--ion-color-primary);
+  --background: transparent;
+  margin-bottom: 20px;
+}
+
+.note-box {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 20px 0;
+}
+
+.note-box ion-icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.note-box.public {
+  background: rgba(var(--ion-color-primary-rgb), 0.05);
+  color: var(--ion-color-primary-shade);
+}
+
+.note-box.private {
+  background: rgba(var(--ion-color-warning-rgb), 0.05);
+  color: var(--ion-color-warning-shade);
+}
+
+.submit-btn {
+  height: 52px;
+  --border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+}
+
+.submit-btn.public {
+  --background: var(--ion-color-primary);
+  --background-activated: var(--ion-color-primary-shade);
+  --box-shadow: 0 6px 15px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.submit-btn.private {
+  --background: var(--ion-color-warning);
+  --background-activated: var(--ion-color-warning-shade);
+  --box-shadow: 0 6px 15px rgba(var(--ion-color-warning-rgb), 0.3);
+}
+
+.invite-section {
+  margin: 25px 0 15px;
+  padding: 15px;
+  border-radius: 8px;
+  background: rgba(var(--ion-color-light-rgb), 0.7);
+}
+
+.invite-section h4 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.invite-section h4 ion-icon {
+  margin-right: 8px;
+  color: var(--ion-color-primary);
+}
+
+.invite-section p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+  .segment-container,
+  .create-button-container {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+
+.create-room-container {
+  position: relative;
+  padding: 24px 20px 40px;
+  overflow: visible;
+  z-index: 1;
+}
+
+/* Blob gradient backgrounds */
+.gradient-blob {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.2;
+  top: -100px;
+  right: -120px;
+}
+
+.public-blob {
+  background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.4) 0%, rgba(var(--ion-color-primary-rgb), 0) 70%);
+}
+
+.private-blob {
+  background: radial-gradient(circle, rgba(var(--ion-color-warning-rgb), 0.4) 0%, rgba(var(--ion-color-warning-rgb), 0) 70%);
+}
+
+/* Icon styling */
+.modal-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.modal-icon-outer {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.public-glow {
+  background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.15) 0%, rgba(var(--ion-color-primary-rgb), 0.05) 70%);
+}
+
+.private-glow {
+  background: radial-gradient(circle, rgba(var(--ion-color-warning-rgb), 0.15) 0%, rgba(var(--ion-color-warning-rgb), 0.05) 70%);
+}
+
+.modal-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.modal-icon.public {
+  background: var(--ion-color-primary);
+}
+
+.modal-icon.private {
+  background: var(--ion-color-warning);
+}
+
+.modal-icon ion-icon {
+  color: white;
+  font-size: 30px;
+}
+
+/* Text styling */
+.modal-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--ion-color-dark);
+}
+
+.modal-description {
+  text-align: center;
+  color: var(--ion-color-medium);
+  margin: 0 auto 32px;
+  max-width: 340px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Form styling */
+.form-container {
+  margin-bottom: 28px;
+}
+
+.form-field {
+  margin-bottom: 22px;
+}
+
+.field-header {
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.field-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.animated-input {
+  background: rgba(var(--ion-background-color-rgb), 0.7);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.animated-input:focus-within {
+  background: rgba(var(--ion-background-color-rgb), 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+.textarea {
+  min-height: 110px;
+}
+
+/* Toggle field styling */
+.toggle-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: rgba(var(--ion-background-color-rgb), 0.7);
+  border-radius: 12px;
+  margin: 28px 0;
+}
+
+.toggle-label {
+  flex: 1;
+}
+
+.toggle-label h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+
+/* Note box styling */
+.note-box {
+  display: flex;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 28px 0;
+}
+
+.note-box.public {
+  background: rgba(var(--ion-color-primary-rgb), 0.06);
+}
+
+.note-box.private {
+  background: rgba(var(--ion-color-warning-rgb), 0.06);
+}
+
+.note-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 16px;
+}
+
+.note-box.public .note-icon {
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+}
+
+.note-box.private .note-icon {
+  background: rgba(var(--ion-color-warning-rgb), 0.12);
+  color: var(--ion-color-warning);
+}
+
+.note-content {
+  flex: 1;
+}
+
+.note-content h5 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.note-box.public .note-content h5 {
+  color: var(--ion-color-primary-shade);
+}
+
+.note-box.private .note-content h5 {
+  color: var(--ion-color-warning-shade);
+}
+
+.note-content p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+/* Invite section styling */
+.invite-section {
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(var(--ion-background-color-rgb), 0.7);
+  margin: 24px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.invite-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.invite-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  margin-right: 12px;
+}
+
+.invite-icon ion-icon {
+  font-size: 18px;
+  color: var(--ion-color-primary);
+}
+
+.invite-header h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.invite-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+/* Button styling */
+.create-button {
+  border-radius: 14px;
+  height: 56px;
+  font-size: 17px;
+  margin-top: 32px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.public-button {
+  background: var(--ion-color-primary);
+  --background: var(--ion-color-primary);
+  --background-activated: var(--ion-color-primary-shade);
+  --box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.private-button {
+  background: var(--ion-color-warning);
+  --background: var(--ion-color-warning);
+  --background-activated: var(--ion-color-warning-shade);
+  --box-shadow: 0 8px 20px rgba(var(--ion-color-warning-rgb), 0.3);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.button-content span {
+  margin-right: 10px;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.3px;
+}
+
+.button-content ion-icon {
+  color: white;
+  font-size: 20px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .ghost-create-room-modal {
+    --background: rgba(var(--ion-background-color-rgb), 0.95);
+  }
+  
+  .animated-input {
+    background: rgba(50, 50, 50, 0.4);
+  }
+  
+  .animated-input:focus-within {
+    background: rgba(60, 60, 60, 0.7);
+  }
+  
+  .toggle-field {
+    background: rgba(50, 50, 50, 0.4);
+  }
+  
+  .invite-section {
+    background: rgba(50, 50, 50, 0.4);
+  }
+  
+  .note-box.public {
+    background: rgba(var(--ion-color-primary-rgb), 0.08);
+  }
+  
+  .note-box.private {
+    background: rgba(var(--ion-color-warning-rgb), 0.08);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .ghost-create-room-modal {
+    --width: 100%;
+    --border-radius: 16px 16px 0 0;
+    --height: auto;
+  }
+  
+  .create-room-container {
+    padding: 20px 16px 30px;
+  }
 }

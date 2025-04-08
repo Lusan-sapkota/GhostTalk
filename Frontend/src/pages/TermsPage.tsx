@@ -105,7 +105,7 @@ const TermsPage: React.FC = () => {
           <div className="terms-navigation">
             <IonCard className="ghost-shadow">
               <IonCardHeader>
-                <IonCardTitle>
+                <IonCardTitle style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                   <IonIcon icon={informationCircleOutline} /> Quick Navigation
                 </IonCardTitle>
               </IonCardHeader>
@@ -203,7 +203,7 @@ const TermsPage: React.FC = () => {
             <IonCard className="ghost-shadow">
               <IonCardHeader>
                 <IonCardTitle>
-                  <span className="section-icon">📋</span> Summary of Key Points
+                  <span className="section-icon-terms">📋</span> Summary of Key Points
                 </IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
@@ -296,7 +296,7 @@ const TermsPage: React.FC = () => {
                   <div className="terms-info-box">
                     <IonIcon icon={timeOutline} />
                     <p>
-                      We recommend reviewing these Terms periodically to stay informed about any changes.
+                    We recommend checking these Terms occasionally. We'll let you know if any major changes affect your use of the app.
                     </p>
                   </div>
                 </div>
@@ -605,12 +605,12 @@ const TermsPage: React.FC = () => {
                     <div className="contact-method">
                       <IonIcon icon={mailOutline} />
                       <div>
-                        <strong>Email:</strong> support@ghosttalk.com
+                        <strong>Email:</strong> support@ghosttalk.me
                       </div>
                     </div>
                   </div>
                   
-                  <IonButton expand="block" href="mailto:support@ghosttalk.com" className="contact-button">
+                  <IonButton expand="block" href="/support" className="contact-button">
                     <IonIcon slot="start" icon={mailOutline} />
                     Contact Support
                   </IonButton>
