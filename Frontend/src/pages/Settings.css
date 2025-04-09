@@ -1,179 +1,479 @@
+/* Main container styling */
+.settings-page {
+  --background: var(--ion-background-color);
+}
+
 .settings-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 8px 16px 32px;
 }
 
+/* Main container styling */
+.gt-settings-page {
+  --background: var(--ion-background-color);
+}
+
+.gt-settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 8px 16px 32px;
+}
+
+/* Search styling */
+.settings-search {
+  margin: 0 0 16px;
+}
+
+/* No results message */
+.no-results-message {
+  text-align: center;
+  padding: 24px;
+  color: var(--ion-color-medium);
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+/* List styling */
 .settings-list {
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  background: transparent;
 }
 
+.gt-settings-list {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: transparent;
+}
+
+/* Divider styling */
 .settings-divider {
-  --background: rgba(var(--ion-color-primary-rgb), 0.1);
+  --background: rgba(var(--ion-color-light-rgb), 0.8);
   --color: var(--ion-color-primary);
-  letter-spacing: 0.5px;
   font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 5px;
-  padding-top: 15px;
-  padding-bottom: 15px;
+  letter-spacing: -0.3px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  margin: 8px 0 4px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .settings-divider ion-icon {
-  font-size: 1.2rem;
-  margin-right: 10px;
+  font-size: 20px;
+  margin-right: 8px;
   opacity: 0.9;
 }
 
-/* Color selector */
-.color-options {
+.gt-settings-divider {
+  --background: rgba(var(--ion-color-light-rgb), 0.8);
+  --color: var(--ion-color-primary);
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  margin: 8px 0 4px;
+  border-radius: 10px;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
-.color-circle {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  position: relative;
+.gt-settings-divider ion-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  opacity: 0.9;
+}
+
+/* Item styling */
+.settings-item {
+  --background: rgba(var(--ion-background-color-rgb), 0.5);
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.05);
+  --background-activated: rgba(var(--ion-color-primary-rgb), 0.08);
+  --background-focused: rgba(var(--ion-color-primary-rgb), 0.08);
+  --border-color: rgba(var(--ion-color-light-rgb), 0.5);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 54px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.color-circle:hover {
-  transform: scale(1.1);
+.settings-item:hover {
+  transform: translateY(-1px);
+  --background: rgba(var(--ion-color-primary-rgb), 0.05);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
 }
 
-.color-circle.active {
-  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--ion-color-primary);
+.settings-item ion-icon[slot="start"] {
+  color: var(--ion-color-primary);
+  font-size: 20px;
+  margin-right: 16px;
 }
 
-.color-circle.purple {
-  background-color: #8a2be2;
+.gt-settings-item {
+  --background: rgba(var(--ion-background-color-rgb), 0.5);
+  --background-hover: rgba(var(--ion-color-primary-rgb), 0.05);
+  --background-activated: rgba(var(--ion-background-color-rgb), 0.5); /* Prevent white flash */
+  --background-focused: rgba(var(--ion-color-primary-rgb), 0.08);
+  --border-color: rgba(var(--ion-color-light-rgb), 0.5);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 54px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.color-circle.blue {
-  background-color: #4285f4;
+.gt-settings-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
 }
 
-.color-circle.teal {
-  background-color: #00bcd4;
+.gt-settings-item ion-icon[slot="start"] {
+  color: var(--ion-color-primary);
+  font-size: 20px;
+  margin-right: 16px;
 }
 
-.color-circle.pink {
-  background-color: #e91e63;
+/* Toggle styling */
+.settings-toggle {
+  --background: rgba(var(--ion-color-medium-rgb), 0.3);
+  --background-checked: var(--ion-color-primary);
+  --handle-background: white;
+  --handle-background-checked: white;
+  --handle-width: 20px;
+  --handle-height: 20px;
+  --handle-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding-right: 6px;
 }
 
-/* Font size slider customizations */
-.font-size-item {
-  --padding-top: 8px;
-  --padding-bottom: 8px;
+.gt-settings-toggle {
+  --background: rgba(var(--ion-color-medium-rgb), 0.3);
+  --background-checked: var(--ion-color-primary);
+  --handle-background: white;
+  --handle-background-checked: white;
+  --handle-width: 20px;
+  --handle-height: 20px;
+  --handle-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding-right: 6px;
 }
 
-.font-size-item ion-range {
-  padding-top: 0;
-  padding-bottom: 0;
+/* Select styling */
+.settings-select {
+  max-width: 140px;
+  --padding-end: 10px;
 }
 
-.font-size-item ion-note[slot="start"] {
-  font-size: 0.8rem;
+.settings-select::part(icon) {
+  opacity: 0.6;
+  color: var(--ion-color-primary);
+  transition: transform 0.3s ease;
 }
 
-.font-size-item ion-note[slot="end"] {
-  font-size: 1.2rem;
+.settings-select:hover::part(icon) {
+  opacity: 0.9;
+  transform: rotate(180deg);
+}
+
+.gt-settings-select {
+  max-width: 140px;
+  --padding-end: 10px;
+}
+
+.gt-settings-select::part(icon) {
+  opacity: 0.6;
+  color: var(--ion-color-primary);
+  transition: transform 0.3s ease;
+}
+
+.gt-settings-select:hover::part(icon) {
+  opacity: 0.9;
+  transform: rotate(180deg);
+}
+
+/* Storage chip styling */
+.storage-chip {
+  font-size: 12px;
   font-weight: 600;
+  height: 24px;
+  padding: 0 8px;
 }
 
-/* Save settings button */
-.settings-actions {
-  margin-top: 30px;
-  margin-bottom: 40px;
-}
-
-.save-settings-button {
-  --border-radius: 12px;
+.gt-storage-chip,
+.gt-devices-chip {
+  font-size: 12px;
   font-weight: 600;
-  height: 48px;
-  margin: 0 auto;
-  max-width: 400px;
+  height: 24px;
+  padding: 0 8px;
 }
 
-.save-settings-button:hover {
-  --box-shadow: 0 4px 15px rgba(var(--ion-color-primary-rgb), 0.4);
+/* Logout section styling */
+.logout-item {
+  --background: transparent;
+  --background-hover: rgba(var(--ion-color-medium-rgb), 0.08);
+  --background-activated: rgba(var(--ion-color-medium-rgb), 0.12);
 }
 
-/* Account section styling */
-.danger-section {
-  --background: rgba(var(--ion-color-danger-rgb), 0.1);
-  --color: var(--ion-color-danger);
-  margin-top: 20px;
+.logout-item ion-icon {
+  transition: transform 0.3s ease;
 }
 
+.logout-item:hover ion-icon {
+  transform: translateX(-4px);
+}
+
+.gt-logout-item {
+  --background: transparent;
+  --background-hover: rgba(var(--ion-color-medium-rgb), 0.08);
+  --background-activated: transparent; /* Prevent white flash */
+}
+
+.gt-logout-item ion-icon {
+  transition: transform 0.3s ease;
+}
+
+.gt-logout-item:hover ion-icon {
+  transform: translateX(-4px);
+}
+
+/* Delete account styling */
 .delete-account-item {
-  --background-activated: rgba(var(--ion-color-danger-rgb), 0.15);
-  --background-focused: rgba(var(--ion-color-danger-rgb), 0.15);
+  --background: rgba(var(--ion-color-danger-rgb), 0.05);
   --background-hover: rgba(var(--ion-color-danger-rgb), 0.1);
+  --background-activated: rgba(var(--ion-color-danger-rgb), 0.15);
 }
 
-/* Ghost animation for settings items */
-ion-item {
-  transform: translateX(0);
-  opacity: 1;
-  transition: all 0.3s ease;
+.gt-delete-account-item {
+  --background: rgba(var(--ion-color-danger-rgb), 0.05);
+  --background-hover: rgba(var(--ion-color-danger-rgb), 0.1);
+  --background-activated: rgba(var(--ion-color-danger-rgb), 0.05); /* Prevent white flash */
+  border-left: 2px solid var(--ion-color-danger);
+  margin-top: 8px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .settings-container {
-    padding: 10px;
+.gt-delete-account-item:hover {
+  --background: rgba(var(--ion-color-danger-rgb), 0.05);
+}
+
+.gt-delete-account-item ion-label {
+  font-weight: 500;
+}
+
+.gt-delete-button {
+  color: var(--ion-color-danger);
+  font-weight: bold;
+}
+
+/* Save button */
+.settings-actions {
+  padding: 8px 0 16px;
+}
+
+.settings-save-button {
+  --border-radius: 10px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 8px 0;
+  --background: var(--ion-color-primary);
+  --background-activated: var(--ion-color-primary-shade);
+  --box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-save-button:hover {
+  --box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.35);
+  transform: translateY(-2px);
+}
+
+.gt-settings-actions {
+  padding: 8px 0 16px;
+}
+
+.gt-settings-save-button {
+  --border-radius: 10px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 8px 0;
+  --background: var(--ion-color-primary);
+  --background-activated: var(--ion-color-primary-shade);
+  --box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gt-settings-save-button:hover {
+  --box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.35);
+  transform: translateY(-2px);
+}
+
+/* Animation for sections */
+.settings-section {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  
-  .color-circle {
-    width: 20px;
-    height: 20px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Dark mode adjustments */
-:root.dark .settings-divider {
-  --background: rgba(var(--ion-color-primary-rgb), 0.2);
+.gt-settings-section {
+  animation: gt-fade-in 0.4s ease forwards;
 }
 
-:root.dark .color-circle.active {
-  box-shadow: 0 0 0 2px #121212, 0 0 0 4px var(--ion-color-primary);
+@keyframes gt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Ghost animations for settings items */
-ion-item {
-  animation: ghostFadeInSlide 0.5s ease forwards;
+/* Staggered animation for items */
+.settings-item {
+  animation: slideIn 0.3s ease forwards;
   opacity: 0;
-  transform: translateX(-10px);
 }
 
-@keyframes ghostFadeInSlide {
-  0% {
+.appearance-section .settings-item:nth-child(1) { animation-delay: 0.05s; }
+.appearance-section .settings-item:nth-child(2) { animation-delay: 0.1s; }
+
+.notifications-section .settings-item:nth-child(1) { animation-delay: 0.15s; }
+.notifications-section .settings-item:nth-child(2) { animation-delay: 0.2s; }
+
+.privacy-section .settings-item:nth-child(1) { animation-delay: 0.25s; }
+.privacy-section .settings-item:nth-child(2) { animation-delay: 0.3s; }
+.privacy-section .settings-item:nth-child(3) { animation-delay: 0.35s; }
+.privacy-section .settings-item:nth-child(4) { animation-delay: 0.4s; }
+
+.data-section .settings-item:nth-child(1) { animation-delay: 0.45s; }
+.data-section .settings-item:nth-child(2) { animation-delay: 0.5s; }
+.data-section .settings-item:nth-child(3) { animation-delay: 0.55s; }
+
+.danger-section .settings-item:nth-child(1) { animation-delay: 0.6s; }
+.danger-section .settings-item:nth-child(2) { animation-delay: 0.65s; }
+
+.logout-section .settings-item:nth-child(1) { animation-delay: 0.7s; }
+
+@keyframes slideIn {
+  from {
     opacity: 0;
     transform: translateX(-10px);
   }
-  100% {
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
-/* Staggered animation for list items */
-ion-item:nth-child(1) { animation-delay: 0.05s; }
-ion-item:nth-child(2) { animation-delay: 0.1s; }
-ion-item:nth-child(3) { animation-delay: 0.15s; }
-ion-item:nth-child(4) { animation-delay: 0.2s; }
-ion-item:nth-child(5) { animation-delay: 0.25s; }
-ion-item:nth-child(6) { animation-delay: 0.3s; }
-ion-item:nth-child(7) { animation-delay: 0.35s; }
-ion-item:nth-child(8) { animation-delay: 0.4s; }
-ion-item:nth-child(9) { animation-delay: 0.45s; }
-ion-item:nth-child(10) { animation-delay: 0.5s; }
+.gt-settings-item {
+  animation: gt-slide-in 0.3s ease forwards;
+  opacity: 0;
+}
+
+.gt-appearance-section .gt-settings-item:nth-child(1) { animation-delay: 0.05s; }
+.gt-notifications-section .gt-settings-item:nth-child(1) { animation-delay: 0.1s; }
+.gt-notifications-section .gt-settings-item:nth-child(2) { animation-delay: 0.15s; }
+.gt-privacy-section .gt-settings-item:nth-child(1) { animation-delay: 0.2s; }
+.gt-privacy-section .gt-settings-item:nth-child(2) { animation-delay: 0.25s; }
+.gt-privacy-section .gt-settings-item:nth-child(3) { animation-delay: 0.3s; }
+.gt-privacy-section .gt-settings-item:nth-child(4) { animation-delay: 0.35s; }
+.gt-privacy-section .gt-settings-item:nth-child(5) { animation-delay: 0.4s; }
+.gt-privacy-section .gt-settings-item:nth-child(6) { animation-delay: 0.45s; }
+.gt-privacy-section .gt-settings-item:nth-child(7) { animation-delay: 0.5s; }
+.gt-privacy-section .gt-settings-item:nth-child(8) { animation-delay: 0.55s; }
+.gt-data-section .gt-settings-item:nth-child(1) { animation-delay: 0.6s; }
+.gt-data-section .gt-settings-item:nth-child(2) { animation-delay: 0.65s; }
+.gt-data-section .gt-settings-item:nth-child(3) { animation-delay: 0.7s; }
+.gt-data-section .gt-settings-item:nth-child(4) { animation-delay: 0.75s; }
+.gt-danger-section .gt-settings-item:nth-child(1) { animation-delay: 0.8s; }
+.gt-danger-section .gt-settings-item:nth-child(2) { animation-delay: 0.85s; }
+.gt-logout-section .gt-settings-item:nth-child(1) { animation-delay: 0.9s; }
+
+@keyframes gt-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Dark mode adjustments */
+:host-context(.dark) .settings-searchbar,
+.dark .settings-searchbar {
+  --background: rgba(30, 30, 30, 0.6);
+}
+
+:host-context(.dark) .settings-divider,
+.dark .settings-divider {
+  --background: rgba(40, 40, 40, 0.7);
+}
+
+:host-context(.dark) .settings-item,
+.dark .settings-item {
+  --background: rgba(30, 30, 30, 0.5);
+  --border-color: rgba(60, 60, 60, 0.4);
+}
+
+.dark .gt-settings-divider {
+  --background: rgba(40, 40, 40, 0.7);
+}
+
+.dark .gt-settings-item {
+  --background: rgba(30, 30, 30, 0.5);
+  --background-activated: rgba(30, 30, 30, 0.5); /* Prevent white flash in dark mode */
+  --border-color: rgba(60, 60, 60, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .settings-container {
+    padding: 8px;
+  }
+  
+  .settings-divider {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  
+  .settings-item {
+    --min-height: 48px;
+  }
+}
+
+@media (max-width: 576px) {
+  .gt-settings-container {
+    padding: 8px;
+  }
+  
+  .gt-settings-divider {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  
+  .gt-settings-item {
+    --min-height: 48px;
+  }
+}

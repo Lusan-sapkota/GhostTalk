@@ -227,14 +227,14 @@ const SideMenu: React.FC = () => {
             </IonItem>
           </IonMenuToggle>
           
-          {isAuthenticated && (
+          {/* {isAuthenticated && ( */}
           <IonMenuToggle>
             <IonItem routerLink="/chat-individual" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={chatbubblesOutline} />
               <IonLabel>Private Chat</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          )}
+          {/* )} */}
 
           <IonMenuToggle>
             <IonItem routerLink="/search" routerDirection="none" detail={false} className="staggered-item">
@@ -257,26 +257,26 @@ const SideMenu: React.FC = () => {
             </IonItem>
           </IonMenuToggle>
           
-          {isAuthenticated && (
+          {/* {isAuthenticated && ( */}
           <IonItemDivider className="menu-divider">Profile & Settings</IonItemDivider>
-          )}
+          {/* )} */}
           
-          {isAuthenticated && (
+          {/* {isAuthenticated && ( */}
           <IonMenuToggle>
             <IonItem routerLink="/profile" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={personCircleOutline} /> {/* Changed: better represents profile */}
               <IonLabel>Profile</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          )}
-          {isAuthenticated && (
+          {/* )} */}
+          {/* {isAuthenticated && ( */}
           <IonMenuToggle>
             <IonItem routerLink="/settings" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={settingsOutline} /> {/* Changed: proper settings icon */}
               <IonLabel>Settings</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          )}
+          {/* )} */}
 
           <IonItemDivider className="menu-divider">Info & Support</IonItemDivider>
           <IonMenuToggle>
@@ -516,9 +516,11 @@ const App: React.FC = () => {
               <Route exact path="/home" component={Home} />
               <Route exact path="/random-chat" component={RandomChat} />
               <Route exact path="/chat-room" component={ChatRoom} />
-              <PrivateRoute exact path="/chat-individual" component={ChatIndividual} />
+              <Route exact path="/chat-individual" component={ChatIndividual} />
+              {/* <PrivateRoute exact path="/chat-individual" component={ChatIndividual} /> */}
               <Route exact path="/about" component={About} />
-              <PrivateRoute exact path="/profile" component={Profile} />
+              <Route exact path="/profile" component={Profile} />
+              {/* <PrivateRoute exact path="/profile" component={Profile} /> */}
               <Route exact path="/login" component={Login} />
               <Route exact path="/register" component={Register} />
               <Route path="/onboarding" component={Onboarding} exact={true} />
@@ -527,7 +529,8 @@ const App: React.FC = () => {
               <Route exact path="/privacy" component={PrivacyPage} />
               <Route exact path="/support" component={SupportPage} />
               <Route exact path="/contact" component={ContactPage} />
-              <PrivateRoute exact path="/settings" component={Settings} />
+              <Route exact path="/settings" component={Settings} />
+              {/* <PrivateRoute exact path="/settings" component={Settings} /> */}
               <Route exact path="/search" component={SearchPage} />
               <Route exact path="/magic-link-sent" component={MagicLinkSent} />
               <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 

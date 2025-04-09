@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   IonHeader,
   IonToolbar,
@@ -6,56 +6,79 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
-  IonBackButton
+  IonBackButton,
+  IonSearchbar
 } from '@ionic/react';
-import { arrowBack, ellipsisVertical } from 'ionicons/icons';
+import { search, arrowBack } from 'ionicons/icons';
 import './BackHeaderComponent.css';
 
 interface BackHeaderComponentProps {
   title: string;
-  defaultHref?: string;
-  showOptions?: boolean;
-  onOptionsClick?: () => void;
-  onBack?: () => void; // Added for modal support
-  isModal?: boolean; // Flag to identify if it's being used in a modal
-  children?: React.ReactNode; // Added to support children components
+  isModal?: boolean;
+  onBack?: () => void;
+  showSearch?: boolean;
+  searchPlaceholder?: string;
+  onSearchChange?: (value: string) => void;
 }
 
-const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({
-  title,
-  defaultHref = '/home',
-  showOptions = false,
-  onOptionsClick,
-  onBack,
+const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({ 
+  title, 
   isModal = false,
-  children
+  onBack,
+  showSearch = false,
+  searchPlaceholder = "Search...",
+  onSearchChange
 }) => {
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  const toggleSearch = () => {
+    setIsSearchVisible(!isSearchVisible);
+    if (isSearchVisible && searchText) {
+      setSearchText('');
+      if (onSearchChange) onSearchChange('');
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    if (onSearchChange) onSearchChange(value);
+  };
+
   return (
-    <IonHeader className="back-header ion-no-border">
-      <IonToolbar color="primary" className="ghost-shadow">
-        <IonButtons slot="start">
-          {isModal ? (
-            // Use a regular button for modals with custom back action
-            <IonButton onClick={onBack} className="modal-back-button ghost-fade-in">
-              <IonIcon icon={arrowBack} slot="icon-only" />
-            </IonButton>
-          ) : (
-            // Use IonBackButton for regular navigation
-            <IonBackButton defaultHref={defaultHref} className="back-button ghost-fade-in" />
-          )}
-        </IonButtons>
-        <IonTitle className="header-title">{title}</IonTitle>
-        {showOptions && (
-          <IonButtons slot="end">
-            <IonButton onClick={onOptionsClick} className="ghost-wiggle">
-              <IonIcon slot="icon-only" icon={ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
-        )}
-        {children && (
-          <IonButtons slot="end">
-            {children}
-          </IonButtons>
+    <IonHeader className="back-header">
+      <IonToolbar color="primary">
+        {isSearchVisible ? (
+          <IonSearchbar
+            value={searchText}
+            onIonChange={(e) => handleSearchChange(e.detail.value || '')}
+            placeholder={searchPlaceholder}
+            showCancelButton="always"
+            onIonCancel={toggleSearch}
+            animated
+            className="back-header-searchbar"
+            debounce={300}
+          />
+        ) : (
+          <>
+            <IonButtons slot="start">
+              {isModal ? (
+                <IonButton onClick={onBack} className="back-button">
+                  <IonIcon icon={arrowBack} slot="icon-only" />
+                </IonButton>
+              ) : (
+                <IonBackButton defaultHref="/" />
+              )}
+            </IonButtons>
+            <IonTitle className="back-header-title">{title}</IonTitle>
+            {showSearch && (
+              <IonButtons slot="end">
+                <IonButton onClick={toggleSearch} className="search-button">
+                  <IonIcon slot="icon-only" icon={search} />
+                </IonButton>
+              </IonButtons>
+            )}
+          </>
         )}
       </IonToolbar>
     </IonHeader>

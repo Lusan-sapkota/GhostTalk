@@ -32,13 +32,23 @@ import {
   key,
   logOut,
   qrCode,
-  ellipsisVertical
+  ellipsisVertical,
+  calendar,
+  chevronForward,
+  shieldOutline,
+  documentTextOutline,
+  create,
+  checkmarkOutline,
+  settingsOutline,
+  optionsOutline
 } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 import './Profile.css';
 import BackHeaderComponent from '../components/BackHeaderComponent';
 
 const Profile: React.FC = () => {
+  const history = useHistory();
   const [username, setUsername] = useState('GhostUser123');
   const [email, setEmail] = useState('user@example.com');
   const [bio, setBio] = useState('Just a friendly ghost in the digital world.');
@@ -60,8 +70,6 @@ const Profile: React.FC = () => {
     <IonPage className="ghost-appear">
       <BackHeaderComponent 
         title="Profile" 
-        showOptions={true}
-        onOptionsClick={() => setIsEditing(!isEditing)}
       />
       
       <IonContent fullscreen>
@@ -76,11 +84,36 @@ const Profile: React.FC = () => {
               </div>
             )}
           </div>
-          <h2 className="username">{username}</h2>
-          <p className="user-id">ID: GHOST-92834</p>
-          <IonChip color="primary" className="pro-badge">
-            <IonLabel>Free User</IonLabel>
-          </IonChip>
+          
+          <div className="profile-info-container">
+            <h2 className="username">{username}</h2>
+            <p className="user-id">
+              <IonIcon icon={qrCode} />
+              GHOST-92834
+            </p>
+            <IonChip color="primary" className="pro-badge">
+              <IonLabel>Free User</IonLabel>
+            </IonChip>
+            
+            <div className="profile-meta">
+              <div className="profile-meta-item profile-meta-gender">
+                <IonIcon icon={person} />
+                Male
+              </div>
+              <div className="profile-meta-item profile-meta-since">
+                <IonIcon icon={calendar} />
+                Member since Nov 2023
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-settings-link" onClick={() => history.replace('/settings')} style={{ cursor: 'pointer' }}>
+          <div className="profile-settings-link-text">
+            <h4>Privacy & Settings</h4>
+            <p>Manage your privacy, notifications and account settings</p>
+          </div>
+          <IonIcon icon={chevronForward} />
         </div>
 
         <div className="profile-content">
@@ -97,7 +130,7 @@ const Profile: React.FC = () => {
                 <IonInput 
                   value={username} 
                   onIonChange={e => setUsername(e.detail.value!)} 
-                  disabled={!isEditing}
+                  disabled
                 />
               </IonItem>
               
@@ -107,7 +140,7 @@ const Profile: React.FC = () => {
                   type="email" 
                   value={email} 
                   onIonChange={e => setEmail(e.detail.value!)} 
-                  disabled={!isEditing}
+                  disabled
                 />
               </IonItem>
               
@@ -119,38 +152,71 @@ const Profile: React.FC = () => {
                   disabled={!isEditing}
                 />
               </IonItem>
+
+              {!isEditing && (
+                <IonButton 
+                  expand="block" 
+                  className="profile-action-btn edit-btn"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <IonIcon slot="start" icon={create} />
+                  Enable Editing
+                </IonButton>
+              )}
+              
+              {isEditing && (
+                <IonButton 
+                  expand="block" 
+                  color="primary" 
+                  className="profile-action-btn save-btn"
+                  onClick={handleSaveProfile}
+                >
+                  <IonIcon slot="start" icon={checkmarkOutline} />
+                  Save Changes
+                </IonButton>
+              )}
             </IonCardContent>
           </IonCard>
 
-          <IonList className="ghost-shadow">
-            <IonItemDivider>Settings</IonItemDivider>
-
-            <IonItem>
-              <IonIcon icon={shield} slot="start" color="primary" />
-              <IonLabel>Privacy</IonLabel>
-              <IonButtons slot="end">
-                <IonButton routerLink="/privacy-settings">
-                  Manage
+          <IonCard className="profile-options-card ghost-shadow">
+            <IonCardHeader>
+              <h3>
+                <IonIcon icon={settingsOutline} color="primary" />
+                Account Options
+              </h3>
+            </IonCardHeader>
+            <IonCardContent>
+              <div className="profile-options-container">
+                <IonButton expand="block" fill="clear" className="profile-option-btn" routerLink="/settings">
+                  <IonIcon slot="start" icon={optionsOutline} />
+                  Go to Settings
+                  <IonIcon slot="end" icon={chevronForward} />
                 </IonButton>
-              </IonButtons>
-            </IonItem>
-
-            <IonItem>
-              <IonIcon icon={notifications} slot="start" color="primary" />
-              <IonLabel>Notifications</IonLabel>
-              <IonToggle checked={true} slot="end" />
-            </IonItem>
-
-            <IonItem button routerLink="/change-password">
-              <IonIcon icon={key} slot="start" color="primary" />
-              <IonLabel>Change Password</IonLabel>
-            </IonItem>
-
-            <IonItem button onClick={() => setShowLogoutAlert(true)}>
-              <IonIcon icon={logOut} slot="start" color="danger" />
-              <IonLabel color="danger">Logout</IonLabel>
-            </IonItem>
-          </IonList>
+                
+                <IonButton expand="block" fill="clear" className="profile-option-btn" routerLink="/privacy">
+                  <IonIcon slot="start" icon={shieldOutline} />
+                  Review Privacy Policy
+                  <IonIcon slot="end" icon={chevronForward} />
+                </IonButton>
+                
+                <IonButton expand="block" fill="clear" className="profile-option-btn" routerLink="/terms">
+                  <IonIcon slot="start" icon={documentTextOutline} />
+                  Review Terms of Service
+                  <IonIcon slot="end" icon={chevronForward} />
+                </IonButton>
+                
+                <IonButton 
+                  expand="block" 
+                  fill="clear" 
+                  className="profile-option-btn logout-btn" 
+                  onClick={() => setShowLogoutAlert(true)}
+                >
+                  <IonIcon slot="start" icon={logOut} color="danger" />
+                  Logout
+                </IonButton>
+              </div>
+            </IonCardContent>
+          </IonCard>
 
           <IonCard className="upgrade-card ghost-shadow">
             <IonCardHeader>
@@ -164,11 +230,22 @@ const Profile: React.FC = () => {
                 <li>Exclusive chat themes</li>
                 <li>Extended chat history</li>
               </ul>
-              <IonButton expand="block" color="warning">
+              <IonButton expand="block" color="primary" className="pro-upgrade-btn">
                 Go Pro
               </IonButton>
             </IonCardContent>
           </IonCard>
+        </div>
+
+        <div className="profile-legal-links">
+          <a href="/privacy" className="profile-legal-link">
+            <IonIcon icon={shieldOutline} />
+            Privacy Policy
+          </a>
+          <a href="/terms" className="profile-legal-link">
+            <IonIcon icon={documentTextOutline} />
+            Terms of Service
+          </a>
         </div>
 
         <IonAlert
