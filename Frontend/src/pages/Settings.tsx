@@ -420,10 +420,6 @@ const Settings: React.FC = () => {
             {/* Account Section */}
             {/* {isAuthenticated && isSectionVisible('account') && ( */}
               <>
-                <IonItemDivider className="gt-settings-divider gt-danger-divider">
-                  <IonIcon icon={trashOutline} color="danger" />
-                  <IonLabel color="danger">Account</IonLabel>
-                </IonItemDivider>
                 
                 <div className="gt-settings-section gt-danger-section">
                   <IonItem lines="full" button routerLink="/deactivate-account" className="gt-settings-item">
