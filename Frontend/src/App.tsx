@@ -52,6 +52,9 @@ import {
   phonePortraitOutline,
   moonOutline,
   sunnyOutline,
+  notifications,
+  heartOutline,
+  notificationsOutline,
 } from 'ionicons/icons';
 
 import Home from './pages/Home';
@@ -76,6 +79,11 @@ import Onboarding from './pages/Onboarding';
 import DocsPage from './pages/DocsPage';
 import ContactPage from './pages/ContactPage';
 import CommunityPage from './pages/CommunityPage';
+import FavoritesPage from './pages/FavoritesPage';
+import NotificationsPage from './pages/NotificationsPage';
+import TwoFactorAuth from './pages/TwoFactorAuth';
+import VerifySession from './pages/VerifySession';
+import VerificationNeeded from './pages/VerificationNeeded';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -101,6 +109,7 @@ import './theme/variables.css';
 import './theme/animations.css';
 import './theme/menu.css';
 import './App.css';
+import './theme/SessionVerification.css';
 import { useEffect, useState } from 'react';
 import themeService from './services/ThemeService';
 import { AuthProvider } from './contexts/AuthContext';
@@ -111,6 +120,8 @@ import { isPlatform } from '@ionic/react';
 import { Capacitor } from '@capacitor/core';
 import { fixAndroidPaths } from './utils/androidPathFix';
 import FirstLaunch from './plugins/firstLaunch';
+import NotFound from './pages/NotFound';
+import SessionVerificationPrompt from './components/SessionVerificationPrompt';
 
 setupIonicReact();
 
@@ -184,6 +195,8 @@ const SideMenu: React.FC = () => {
     };
   }, [currentTheme]);
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   return (
     <IonMenu contentId="main" className="ghost-fade-in">
       <IonHeader>
@@ -227,14 +240,14 @@ const SideMenu: React.FC = () => {
             </IonItem>
           </IonMenuToggle>
           
-          {/* {isAuthenticated && ( */}
+          {isAuthenticated && (
           <IonMenuToggle>
             <IonItem routerLink="/chat-individual" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={chatbubblesOutline} />
               <IonLabel>Private Chat</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          {/* )} */}
+          )}
 
           <IonMenuToggle>
             <IonItem routerLink="/search" routerDirection="none" detail={false} className="staggered-item">
@@ -242,41 +255,60 @@ const SideMenu: React.FC = () => {
               <IonLabel>Search Users</IonLabel>
             </IonItem>
           </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/notifications" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={notificationsOutline} />
+              <IonLabel>Notifications</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
+          <IonMenuToggle>
+            <IonItem routerLink="/favorites" routerDirection="none" detail={false} className="staggered-item">
+              <IonIcon slot="start" icon={heartOutline} />
+              <IonLabel>Favourites</IonLabel>
+            </IonItem>
+          </IonMenuToggle>
 
+          {!isAuthenticated && (
           <IonItemDivider className="menu-divider">Authentication</IonItemDivider>
+          )}
+          
+          {!isAuthenticated && (
           <IonMenuToggle>
             <IonItem routerLink="/login" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={logInOutline} /> {/* Changed: more appropriate for login */}
               <IonLabel>Login</IonLabel>
             </IonItem>
           </IonMenuToggle>
+          )}
+          {!isAuthenticated && (
           <IonMenuToggle>
             <IonItem routerLink="/register" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={personAddOutline} /> {/* Changed: more appropriate for registration */}
               <IonLabel>Register</IonLabel>
             </IonItem>
           </IonMenuToggle>
+          )}
           
-          {/* {isAuthenticated && ( */}
+          {isAuthenticated && (
           <IonItemDivider className="menu-divider">Profile & Settings</IonItemDivider>
-          {/* )} */}
+          )}
           
-          {/* {isAuthenticated && ( */}
+          {isAuthenticated && (
           <IonMenuToggle>
             <IonItem routerLink="/profile" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={personCircleOutline} /> {/* Changed: better represents profile */}
               <IonLabel>Profile</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          {/* )} */}
-          {/* {isAuthenticated && ( */}
+          )}
+          {isAuthenticated && (
           <IonMenuToggle>
             <IonItem routerLink="/settings" routerDirection="none" detail={false} className="staggered-item">
               <IonIcon slot="start" icon={settingsOutline} /> {/* Changed: proper settings icon */}
               <IonLabel>Settings</IonLabel>
             </IonItem>
           </IonMenuToggle>
-          {/* )} */}
+          )}
 
           <IonItemDivider className="menu-divider">Info & Support</IonItemDivider>
           <IonMenuToggle>
@@ -320,12 +352,35 @@ const SideMenu: React.FC = () => {
             </IonLabel>
           </IonItem>
 
-          {isAuthenticated && (
-            <IonItem button onClick={() => logout()} className="staggered-item logout-item">
+            {isAuthenticated && (
+            <>
+              <IonItem button onClick={() => setShowLogoutConfirm(true)} className="staggered-item logout-item">
               <IonIcon slot="start" icon={logOutOutline} />
               <IonLabel>Logout</IonLabel>
-            </IonItem>
-          )}
+              </IonItem>
+              
+              <IonAlert
+              isOpen={showLogoutConfirm}
+              onDidDismiss={() => setShowLogoutConfirm(false)}
+              header="Confirm Logout"
+              message="Are you sure you want to log out of your account?"
+              buttons={[
+                {
+                text: 'Cancel',
+                role: 'cancel',
+                cssClass: 'secondary'
+                },
+                {
+                text: 'Logout',
+                handler: () => {
+                  logout();
+                  document.querySelector('ion-menu')?.close();
+                }
+                }
+              ]}
+              />
+            </>
+            )}
         </IonList>
       </IonContent>
       
@@ -485,98 +540,172 @@ const App: React.FC = () => {
     }
   }, [history]);
 
+  useEffect(() => {
+    // Check token validity early to prevent UI flicker
+    const validateToken = async () => {
+      const token = apiService.getToken();
+      if (token) {
+        try {
+          // Make a lightweight request to verify token
+          const response = await apiService.makeRequest('/auth/verify-token', 'POST');
+          if (!response.success) {
+            // Invalid token, clear it
+            console.log("Token validation failed on app init, clearing auth state");
+            apiService.clearToken();
+          }
+        } catch (error) {
+          console.error("Error validating token on app init:", error);
+          apiService.clearToken();
+        }
+      }
+    };
+    
+    validateToken();
+  }, []);
+
   const { isAuthenticated } = useAuth();
 
   // Protected route component
-  const PrivateRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>; [x: string]: any }) => (
-    <Route 
-      {...rest} 
-      render={props => 
-        isAuthenticated ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to={{ pathname: '/login', state: { from: props.location } }} />
-        )
-      } 
-    />
-  );
+  const PrivateRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>; [x: string]: any }) => {
+    const { isAuthenticated, isLoading } = useAuth();
+    
+    return (
+      <Route 
+        {...rest} 
+        render={props => {
+          // Show loading or splash while auth state is being determined
+          if (isLoading) {
+            return (
+              <div className="auth-loading-container">
+                <div className="ghost-loader"></div>
+                <p>Loading...</p>
+              </div>
+            );
+          }
+          
+          // Once loaded, either show component or redirect
+          return isAuthenticated ? (
+            <Component {...props} />
+          ) : (
+            <Redirect 
+              to={{ 
+                pathname: '/login', 
+                state: { from: props.location } 
+              }} 
+            />
+          );
+        }} 
+      />
+    );
+  };
 
   return (
-    <AuthProvider>
-      <IonApp>
-        <IonReactRouter>
-          <SideMenu />
-          
-          <IonTabs>
-            <IonRouterOutlet id="main">
-              {/* Make the onboarding route higher priority */}
-              <Route path="/onboarding" component={Onboarding} exact={true} />
-              
-              {/* Other routes */}
-              <Route exact path="/home" component={Home} />
-              <Route exact path="/random-chat" component={RandomChat} />
-              <Route exact path="/chat-room" component={ChatRoom} />
-              <Route exact path="/chat-individual" component={ChatIndividual} />
-              {/* <PrivateRoute exact path="/chat-individual" component={ChatIndividual} /> */}
-              <Route exact path="/about" component={About} />
-              <Route exact path="/profile" component={Profile} />
-              {/* <PrivateRoute exact path="/profile" component={Profile} /> */}
-              <Route exact path="/login" component={Login} />
-              <Route exact path="/register" component={Register} />
-              <Route path="/onboarding" component={Onboarding} exact={true} />
-              <Route exact path="/verify-email/:token" component={VerifyEmail} />
-              <Route exact path="/terms" component={TermsPage} />
-              <Route exact path="/privacy" component={PrivacyPage} />
-              <Route exact path="/support" component={SupportPage} />
-              <Route exact path="/contact" component={ContactPage} />
-              <Route exact path="/settings" component={Settings} />
-              {/* <PrivateRoute exact path="/settings" component={Settings} /> */}
-              <Route exact path="/search" component={SearchPage} />
-              <Route exact path="/magic-link-sent" component={MagicLinkSent} />
-              <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
-              <Route exact path="/reset-password/:token" component={ResetPassword} />
-              <Route exact path="/magic-login/:token" component={MagicLogin} />
-              <Route exact path="/docs" component={DocsPage} />
-              <Route exact path="/community" component={CommunityPage} />
-              
-              {/* Add more routes as needed */}
-              
-              {/* Redirects */}
-              <Route exact path="/" render={() => {
-                // Check if we should show onboarding based on URL hash
-                const hash = window.location.hash;
-                if (hash && hash.includes('/onboarding')) {
-                  console.log('Found onboarding in hash, redirecting');
-                  return <Redirect to="/onboarding" />;
-                }
-                return <Redirect to="/home" />;
-              }} />
-            </IonRouterOutlet>
+    <IonReactRouter>
+      <AuthProvider>
+        <IonApp>
+          <IonReactRouter>
+            <SideMenu />
             
-            {isAuthenticated && (
-            <IonTabBar slot="bottom" className="ghost-shadow">
-              <IonTabButton tab="home" href="/home">
-                <IonIcon icon={homeOutline} />
-                <IonLabel>Home</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="privatechat" href="/chat-individual">
-                <IonIcon icon={chatbubblesOutline} />
-                <IonLabel>Chat</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="chatRoom" href="/chat-room">
-                <IonIcon icon={peopleOutline} />
-                <IonLabel>Rooms</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="profile" href="/profile">
-                <IonIcon icon={personCircleOutline} />
-                <IonLabel>Profile</IonLabel>
-              </IonTabButton>
-            </IonTabBar>
-            )}
-          </IonTabs>
-        </IonReactRouter>
-      </IonApp>
-    </AuthProvider>
+            <IonTabs>
+              <IonRouterOutlet id="main">
+                {/* Special routes that need to be matched first */}
+                <Route path="/onboarding" component={Onboarding} exact={true} />
+                
+                {/* Authentication routes */}
+                <Route exact path="/login" component={Login} />
+                <Route exact path="/register" component={Register} />
+                <Route exact path="/verify-email/:token" component={VerifyEmail} />
+                <Route exact path="/verification-needed" component={VerificationNeeded} />
+                <Route exact path="/magic-link-sent" component={MagicLinkSent} />
+                <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
+                <Route exact path="/reset-password/:token" component={ResetPassword} />
+                <Route exact path="/magic-login/:token" component={MagicLogin} />
+                
+                {/* Public routes */}
+                <Route exact path="/home" component={Home} />
+                <Route exact path="/random-chat" component={RandomChat} />
+                <Route exact path="/chat-room" component={ChatRoom} />
+                <Route exact path="/about" component={About} />
+                <Route exact path="/terms" component={TermsPage} />
+                <Route exact path="/privacy" component={PrivacyPage} />
+                <Route exact path="/support" component={SupportPage} />
+                <Route exact path="/contact" component={ContactPage} />
+                <Route exact path="/search" component={SearchPage} />
+                <Route exact path="/docs" component={DocsPage} />
+                <Route exact path="/community" component={CommunityPage} />
+                <Route path="/verify-2fa/:userId" component={TwoFactorAuth} />
+                <Route exact path="/verify-session/:token" component={VerifySession} />
+                
+                {/* Settings routes */}
+                
+                {/* Protected routes with authentication */}
+                <PrivateRoute exact path="/chat-individual" component={ChatIndividual} />
+                <PrivateRoute exact path="/profile" component={Profile} />
+                <PrivateRoute exact path="/settings" component={Settings} />
+                <PrivateRoute exact path="/favorites" component={FavoritesPage} />
+                <PrivateRoute exact path="/notifications" component={NotificationsPage} />
+                
+                {/* Redirects */}
+                <Route exact path="/" render={() => {
+                  // Check if we should show onboarding based on URL hash
+                  const hash = window.location.hash;
+                  if (hash && hash.includes('/onboarding')) {
+                    console.log('Found onboarding in hash, redirecting');
+                    return <Redirect to="/onboarding" />;
+                  }
+                  return <Redirect to="/home" />;
+                }} />
+                
+                {/* 404 catch-all route - MUST be last */}
+                <Route render={(props) => {
+                  // Check if we're at a route that should be matched by another route
+                  const knownRoutes = [
+                    '/login', '/register', '/home', '/random-chat', '/chat-room', 
+                    '/about', '/terms', '/privacy', '/support', '/contact', 
+                    '/search', '/docs', '/community', '/chat-individual',
+                    '/profile', '/settings', '/favorites', '/notifications',
+                    '/onboarding', '/verify-email', '/magic-link-sent', 
+                    '/password-reset-sent', '/reset-password', '/magic-login', '/verify-2fa', '/verify-session',
+                    '/verification-needed'
+                  ];
+                  
+                  // Check if current path starts with any known route
+                  const isKnownRoute = knownRoutes.some(route => 
+                    props.location.pathname === route || 
+                    props.location.pathname.startsWith(`${route}/`)
+                  );
+                  
+                  // Only show NotFound for unknown routes
+                  return isKnownRoute ? null : <NotFound />;
+                }} />
+              </IonRouterOutlet>
+              
+              {isAuthenticated && (
+              <IonTabBar slot="bottom" className="ghost-shadow">
+                <IonTabButton tab="home" href="/home">
+                  <IonIcon icon={homeOutline} />
+                  <IonLabel>Home</IonLabel>
+                </IonTabButton>
+                <IonTabButton tab="privatechat" href="/chat-individual">
+                  <IonIcon icon={chatbubblesOutline} />
+                  <IonLabel>Chat</IonLabel>
+                </IonTabButton>
+                <IonTabButton tab="chatRoom" href="/chat-room">
+                  <IonIcon icon={peopleOutline} />
+                  <IonLabel>Rooms</IonLabel>
+                </IonTabButton>
+                <IonTabButton tab="profile" href="/profile">
+                  <IonIcon icon={personCircleOutline} />
+                  <IonLabel>Profile</IonLabel>
+                </IonTabButton>
+              </IonTabBar>
+              )}
+            </IonTabs>
+          </IonReactRouter>
+          <SessionVerificationPrompt />
+        </IonApp>
+      </AuthProvider>
+    </IonReactRouter>
   );
 };
 

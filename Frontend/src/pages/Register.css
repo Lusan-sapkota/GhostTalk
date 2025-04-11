@@ -511,3 +511,24 @@
   width: 100%;
 }
 
+.already-logged-in-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 1rem;
+}
+
+.already-logged-in-card {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.already-logged-in-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+

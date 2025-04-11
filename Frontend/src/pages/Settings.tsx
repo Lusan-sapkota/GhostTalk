@@ -40,6 +40,8 @@ import {
   starOutline,
   mailOpenOutline,
   optionsOutline,
+  heartCircleOutline,
+  personRemoveOutline,
 } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import BackHeaderComponent from '../components/BackHeaderComponent';
@@ -55,6 +57,7 @@ const Settings: React.FC = () => {
   const [readReceipts, setReadReceipts] = useState(true);
   const [onlineStatus, setOnlineStatus] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deactivateConfirm, setDeactivateConfirm] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [theme, setTheme] = useState('system');
   const [chatBackup, setChatBackup] = useState(true);
@@ -66,6 +69,7 @@ const Settings: React.FC = () => {
   const [chatRetention, setChatRetention] = useState('30days');
   const [showSavedToast, setShowSavedToast] = useState(false);
   const [filteredSections, setFilteredSections] = useState<string[]>([]);
+  const [favouritesRequests, setFavouritesRequests] = useState(true);
   
   const { isAuthenticated, logout } = useAuth();
   const history = useHistory();
@@ -84,7 +88,7 @@ const Settings: React.FC = () => {
     const sections = {
       'appearance': ['theme', 'light', 'dark', 'system default'],
       'notifications': ['notifications', 'enable notifications', 'notification sound', 'ghost whisper', 'chime', 'bell'],
-      'privacy': ['privacy', 'security', 'read receipts', 'online status', 'bio visibility', 'gender visibility', 'search visibility', 'message requests', 'app lock'],
+      'privacy': ['privacy', 'security', 'read receipts', 'online status', 'bio visibility', 'gender visibility', 'search visibility', 'message requests', 'favouritesRequests', 'app lock'],
       'data': ['data usage', 'data saver', 'back up chats', 'storage', 'chat retention'],
       'more': ['help', 'support', 'about', 'language', 'contact', 'rate', 'feedback'],
       'account': ['account', 'deactivate', 'delete'],
@@ -302,6 +306,15 @@ const Settings: React.FC = () => {
                       className="gt-settings-toggle"
                     />
                   </IonItem>
+                  <IonItem lines="full" className="gt-settings-item">
+                    <IonIcon slot="start" icon={heartCircleOutline} />
+                    <IonLabel>Favourites Requests</IonLabel>
+                    <IonToggle 
+                      checked={favouritesRequests}
+                      onIonChange={(e) => setFavouritesRequests(e.detail.checked)}
+                      className="gt-settings-toggle"
+                    />
+                  </IonItem>
                   
                   <IonItem lines="full" button routerLink="/logged-devices" className="gt-settings-item">
                     <IonIcon slot="start" icon={hardwareChipOutline} />
@@ -311,7 +324,7 @@ const Settings: React.FC = () => {
                   
                   <IonItem lines="full" className="gt-settings-item">
                     <IonIcon slot="start" icon={fingerPrintOutline} />
-                    <IonLabel>App Lock</IonLabel>
+                    <IonLabel>2 Factor Authentication</IonLabel>
                     <IonToggle className="gt-settings-toggle" />
                   </IonItem>
                 </div>
@@ -332,16 +345,6 @@ const Settings: React.FC = () => {
                     <IonToggle 
                       checked={dataSaver} 
                       onIonChange={(e) => setDataSaver(e.detail.checked)}
-                      className="gt-settings-toggle"
-                    />
-                  </IonItem>
-                  
-                  <IonItem lines="full" className="gt-settings-item">
-                    <IonIcon slot="start" icon={cloudOutline} />
-                    <IonLabel>Back Up Chats</IonLabel>
-                    <IonToggle 
-                      checked={chatBackup} 
-                      onIonChange={(e) => setChatBackup(e.detail.checked)} 
                       className="gt-settings-toggle"
                     />
                   </IonItem>
@@ -398,13 +401,10 @@ const Settings: React.FC = () => {
                       className="gt-settings-select"
                     >
                       <IonSelectOption value="en">English</IonSelectOption>
-                      <IonSelectOption value="es">Español</IonSelectOption>
-                      <IonSelectOption value="fr">Français</IonSelectOption>
-                      <IonSelectOption value="de">Deutsch</IonSelectOption>
                     </IonSelect>
                   </IonItem>
                   
-                  <IonItem lines="full" button onClick={() => window.open('mailto:support@ghosttalk.app')} className="gt-settings-item">
+                  <IonItem lines="full" button onClick={() => history.push('/support')} className="gt-settings-item">
                     <IonIcon slot="start" icon={mailOpenOutline} />
                     <IonLabel>Contact Us</IonLabel>
                   </IonItem>
@@ -422,8 +422,10 @@ const Settings: React.FC = () => {
               <>
                 
                 <div className="gt-settings-section gt-danger-section">
-                  <IonItem lines="full" button routerLink="/deactivate-account" className="gt-settings-item">
-                    <IonLabel color="medium">Deactivate Account</IonLabel>
+                  <IonItem lines="full" button routerLink="/deactivate-account" className="gt-settings-item"
+                  onClick={() => setDeactivateConfirm(true)}>
+                    <IonIcon slot="start" icon={personRemoveOutline} color="warning" />
+                    <IonLabel color="warning">Deactivate Account</IonLabel>
                   </IonItem>
                   
                   <IonItem 
@@ -501,6 +503,24 @@ const Settings: React.FC = () => {
           header="System Theme"
           message="GhostTalk follows your device's theme setting. To change between light and dark mode, update your system settings."
           buttons={['Got it!']}
+        />
+        <IonAlert
+          isOpen={deactivateConfirm}
+          onDidDismiss={() => setDeactivateConfirm(false)}
+          header="Deactivate Account"
+          message="Are you sure you want to deactivate your account? You can reactivate it later by logging in."
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'gt-cancel-button'
+            },
+            {
+              text: 'Deactivate',
+              handler: () => history.push('/deactivate-account'),
+              cssClass: 'gt-deactivate-button'
+            }
+          ]}
         />
         
         <IonAlert

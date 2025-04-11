@@ -117,3 +117,12 @@ ion-header.back-header ion-toolbar {
     transform: translateY(0);
   }
 }
+
+/* Icon hover effect */
+.back-header ion-button:hover ion-icon {
+  transform: scale(1.15);
+}
+
+.back-header ion-button ion-icon {
+  transition: transform 0.2s ease;
+}

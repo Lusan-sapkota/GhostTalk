@@ -25,37 +25,49 @@ const MagicLogin: React.FC = () => {
   const [error, setError] = useState('');
   const history = useHistory();
   const { setCurrentUser } = useAuth();
+  const [verifying, setVerifying] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     verifyMagicLink();
   }, [token]);
 
   const verifyMagicLink = async () => {
+    setVerifying(true);
     try {
+      console.log("Verifying magic link token...");
+      
+      // Send token to backend for JWT validation
       const response = await apiService.verifyMagicLink(token);
       
       if (response.success) {
+        console.log("Magic link verification successful!");
+        // Store token and user info
+        apiService.setToken(response.token);
+        setCurrentUser(response.user);
+        
         setSuccess(true);
         
-        // Set the current user in auth context if user info was returned
-        if (response.user) {
-          setCurrentUser(response.user);
-        }
-        
-        // Redirect to home or requested page after short delay
+        // Redirect to intended destination or home
         setTimeout(() => {
-          const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/home';
-          sessionStorage.removeItem('redirectAfterLogin');
-          history.replace(redirectTo);
+          const destination = (history.location.state as any)?.from?.pathname || '/home';
+          history.replace(destination);
         }, 1500);
       } else {
-        setError(response.message || 'Invalid or expired magic link');
+        console.error("Magic link verification failed:", response.message);
+        setError(response.message || 'Login failed. Please try again.');
+        
+        if (response.message && response.message.includes('expired')) {
+          setToastMessage('Your magic link has expired. Please request a new one.');
+          setShowToast(true);
+        }
       }
-    } catch (error) {
-      console.error('Magic link verification error:', error);
-      setError('An error occurred while verifying your magic link');
+    } catch (err) {
+      console.error('Magic link verification error:', err);
+      setError('An error occurred during login. The link might be invalid or expired.');
     } finally {
-      setIsLoading(false);
+      setVerifying(false);
     }
   };
 

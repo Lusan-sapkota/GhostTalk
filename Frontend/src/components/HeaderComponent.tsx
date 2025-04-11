@@ -10,7 +10,7 @@ import {
   IonSearchbar,
   IonBadge
 } from '@ionic/react';
-import { search, notifications, notificationsOutline } from 'ionicons/icons';
+import { search, notifications, notificationsOutline, bookmarkOutline } from 'ionicons/icons';
 import { useAuth } from '../contexts/AuthContext';
 import './HeaderComponent.css';
 
@@ -76,10 +76,15 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({
                 </IonButton>
               )}
               {isAuthenticated && (
-                <IonButton className="notification-button">
-                  <IonIcon slot="icon-only" icon={hasNotifications ? notifications : notificationsOutline} />
-                  {hasNotifications && <IonBadge className="notification-badge">3</IonBadge>}
-                </IonButton>
+                <>
+                  <IonButton className="favorite-button" routerLink="/favorites">
+                    <IonIcon slot="icon-only" icon={bookmarkOutline} />
+                  </IonButton>
+                  <IonButton className="notification-button" routerLink="/notifications">
+                    <IonIcon slot="icon-only" icon={hasNotifications ? notifications : notificationsOutline} />
+                    {hasNotifications && <IonBadge className="notification-badge">3</IonBadge>}
+                  </IonButton>
+                </>
               )}
             </IonButtons>
           </>

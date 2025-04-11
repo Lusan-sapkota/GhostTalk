@@ -1,0 +1,296 @@
+.not-found-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(145deg, rgba(var(--ion-color-primary-rgb), 0.05), rgba(var(--ion-color-secondary-rgb), 0.05));
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ghost element styling */
+.ghost-container-404 {
+  position: relative;
+  margin-bottom: 1.5rem;
+  height: 180px;
+  width: 180px;
+}
+
+.ghost-404 {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background-color: white;
+  border-radius: 60% 60% 10% 10%;
+  box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: float 3s ease-in-out infinite;
+  margin: 0 auto;
+  z-index: 2;
+  transition: transform 0.1s ease-out;
+}
+
+.ghost-body-notfound {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.ghost-eyes-notfound {
+  display: flex;
+  justify-content: space-around;
+  width: 60%;
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.eyes-notfound {
+  width: 15px;
+  height: 15px;
+  background-color: var(--ion-color-dark);
+  border-radius: 50%;
+  position: relative;
+  animation: blink 4s infinite;
+}
+
+.ghost-mouth {
+  width: 25px;
+  height: 10px;
+  background-color: var(--ion-color-dark);
+  border-radius: 0 0 10px 10px;
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ghost-tail {
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ghost-tail-segment {
+  width: 30%;
+  height: 15px;
+  background-color: white;
+  border-radius: 0 0 50% 50%;
+  box-shadow: 0 5px 15px rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+.ghost-shadow-notfound {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 15px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  animation: shadow-pulse 3s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* Title and content styling */
+.not-found-title {
+  font-size: 5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fade-in 1s ease;
+}
+
+.not-found-message {
+  font-size: 1.2rem;
+  margin: 1rem 0 2rem;
+  max-width: 450px;
+  line-height: 1.6;
+  animation: fade-in 1s ease 0.3s both;
+}
+
+/* Action buttons */
+.not-found-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  animation: fade-in 1s ease 0.6s both;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-button {
+  --border-radius: 12px;
+  --box-shadow: 0 8px 16px rgba(var(--ion-color-primary-rgb), 0.3);
+  height: 48px;
+  font-weight: 600;
+  min-width: 150px;
+}
+
+.back-button {
+  --border-radius: 12px;
+  height: 48px;
+  font-weight: 600;
+  min-width: 150px;
+}
+
+/* Help links */
+.not-found-help {
+  width: 100%;
+  max-width: 450px;
+  margin-top: 1rem;
+  animation: fade-in 1s ease 0.9s both;
+}
+
+/* Update the help options in NotFound.css */
+.help-options {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  margin-top: 1rem;
+}
+
+.help-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ion-color-medium);
+  text-decoration: none;
+  transition: color 0.3s ease, transform 0.2s ease;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  min-width: 100px;
+  text-align: center;
+}
+
+.help-option:hover {
+  color: var(--ion-color-primary);
+  background-color: rgba(var(--ion-color-primary-rgb), 0.05);
+  transform: translateY(-3px);
+}
+
+.help-option ion-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem; /* Fix margin - was using margin-right */
+}
+
+/* Responsive adjustments for help options */
+@media (max-width: 340px) {
+  .help-options {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .help-option {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .help-option ion-icon {
+    margin-right: 0.5rem;
+    margin-bottom: 0; 
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes shadow-pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0.1;
+  }
+}
+
+@keyframes blink {
+  0%, 45%, 55%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .ghost-404 {
+    background-color: #3a3a3a;
+    box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.5);
+  }
+  
+  .ghost-tail-segment {
+    background-color: #3a3a3a;
+  }
+  
+  .ghost-shadow-notfound {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .eyes-notfound {
+    background-color: var(--ion-color-light);
+  }
+  
+  .ghost-mouth {
+    background-color: var(--ion-color-light);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .not-found-title {
+    font-size: 4rem;
+  }
+  
+  .not-found-message {
+    font-size: 1rem;
+  }
+  
+  .not-found-actions {
+    flex-direction: column;
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .ghost-container-404 {
+    height: 150px;
+  }
+  
+  .ghost-404 {
+    width: 100px;
+    height: 100px;
+  }
+}

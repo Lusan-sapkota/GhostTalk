@@ -149,6 +149,25 @@ public class MainActivity extends BridgeActivity {
       }
     });
     
+    // Inside your onCreate method, add this to the webView config
+    webView.setWebViewClient(new WebViewClient() {
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        String url = request.getUrl().toString();
+        Log.d("DeepLink", "Processing URL: " + url);
+        
+        // Fix for app-specific deep links
+        if (url.contains("localhost") && url.contains("/")) {
+          String path = url.substring(url.indexOf("/", 8));
+          Log.d("DeepLink", "Path component: " + path);
+          
+          // Don't override app navigation
+          return false;
+        }
+        return super.shouldOverrideUrlLoading(view, request);
+      }
+    });
+    
     // Console logging for debugging
     webView.setWebChromeClient(new WebChromeClient() {
       @Override

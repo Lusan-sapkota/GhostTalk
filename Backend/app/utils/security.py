@@ -1,28 +1,55 @@
 import jwt
-import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from flask import current_app, request, jsonify
 import uuid
 
-def generate_token(user_id, token_type='auth', expiry_minutes=10):
-    """Generate a JWT token with enhanced security"""
+def generate_token(user_id, token_type='auth', expiry_hours=24):
+    """Generate a JWT token for authentication, verification, or password reset"""
     payload = {
-        'user_id': user_id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=expiry_minutes),
-        'iat': datetime.datetime.utcnow(),
-        'type': token_type,
-        'jti': str(uuid.uuid4()),  # Add a unique ID to prevent token reuse
+        'sub': user_id,  # 'sub' is standard for JWT
+        'exp': datetime.utcnow() + timedelta(hours=expiry_hours),
+        'iat': datetime.utcnow(),
+        'type': token_type,  # 'auth', 'verification', 'reset', 'magic'
+        'jti': str(uuid.uuid4())  # JWT ID for uniqueness
     }
     
+    # Sign the token with our secret key
     token = jwt.encode(
         payload,
         current_app.config['SECRET_KEY'],
         algorithm='HS256'
     )
     
+    # Handle different JWT library versions
     if isinstance(token, bytes):
         return token.decode('utf-8')
     return token
+
+def verify_token(token, expected_type=None):
+    """Verify a JWT token and return the payload if valid"""
+    try:
+        payload = jwt.decode(
+            token, 
+            current_app.config['SECRET_KEY'],
+            algorithms=['HS256']
+        )
+        
+        # Verify token type if specified
+        if expected_type and payload.get('type') != expected_type:
+            print(f"Token type mismatch: expected {expected_type}, got {payload.get('type')}")
+            return None
+            
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")
+        return None
+    except jwt.InvalidTokenError as e:
+        print(f"Invalid token: {str(e)}")
+        return None
+    except Exception as e:
+        print(f"Error verifying token: {str(e)}")
+        return None
 
 def token_required(f):
     """Decorator for routes that require authentication"""
@@ -48,3 +75,5 @@ def token_required(f):
         return f(current_user_id, *args, **kwargs)
     
     return decorated
+
+require_auth = token_required  # Alias for backward compatibility

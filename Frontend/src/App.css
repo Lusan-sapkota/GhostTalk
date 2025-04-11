@@ -59,3 +59,51 @@ ion-tabs ion-tab-bar {
     display: block !important;
   }
 }
+
+/* Add this to your App.css */
+.auth-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  background: var(--ion-background-color);
+}
+
+.ghost-loader {
+  width: 60px;
+  height: 60px;
+  background-color: var(--ion-color-light);
+  border-radius: 50% 50% 10% 10%;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: ghost-bounce 1.5s infinite ease-in-out;
+}
+
+.ghost-loader:before, .ghost-loader:after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--ion-color-dark);
+  border-radius: 50%;
+  top: 15px;
+}
+
+.ghost-loader:before {
+  left: 15px;
+}
+
+.ghost-loader:after {
+  right: 15px;
+}
+
+@keyframes ghost-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}

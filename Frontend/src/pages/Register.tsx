@@ -28,10 +28,12 @@ import BackHeaderComponent from '../components/BackHeaderComponent';
 import { apiService } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useRateLimit } from '../hooks/useRateLimit';
+import { homeOutline, logOutOutline } from 'ionicons/icons';
 
 const Register: React.FC = () => {
   const history = useHistory();
-  const { register } = useAuth();
+  const { register, isAuthenticated, logout } = useAuth();
+  const [alreadyAuthenticated, setAlreadyAuthenticated] = useState(false);
   const [isResending, setIsResending] = useState(false);
   
   // Form fields
@@ -64,34 +66,71 @@ const Register: React.FC = () => {
 
   const { canPerformAction, triggerAction, countdown } = useRateLimit(60);
 
-  // Function to generate a username from the backend
+  // Improved username generation with better error handling
   const generateUsername = async () => {
     try {
       setGeneratingUsername(true);
-      const response = await apiService.makeRequest('/auth/generate-username', 'GET');
+      
+      // Add timeout to prevent long waiting
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      console.log("Requesting username from backend...");
+      const response = await apiService.makeRequest(
+        '/auth/generate-username', 
+        'GET',
+        undefined,
+        { signal: controller.signal }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      console.log("Backend response:", response);
+      
       if (response && response.success) {
         setGeneratedUsername(response.username);
+        console.log("Username set successfully:", response.username);
       } else {
         console.error('Username generation failed:', response);
-        setToastMessage(response?.message || 'Failed to generate username');
+        setToastMessage('Could not generate username from server. Please try again.');
         setShowToast(true);
-        // Generate a fallback username if the API fails
-        setGeneratedUsername(`User${Math.floor(Math.random() * 9000) + 1000}`);
       }
     } catch (error) {
       console.error('Network error when generating username:', error);
-      setToastMessage('Network error when generating username. Using fallback name.');
+      
+      setToastMessage('Network error. Please check your connection and try again.');
       setShowToast(true);
-      // Generate a fallback username if the API fails
-      setGeneratedUsername(`User${Math.floor(Math.random() * 9000) + 1000}`);
     } finally {
       setGeneratingUsername(false);
     }
   };
 
-  // Call username generation on component mount
+  // Call username generation on component mount with retry mechanism
   useEffect(() => {
-    generateUsername();
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const attemptGenerateUsername = async () => {
+      try {
+        await generateUsername();
+      } catch (error) {
+        console.error(`Username generation attempt ${retryCount + 1} failed:`, error);
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`Retrying username generation (${retryCount}/${maxRetries})...`);
+          
+          // Wait a bit before retrying (increasing delay with each retry)
+          setTimeout(attemptGenerateUsername, 1000 * retryCount);
+        } else {
+          console.error(`Failed to generate username after ${maxRetries} attempts`);
+          setToastMessage('Could not generate a username. Please try again later or contact support.');
+          setShowToast(true);
+        }
+      }
+    };
+    
+    attemptGenerateUsername();
   }, []);
 
   // Check password requirements
@@ -189,11 +228,27 @@ const Register: React.FC = () => {
     
     try {
       setIsResending(true);
-      const response = await apiService.makeRequest('/auth/resend-verification', 'POST', { email });
+      console.log("Requesting verification email resend for:", email);
+      
+      const response = await apiService.resendVerification(email);
+      console.log("Resend verification response:", response);
       
       if (response.success) {
         triggerAction(); // Start cooldown
-        setToastMessage('Verification email resent! Please check your inbox.');
+        setToastMessage('Verification email sent! Please check your inbox and spam folder.');
+        
+        // FOR DEVELOPMENT ONLY - will auto-open verification link if available
+        // Remove this in production!
+        if (response.verificationUrl) {
+          console.log("Dev mode: Auto verification URL:", response.verificationUrl);
+          // Extract the correct port from the current window location
+          const currentPort = window.location.port;
+          // Update URL to use the current port rather than the one from backend
+          const fixedUrl = response.verificationUrl.replace(/:\d+\//, `:${currentPort}/`);
+          console.log("Using corrected URL with current port:", fixedUrl);
+          // Uncomment to auto-open the link for testing:
+          window.open(fixedUrl, '_blank');
+        }
       } else {
         setToastMessage(response.message || 'Failed to resend verification email');
       }
@@ -385,6 +440,44 @@ const Register: React.FC = () => {
     </IonCard>
   );
 
+  const checkVerificationStatus = async () => {
+    setIsLoading(true);
+    try {
+      console.log("Checking verification status for:", email);
+      const response = await apiService.makeRequest('/auth/check-verification', 'POST', { email });
+      console.log("Verification status response:", response);
+      
+      if (response.success) {
+        if (response.isVerified) {
+          setToastMessage('Email verified! You can now login.');
+          setShowToast(true);
+          setTimeout(() => {
+            history.push('/login');
+          }, 1500);
+        } else {
+          // For development only - auto-open verification URL if available
+          if (response._devUrl) {
+            console.log("Development verification URL:", response._devUrl);
+            // Uncomment to auto-open the link for testing:
+            // window.open(response._devUrl, '_blank');
+          }
+          
+          setToastMessage('Your email is not yet verified. Please check your inbox or request a new verification email.');
+          setShowToast(true);
+        }
+      } else {
+        setToastMessage('Could not verify your status. Please try again later.');
+        setShowToast(true);
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      setToastMessage('Network error when checking verification status.');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderVerificationScreen = () => (
     <IonCard className="verification-card ghost-shadow">
       <IonCardHeader>
@@ -399,34 +492,7 @@ const Register: React.FC = () => {
           Please check your inbox and click the verification link.
         </p>
         <div className="verification-actions">
-          <IonButton 
-            expand="block" 
-            onClick={() => {
-              // Check verification status before redirecting to login
-              setIsLoading(true);
-              apiService.makeRequest('/auth/check-verification', 'POST', { email })
-                .then(response => {
-                  if (response.success && response.isVerified) {
-                    setToastMessage('Email verified! You can now login.');
-                    setShowToast(true);
-                    setTimeout(() => {
-                      history.push('/login');
-                    }, 1000);
-                  } else {
-                    setToastMessage('Your email is not yet verified. Please check your inbox or request a new verification email.');
-                    setShowToast(true);
-                  }
-                })
-                .catch(error => {
-                  console.error('Error checking verification status:', error);
-                  setToastMessage('Could not verify your status. Please try again later.');
-                  setShowToast(true);
-                })
-                .finally(() => {
-                  setIsLoading(false);
-                });
-            }}
-          >
+          <IonButton expand="block" onClick={checkVerificationStatus}>
             Go to Login
           </IonButton>
           <IonButton expand="block" fill="outline" onClick={() => setRegistrationStep(1)}>
@@ -451,14 +517,60 @@ const Register: React.FC = () => {
     </IonCard>
   );
 
+  // Check if already logged in on component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      setAlreadyAuthenticated(true);
+    }
+  }, [isAuthenticated]);
+
+  // Component to display when already logged in
+  const AlreadyLoggedInMessage = () => (
+    <div className="already-logged-in-container">
+      <IonCard className="already-logged-in-card ghost-shadow">
+        <IonCardHeader>
+          <IonCardTitle className="ghost-pulse">Already Logged In</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
+          <p>You are already logged in to your account. You need to log out first to register a new account.</p>
+          <div className="already-logged-in-buttons">
+            <IonButton 
+              expand="block" 
+              onClick={() => history.push('/home')}
+              className="ghost-shadow"
+            >
+              <IonIcon slot="start" icon={homeOutline} />
+              Go to Home
+            </IonButton>
+            <IonButton 
+              expand="block" 
+              color="medium"
+              onClick={() => {
+                logout();
+                setAlreadyAuthenticated(false);
+              }}
+            >
+              <IonIcon slot="start" icon={logOutOutline} />
+              Logout
+            </IonButton>
+          </div>
+        </IonCardContent>
+      </IonCard>
+    </div>
+  );
+
   return (
     <IonPage className="ghost-appear">
       <BackHeaderComponent title="Register" defaultHref="/login" />
       
       <IonContent fullscreen>
-        <div className="register-container">
-          {registrationStep === 1 ? renderRegistrationForm() : renderVerificationScreen()}
-        </div>
+        {alreadyAuthenticated ? (
+          <AlreadyLoggedInMessage />
+        ) : (
+          <div className="register-container">
+            {registrationStep === 1 ? renderRegistrationForm() : renderVerificationScreen()}
+          </div>
+        )}
         
         <IonToast
           isOpen={showToast}
@@ -478,5 +590,4 @@ const Register: React.FC = () => {
 };
 
 export default Register;
-// Add this with other state declarations
 

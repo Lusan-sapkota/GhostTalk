@@ -1,0 +1,77 @@
+.session-verification-alert {
+  --backdrop-opacity: 1 !important;
+  z-index: 100000 !important;
+}
+
+.session-verification-alert::part(backdrop) {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Prevent clicking through the backdrop */
+.session-verification-alert::part(backdrop) {
+  pointer-events: all !important;
+}
+
+.session-verification-modal .login-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.session-verification-modal .ghost-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.session-verification-modal ion-icon {
+  font-size: 48px;
+}
+
+.session-details {
+  background-color: rgba(var(--ion-color-light-rgb), 0.3);
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.session-details h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  padding-left: 8px;
+}
+
+.session-details ion-item {
+  --background: transparent;
+  --padding-start: 8px;
+  --inner-padding-end: 8px;
+}
+
+.session-details ion-label h3 {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  margin-bottom: 2px;
+}
+
+.session-details ion-label p {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ion-color-dark);
+}
+
+.verification-actions {
+  margin-top: 16px;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}

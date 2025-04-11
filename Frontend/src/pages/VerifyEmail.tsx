@@ -48,11 +48,19 @@ const VerifyEmail: React.FC = () => {
   const verifyEmail = async () => {
     setVerifying(true);
     try {
+      // Backend will validate our custom JWT token
       const response = await apiService.makeRequest('/auth/verify-email', 'POST', { token });
       
       if (response.success) {
         setSuccess(true);
         setEmail(response.email || '');
+        
+        // Store verification status
+        localStorage.setItem('emailVerified', 'true');
+        
+        // Display success message
+        setToastMessage('Email verified successfully!');
+        setShowToast(true);
       } else {
         setError(response.message || 'Verification failed. Please try again.');
         // Check if token might be expired

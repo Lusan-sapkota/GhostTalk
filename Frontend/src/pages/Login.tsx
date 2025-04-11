@@ -16,8 +16,8 @@ import {
   IonSegment,
   IonSegmentButton
 } from '@ionic/react';
-import { logIn, person, eye, eyeOff, mail } from 'ionicons/icons';
-import { useState } from 'react';
+import { logIn, person, eye, eyeOff, mail, homeOutline, logOutOutline } from 'ionicons/icons';
+import { useState, useEffect } from 'react';
 import './Login.css';
 import { useAuth } from '../contexts/AuthContext';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -33,14 +33,22 @@ const Login: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
+  const [alreadyAuthenticated, setAlreadyAuthenticated] = useState(false);
   
-  const { login } = useAuth();
+  const { login, isAuthenticated, logout } = useAuth();
   const history = useHistory();
   const location = useLocation();
   
   // Get redirect URL if available
   const { from } = location.state as { from: { pathname: string } } || { from: { pathname: '/home' } };
   
+  // Check if already logged in on component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      setAlreadyAuthenticated(true);
+    }
+  }, [isAuthenticated]);
+
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
   };
@@ -48,19 +56,8 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation for both methods
-    if (!email) {
-      setToastMessage('Please enter your email address');
-      setShowToast(true);
-      return;
-    }
-    
-    // Only validate password for password login method
-    if (loginMethod === 'password' && !password) {
-      setToastMessage('Please enter your password');
-      setShowToast(true);
-      return;
-    }
+    // Get redirect location if applicable
+    const { from } = (location.state as { from: { pathname: string } }) || { from: { pathname: '/home' } };
     
     try {
       setIsLoading(true);
@@ -102,7 +99,7 @@ const Login: React.FC = () => {
           
           // Option to redirect to verification resend screen
           setTimeout(() => {
-            history.push('/verification-needed', { email: response.email });
+            history.push('/verification-needed', { email });
           }, 2000);
         } else {
           setToastMessage(response.message || 'Login failed');
@@ -146,103 +143,142 @@ const Login: React.FC = () => {
     }
   };
 
+  // Component to display when already logged in
+  const AlreadyLoggedInMessage = () => (
+    <div className="already-logged-in-container">
+      <IonCard className="already-logged-in-card ghost-shadow">
+        <IonCardHeader>
+          <IonCardTitle className="ghost-pulse">Already Logged In</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
+          <p>You are already logged in to your account.</p>
+          <div className="already-logged-in-buttons">
+            <IonButton 
+              expand="block" 
+              onClick={() => history.push('/home')}
+              className="ghost-shadow"
+            >
+              <IonIcon slot="start" icon={homeOutline} />
+              Go to Home
+            </IonButton>
+            <IonButton 
+              expand="block" 
+              color="medium"
+              onClick={() => {
+                logout();
+                setAlreadyAuthenticated(false);
+              }}
+            >
+              <IonIcon slot="start" icon={logOutOutline} />
+              Logout
+            </IonButton>
+          </div>
+        </IonCardContent>
+      </IonCard>
+    </div>
+  );
+
   return (
     <IonPage className="ghost-appear">
       <BackHeaderComponent title="Login" />
       
       <IonContent fullscreen>
-        <div className="login-container">
-          <IonCard className="login-card ghost-shadow">
-            <IonCardHeader>
-              <div className="login-icon-container ghost-float">
-                <IonIcon icon={person} color="primary" />
-              </div>
-              <IonCardTitle className="ghost-pulse">Login</IonCardTitle>
-              
-              <IonSegment 
-                value={loginMethod} 
-                onIonChange={e => setLoginMethod(e.detail.value as 'password' | 'magic')}
-                className="login-method-segment staggered-item"
-              >
-                <IonSegmentButton value="password">
-                  <IonLabel>Password</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="magic">
-                  <IonLabel>Magic Link</IonLabel>
-                </IonSegmentButton>
-              </IonSegment>
-            </IonCardHeader>
-            
-            <IonCardContent>
-              <form onSubmit={handleLogin}>
-                <IonItem className="login-form-item staggered-item">
-                  <IonLabel className="login-form-label">Email address</IonLabel>
-                  <IonInput 
-                    className="login-input"
-                    type="email" 
-                    value={email} 
-                    onIonChange={e => setEmail(e.detail.value!)} 
-                    required
-                  />
-                </IonItem>
+        {alreadyAuthenticated ? (
+          <AlreadyLoggedInMessage />
+        ) : (
+          <div className="login-container">
+            <IonCard className="login-card ghost-shadow">
+              <IonCardHeader>
+                <div className="login-icon-container ghost-float">
+                  <IonIcon icon={person} color="primary" />
+                </div>
+                <IonCardTitle className="ghost-pulse">Login</IonCardTitle>
                 
-                {loginMethod === 'password' && (
-                  <IonItem className="login-form-item staggered-item login-password-item">
-                    <IonLabel className="login-form-label">Password</IonLabel>
+                <IonSegment 
+                  value={loginMethod} 
+                  onIonChange={e => setLoginMethod(e.detail.value as 'password' | 'magic')}
+                  className="login-method-segment staggered-item"
+                >
+                  <IonSegmentButton value="password">
+                    <IonLabel>Password</IonLabel>
+                  </IonSegmentButton>
+                  <IonSegmentButton value="magic">
+                    <IonLabel>Magic Link</IonLabel>
+                  </IonSegmentButton>
+                </IonSegment>
+              </IonCardHeader>
+              
+              <IonCardContent>
+                <form onSubmit={handleLogin}>
+                  <IonItem className="login-form-item staggered-item">
+                    <IonLabel className="login-form-label">Email address</IonLabel>
                     <IonInput 
                       className="login-input"
-                      type={showPassword ? "text" : "password"}
-                      value={password} 
-                      onIonChange={e => setPassword(e.detail.value!)} 
+                      type="email" 
+                      value={email} 
+                      onIonChange={e => setEmail(e.detail.value!)} 
                       required
                     />
-                    <IonButton 
-                      fill="clear" 
-                      slot="end" 
-                      onClick={handleTogglePassword}
-                      className="login-password-toggle-btn"
-                    >
-                      <IonIcon slot="icon-only" icon={showPassword ? eye : eyeOff} />
-                    </IonButton>
                   </IonItem>
-                )}
-                
-                {loginMethod === 'password' && (
-                  <div className="login-remember-item">
-                    <IonCheckbox 
-                      className="login-checkbox"
-                      checked={remember} 
-                      onIonChange={e => setRemember(e.detail.checked)} 
-                    />
-                    <span>Remember me</span>
-                  </div>
-                )}
-                
-                <div className="login-buttons staggered-item">
-                  <IonButton 
-                    expand="block" 
-                    type="submit" 
-                    className="login-button ghost-shadow"
-                  >
-                    <IonIcon slot="start" icon={loginMethod === 'password' ? logIn : mail} />
-                    {loginMethod === 'password' ? 'Login' : 'Send Magic Link'}
-                  </IonButton>
                   
-                  <div className="auth-links">
-                    <IonButton routerLink="/register" fill="clear" size="small">
-                      Create Account
-                    </IonButton>
-                    {loginMethod === 'password' && (
-                      <IonButton onClick={handleForgotPassword} fill="clear" size="small">
-                        Forgot Password?
+                  {loginMethod === 'password' && (
+                    <IonItem className="login-form-item staggered-item login-password-item">
+                      <IonLabel className="login-form-label">Password</IonLabel>
+                      <IonInput 
+                        className="login-input"
+                        type={showPassword ? "text" : "password"}
+                        value={password} 
+                        onIonChange={e => setPassword(e.detail.value!)} 
+                        required
+                      />
+                      <IonButton 
+                        fill="clear" 
+                        slot="end" 
+                        onClick={handleTogglePassword}
+                        className="login-password-toggle-btn"
+                      >
+                        <IonIcon slot="icon-only" icon={showPassword ? eye : eyeOff} />
                       </IonButton>
-                    )}
+                    </IonItem>
+                  )}
+                  
+                  {loginMethod === 'password' && (
+                    <div className="login-remember-item">
+                      <IonCheckbox 
+                        className="login-checkbox"
+                        checked={remember} 
+                        onIonChange={e => setRemember(e.detail.checked)} 
+                      />
+                      <span>Remember me</span>
+                    </div>
+                  )}
+                  
+                  <div className="login-buttons staggered-item">
+                    <IonButton 
+                      expand="block" 
+                      type="submit" 
+                      className="login-button ghost-shadow"
+                    >
+                      <IonIcon slot="start" icon={loginMethod === 'password' ? logIn : mail} />
+                      {loginMethod === 'password' ? 'Login' : 'Send Magic Link'}
+                    </IonButton>
+                    
+                    <div className="auth-links">
+                      <IonButton routerLink="/register" fill="clear" size="small">
+                        Create Account
+                      </IonButton>
+                      {loginMethod === 'password' && (
+                        <IonButton onClick={handleForgotPassword} fill="clear" size="small">
+                          Forgot Password?
+                        </IonButton>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </form>
-            </IonCardContent>
-          </IonCard>
-        </div>
+                </form>
+              </IonCardContent>
+            </IonCard>
+          </div>
+        )}
         
         <IonToast
           isOpen={showToast}

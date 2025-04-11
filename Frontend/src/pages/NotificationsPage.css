@@ -1,0 +1,296 @@
+.notifications-page {
+  --background: var(--ion-background-color);
+}
+
+/* Notifications list styling */
+.notifications-list {
+  background: transparent;
+  padding: 0 16px;
+}
+
+/* Actions row */
+.notifications-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  margin-bottom: 8px;
+}
+
+/* Notification item styling */
+.notification-item {
+  --background: rgba(var(--ion-color-light-rgb), 0.5);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.notification-item.unread {
+  --background: rgba(var(--ion-color-primary-rgb), 0.05);
+  border-left: 3px solid var(--ion-color-primary);
+}
+
+.notification-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.notification-icon ion-icon {
+  font-size: 20px;
+  color: white;
+}
+
+.notification-icon.primary {
+  background: var(--ion-color-primary);
+}
+
+.notification-icon.success {
+  background: var(--ion-color-success);
+}
+
+.notification-icon.warning {
+  background: var(--ion-color-warning);
+}
+
+.notification-icon.danger {
+  background: var(--ion-color-danger);
+}
+
+.notification-icon.tertiary {
+  background: var(--ion-color-tertiary);
+}
+
+.notification-icon.medium {
+  background: var(--ion-color-medium);
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notification-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.unread-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  margin-right: 8px;
+  animation: pulse 2s infinite;
+}
+
+.notification-description {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium-shade);
+  line-height: 1.4;
+}
+
+.notification-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-time {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+.notification-time ion-icon {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+.notification-action {
+  --color: var(--ion-color-primary);
+  --padding-start: 8px;
+  --padding-end: 8px;
+  margin: 0;
+  height: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Empty state */
+.empty-notifications {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ion-color-medium);
+}
+
+.empty-notifications ion-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.empty-notifications h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.empty-notifications p {
+  margin: 0;
+  max-width: 260px;
+  font-size: 0.95rem;
+}
+
+/* Settings section */
+.settings-section {
+  padding: 0 16px 32px;
+  margin-top: 32px;
+}
+
+.notification-settings-card {
+  margin: 0 0 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.settings-header ion-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.settings-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.settings-item {
+  --padding-start: 0;
+  --padding-end: 0;
+  --inner-padding-end: 0;
+  --background: transparent;
+}
+
+.categories-section {
+  margin: 16px 0;
+}
+
+.categories-section h4 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-chip {
+  --background: transparent;
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.advanced-settings-btn {
+  margin-top: 16px;
+  --color: var(--ion-color-primary);
+  font-weight: 500;
+}
+
+/* Tips section */
+.notification-tips {
+  margin-top: 24px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.tip-item ion-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.tip-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium-shade);
+}
+
+/* Skeleton loading */
+.skeleton .notification-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.staggered-item {
+  animation: fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.staggered-item:nth-child(1) { animation-delay: 0.05s; }
+.staggered-item:nth-child(2) { animation-delay: 0.1s; }
+.staggered-item:nth-child(3) { animation-delay: 0.15s; }
+.staggered-item:nth-child(4) { animation-delay: 0.2s; }
+.staggered-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* Dark mode tweaks */
+@media (prefers-color-scheme: dark) {
+  .notification-item {
+    --background: rgba(var(--ion-color-dark-rgb), 0.3);
+  }
+  
+  .notification-item.unread {
+    --background: rgba(var(--ion-color-primary-rgb), 0.15);
+  }
+  
+  .tip-item {
+    background: rgba(var(--ion-color-dark-rgb), 0.3);
+  }
+}

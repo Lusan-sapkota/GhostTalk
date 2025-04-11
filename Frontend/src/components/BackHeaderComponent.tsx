@@ -10,6 +10,7 @@ import {
   IonSearchbar
 } from '@ionic/react';
 import { search, arrowBack } from 'ionicons/icons';
+import { useAuth } from '../contexts/AuthContext';
 import './BackHeaderComponent.css';
 
 interface BackHeaderComponentProps {
@@ -19,6 +20,7 @@ interface BackHeaderComponentProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
+  defaultHref?: string;
 }
 
 const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({ 
@@ -27,10 +29,12 @@ const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({
   onBack,
   showSearch = false,
   searchPlaceholder = "Search...",
-  onSearchChange
+  onSearchChange,
+  defaultHref = "/"
 }) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const { isAuthenticated } = useAuth();
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);
@@ -67,17 +71,17 @@ const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({
                   <IonIcon icon={arrowBack} slot="icon-only" />
                 </IonButton>
               ) : (
-                <IonBackButton defaultHref="/" />
+                <IonBackButton defaultHref={defaultHref} />
               )}
             </IonButtons>
             <IonTitle className="back-header-title">{title}</IonTitle>
-            {showSearch && (
-              <IonButtons slot="end">
+            <IonButtons slot="end">
+              {showSearch && (
                 <IonButton onClick={toggleSearch} className="search-button">
                   <IonIcon slot="icon-only" icon={search} />
                 </IonButton>
-              </IonButtons>
-            )}
+              )}
+            </IonButtons>
           </>
         )}
       </IonToolbar>

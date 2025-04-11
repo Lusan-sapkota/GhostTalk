@@ -66,6 +66,7 @@ const ResetPassword: React.FC = () => {
     
     setIsLoading(true);
     try {
+      // Token will be verified by our backend with JWT validation
       const response = await apiService.resetPassword(token, password);
       
       if (response.success) {
@@ -82,7 +83,7 @@ const ResetPassword: React.FC = () => {
       }
     } catch (error) {
       console.error('Password reset error:', error);
-      setMessage('An error occurred. Please try again.');
+      setMessage('An error occurred. Please try again or request a new reset link.');
       setIsError(true);
     } finally {
       setIsLoading(false);
