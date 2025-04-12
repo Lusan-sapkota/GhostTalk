@@ -85,7 +85,7 @@ class AppwriteService:
                     'gender': gender,
                     'bio': bio,
                     'createdAt': datetime.utcnow().isoformat(), # Use ISO format for datetime
-                    'isPro': False,
+                    'proStatus': 'free',
                     'isVerified': False,
                     'avatar': avatar_reference,  # Just store the ID
                     'avatarId': avatar_bucket_id,  # Store bucket ID separately
@@ -729,3 +729,82 @@ class AppwriteService:
         except Exception as e:
             print(f"Error getting 2FA settings: {str(e)}")
             return {'enabled': False}
+
+    def update_user_online_status(self, user_id, is_online):
+        """Update a user's online status"""
+        self._initialize_client()
+        try:
+            from datetime import datetime
+            
+            # Get the user document
+            user_doc = self.get_user_document(user_id)
+            
+            if not user_doc:
+                print(f"User document not found for ID: {user_id}")
+                return False
+                
+            # Update the document with online status
+            self.database.update_document(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,
+                document_id=user_id,
+                data={
+                    'isOnline': is_online,
+                    'lastActiveAt': datetime.utcnow().isoformat()
+                }
+            )
+            
+            return True
+        except Exception as e:
+            print(f"Error updating online status: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    # Add a utility method for migrating existing users
+    def migrate_pro_status_field(self):
+        """Migrate isPro boolean field to proStatus enum field"""
+        self._initialize_client()
+        try:
+            # Get all user documents
+            users = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id
+            )
+            
+            migrated_count = 0
+            
+            # Update each user document
+            for user in users['documents']:
+                user_id = user['$id']
+                is_pro = user.get('isPro', False)
+                
+                # Skip if proStatus is already set
+                if 'proStatus' in user:
+                    continue
+                    
+                # Convert boolean isPro to enum proStatus
+                pro_status = 'monthly' if is_pro else 'free'
+                
+                # Update the document
+                self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data={
+                        'proStatus': pro_status
+                    }
+                )
+                
+                migrated_count += 1
+                
+            return {
+                'success': True,
+                'message': f'Migrated {migrated_count} user(s)'
+            }
+        except Exception as e:
+            print(f"Error migrating pro status: {str(e)}")
+            return {
+                'success': False,
+                'message': str(e)
+            }

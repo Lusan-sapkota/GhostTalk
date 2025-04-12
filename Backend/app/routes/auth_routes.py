@@ -9,6 +9,17 @@ auth_bp = Blueprint('auth', __name__)
 auth_service = AuthService()
 username_repository = UsernameRepository()
 
+@auth_bp.route('/<path:path>', methods=['OPTIONS'])
+def options_handler(path):
+    """Handle OPTIONS requests for CORS preflight checks"""
+    response = jsonify({})
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Max-Age', '86400')  # 24 hours
+    return response
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """Register a new user"""
@@ -353,10 +364,10 @@ def verify_token():
     token = auth_header.split(' ')[1]
     
     try:
-        # Verify token with your validation logic
+        # Verify token with your validation logic - accept any valid token type
         from ..utils.security import verify_token
-        # Try both security and session token types
-        payload = verify_token(token, 'security') or verify_token(token, 'session')
+        # Try multiple token types
+        payload = verify_token(token) # Remove the type requirement
         
         if not payload:
             return jsonify({'success': False, 'message': 'Invalid or expired token'}), 401

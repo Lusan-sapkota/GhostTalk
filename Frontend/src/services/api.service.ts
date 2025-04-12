@@ -142,94 +142,77 @@ export class ApiService {
   }
   
   setToken(token: string, remember: boolean = false) {
-    this.token = token; // Set token in the service instance
+    // Always store token in memory for current session
+    this.token = token;
     
-    // Store expiration date (7 days from now)
+    // Calculate token expiry (e.g., 7 days for remember me, 1 day for session)
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 7);
+    expiryDate.setDate(expiryDate.getDate() + (remember ? 7 : 1));
     
-    // ALWAYS store in sessionStorage for current session
+    // Always store in sessionStorage (for tab persistence)
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('authTokenExpires', expiryDate.toISOString());
     
-    // If remember me is checked, ALSO store in localStorage for persistence
+    // Set rememberMe flag in sessionStorage too
+    sessionStorage.setItem('rememberMe', remember ? 'true' : 'false');
+    
+    // If "Remember Me" is checked, also store in localStorage
     if (remember) {
-      console.log('Remember me enabled, storing token in localStorage');
       localStorage.setItem('authToken', token);
       localStorage.setItem('authTokenExpires', expiryDate.toISOString());
       localStorage.setItem('rememberMe', 'true');
-    } else {
-      // Clean up localStorage if remember me is not checked
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('authTokenExpires');
-      localStorage.removeItem('rememberMe');
+    }
+    
+    // Set initial verification flags to prevent immediate logout
+    sessionStorage.setItem('sessionVerified', 'true');
+    if (remember) {
+      localStorage.setItem('sessionVerified', 'true');
     }
   }
   
   clearToken() {
     this.token = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authTokenExpires');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('authTokenExpires');
     
-    // Clear all auth-related data from both storage types
-    const keysToRemove = [
-      'authToken', 
-      'authTokenExpires', 
-      'sessionVerified', 
-      'sessionDetails',
-      'rememberMe',
-      'securityTokenVerified'
-    ];
-    
-    // Clear from localStorage
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    // Clear from sessionStorage
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
-    
-    console.log('All auth tokens and session data cleared');
+    // Clear verification statuses as well
+    localStorage.removeItem('sessionVerified');
+    sessionStorage.removeItem('sessionVerified');
+    localStorage.removeItem('securityTokenVerified');
+    sessionStorage.removeItem('securityTokenVerified');
   }
   
-  getToken() {
-    // Try different token sources in specific order
-    
-    // 1. First, the in-memory token (fastest)
+  getToken(): string | null {
+    // First check memory
     if (this.token) {
       return this.token;
     }
     
-    // 2. Then sessionStorage (for current browser session)
-    const sessionToken = sessionStorage.getItem('authToken');
-    const sessionExpires = sessionStorage.getItem('authTokenExpires');
+    // Check if "Remember Me" was used
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
     
-    if (sessionToken && sessionExpires) {
-      const expirationDate = new Date(sessionExpires);
-      if (new Date() < expirationDate) {
-        this.token = sessionToken;
-        return sessionToken;
-      }
-      // Clear expired token
-      sessionStorage.removeItem('authToken');
-      sessionStorage.removeItem('authTokenExpires');
+    // Try to get token from session storage first (for current tab)
+    let token = sessionStorage.getItem('authToken');
+    let expires = sessionStorage.getItem('authTokenExpires');
+    
+    // If not in session storage or expired, and remember me is enabled,
+    // check local storage
+    if ((!token || !expires || new Date(expires) < new Date()) && rememberMe) {
+      token = localStorage.getItem('authToken');
+      expires = localStorage.getItem('authTokenExpires');
     }
     
-    // 3. Finally localStorage (for persistent login with remember me)
-    const localToken = localStorage.getItem('authToken');
-    const localExpires = localStorage.getItem('authTokenExpires');
-    
-    if (localToken && localExpires) {
-      const expirationDate = new Date(localExpires);
-      if (new Date() < expirationDate) {
-        // Valid token found, also save it to sessionStorage and memory for future use
-        this.token = localToken;
-        sessionStorage.setItem('authToken', localToken);
-        sessionStorage.setItem('authTokenExpires', localExpires);
-        return localToken;
-      }
-      // Clear expired token
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('authTokenExpires');
+    // If token exists and is not expired, return it
+    if (token && expires && new Date(expires) > new Date()) {
+      this.token = token; // Restore to memory
+      return token;
     }
     
-    return null; // No valid token found
+    // If we got here, token is either missing or expired
+    this.clearToken(); // Clear any invalid tokens
+    return null;
   }
 
   isAuthenticated() {
@@ -347,6 +330,69 @@ export class ApiService {
 
   getUserInfo(userId: string) {
     return this.makeRequest('/auth/user-info', 'POST', { userId });
+  }
+
+  async validateToken(): Promise<{ success: boolean; user?: any; message?: string }> {
+    try {
+      // Get the current token
+      const token = this.getToken();
+      if (!token) {
+        return { success: false, message: 'No token found' };
+      }
+
+      // Network check before making request
+      const isOnline = navigator.onLine;
+      if (!isOnline) {
+        return { success: false, message: 'Offline mode' };
+      }
+      
+      // Use try-catch with custom fetch to prevent CORS errors in console
+      try {
+        // Use a custom fetch approach with error suppression
+        const response = await this.silentFetch('/auth/validate', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response && response.ok) {
+          const data = await response.json();
+          return { 
+            success: true, 
+            user: data.user 
+          };
+        }
+        
+        return { 
+          success: false, 
+          message: 'Invalid token response'
+        };
+      } catch (fetchError) {
+        // Silently handle fetch errors
+        return { 
+          success: false, 
+          message: 'Token validation fetch failed'
+        };
+      }
+    } catch (error) {
+      // Return failure without logging
+      return { 
+        success: false, 
+        message: 'Token validation failed'
+      };
+    }
+  }
+
+  // Add this helper method to silently handle fetch requests
+  private async silentFetch(endpoint: string, options: RequestInit = {}): Promise<Response | null> {
+    try {
+      const url = `${this.API_URL}${endpoint}`;
+      return await fetch(url, {
+        ...options,
+        credentials: 'include'
+      });
+    } catch (error) {
+      // Silently fail - no console errors
+      return null;
+    }
   }
 }
 

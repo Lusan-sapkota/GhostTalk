@@ -75,3 +75,20 @@
     transform: translateY(0px);
   }
 }
+
+/* Add this for compact modal */
+.verification-compact-card {
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.session-verification-modal .modal-wrapper {
+  --height: auto;
+  --width: 90%;
+  max-width: 370px;
+}
+
+.session-verification-modal ion-content {
+  --padding-top: 20px;
+  --padding-bottom: 20px;
+}

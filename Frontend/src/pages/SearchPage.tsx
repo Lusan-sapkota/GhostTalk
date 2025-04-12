@@ -33,7 +33,7 @@ interface User {
   name: string;
   avatar?: string;
   status?: string;
-  isPro?: boolean;
+  proStatus?: string; // Change from isPro to proStatus
   isVerified?: boolean;
   lastSeen?: string;
 }
@@ -62,7 +62,7 @@ const SearchPage: React.FC = () => {
             id: 'user1',
             name: `${value} Smith`,
             status: 'Online',
-            isPro: true,
+            proStatus: 'monthly', // Changed from isPro: true
             isVerified: true,
             lastSeen: 'Just now'
           },
@@ -70,7 +70,7 @@ const SearchPage: React.FC = () => {
             id: 'user2',
             name: `Alex ${value}son`,
             status: 'Away',
-            isPro: false,
+            proStatus: 'free', // Changed from isPro: false
             isVerified: false,
             lastSeen: '2 hours ago'
           },
@@ -78,7 +78,7 @@ const SearchPage: React.FC = () => {
             id: 'user3',
             name: `Jamie ${value}`,
             status: 'Offline',
-            isPro: false,
+            proStatus: 'free', // Changed from isPro: false
             isVerified: true,
             lastSeen: '1 day ago'
           }
@@ -132,7 +132,7 @@ const SearchPage: React.FC = () => {
           id: 'user4',
           name: `Taylor ${searchText}`,
           status: 'Online',
-          isPro: true,
+          proStatus: 'yearly', // Changed from isPro: true
           isVerified: false,
           lastSeen: 'Just now'
         },
@@ -140,7 +140,7 @@ const SearchPage: React.FC = () => {
           id: 'user5',
           name: `Morgan ${searchText}son`,
           status: 'Away',
-          isPro: false,
+          proStatus: 'free', // Changed from isPro: false
           isVerified: false,
           lastSeen: '5 hours ago'
         }
@@ -224,7 +224,9 @@ const SearchPage: React.FC = () => {
                   <IonLabel>
                     <div className="user-name-row">
                       <h2>{user.name}</h2>
-                      {user.isPro && <IonBadge color="warning" className="pro-badge">PRO</IonBadge>}
+                      {user.proStatus && user.proStatus !== 'free' && (
+                        <IonBadge color="warning" className="pro-badge">PRO</IonBadge>
+                      )}
                       {user.isVerified && (
                         <IonIcon icon={checkmarkCircle} color="primary" className="verified-icon" />
                       )}

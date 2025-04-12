@@ -195,7 +195,7 @@ class AuthService:
                             'id': result['user']['$id'],
                             'email': result['user']['email'],
                             'name': result['user']['name'],
-                            'isPro': user_doc.get('isPro', False) if user_doc else False,
+                            'proStatus': user_doc.get('proStatus', 'free') if user_doc else 'free',
                             'isVerified': True
                         },
                         'token': token
@@ -781,7 +781,7 @@ class AuthService:
                     'id': user['$id'],
                     'email': user['email'],
                     'name': user.get('name', ''),
-                    'isPro': user_doc.get('isPro', False),
+                    'proStatus': user_doc.get('proStatus', 'free'),
                     'isVerified': True
                 },
                 'token': token

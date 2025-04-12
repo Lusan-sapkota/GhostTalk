@@ -10,8 +10,12 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Enable CORS properly with credentials support
-    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:8100", "http://localhost:8101", "capacitor://localhost"]}}, supports_credentials=True)
+    # Configure CORS properly to accept requests from the frontend
+    # This is critical for handling preflight OPTIONS requests
+    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:8100", "http://localhost:8101", "capacitor://localhost"]}}, 
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization", "X-Test-IP"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     
     # Debug output to verify configuration loading
     print(f"Loaded database ID: {app.config.get('APPWRITE_DATABASE_ID')}")
