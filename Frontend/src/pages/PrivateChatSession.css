@@ -1,0 +1,309 @@
+/* Header styling */
+.chat-header {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.chat-title {
+  padding: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.user-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--ion-color-success);
+  border-radius: 50%;
+  border: 2px solid var(--ion-background-color);
+}
+
+.user-status h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.user-status p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+
+/* Session timer */
+.session-timer {
+  padding: 0 10px 5px;
+}
+
+.timer-text {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 0;
+  justify-content: space-between;
+}
+
+.timer-text ion-icon {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+/* Message container */
+.message-container {
+  padding: 10px 15px;
+}
+
+.message {
+  margin-bottom: 12px;
+  max-width: 80%;
+  clear: both;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.sent {
+  float: right;
+}
+
+.message.received {
+  float: left;
+}
+
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  position: relative;
+  word-break: break-word;
+}
+
+.sent .message-bubble {
+  background: var(--ion-color-primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.received .message-bubble {
+  background: var(--ion-color-light);
+  color: var(--ion-color-dark);
+  border-bottom-left-radius: 4px;
+}
+
+.ghost-message .message-bubble {
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-tertiary));
+}
+
+.ghost-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.ghost-indicator ion-icon {
+  margin-right: 4px;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ion-color-medium);
+}
+
+.sent .message-meta {
+  justify-content: flex-end;
+}
+
+.message-status {
+  margin-left: 4px;
+}
+
+.message-status ion-icon {
+  font-size: 14px;
+}
+
+/* Audio message */
+.audio-message {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 18px;
+  background: var(--ion-color-light);
+}
+
+.sent .audio-message {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.audio-icon {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.audio-waveform {
+  flex: 1;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.waveform-placeholder {
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(90deg, 
+    var(--ion-color-medium) 1px, transparent 1px, 
+    transparent 4px, var(--ion-color-medium) 4px);
+  background-size: 5px 100%;
+  opacity: 0.5;
+  border-radius: 2px;
+}
+
+.sent .waveform-placeholder {
+  background: linear-gradient(90deg, 
+    white 1px, transparent 1px, 
+    transparent 4px, white 4px);
+  background-size: 5px 100%;
+  opacity: 0.8;
+}
+
+.play-button {
+  margin: 0;
+  height: 30px;
+}
+
+/* Footer and input area */
+.chat-footer {
+  border-top: 1px solid var(--ion-border-color);
+  padding: 5px 10px;
+  background: var(--ion-background-color);
+}
+
+.input-container {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.message-input {
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  border-radius: 20px;
+  background: var(--ion-color-light);
+  margin: 0 6px;
+  max-height: 120px;
+  font-size: 16px;
+}
+
+.ghost-toggle, .mic-button, .send-button {
+  min-width: 40px;
+  height: 40px;
+  margin: 0;
+}
+
+.ghost-toggle ion-icon, .mic-button ion-icon, .send-button ion-icon {
+  font-size: 20px;
+}
+
+/* Recording interface */
+.recording-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px;
+  background: rgba(var(--ion-color-danger-rgb), 0.05);
+  border-radius: 20px;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.recording-pulse {
+  width: 12px;
+  height: 12px;
+  background: var(--ion-color-danger);
+  border-radius: 50%;
+  margin-right: 10px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(0.8); opacity: 1; }
+}
+
+/* Ghost options */
+.ghost-options {
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ghost-title {
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.ghost-title ion-icon {
+  margin-right: 6px;
+}
+
+.time-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-options ion-chip {
+  margin: 0;
+  height: 28px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .received .message-bubble {
+    background: var(--ion-color-dark-shade);
+  }
+
+  .message-input, .ghost-options {
+    background: var(--ion-color-dark-shade);
+  }
+
+  .recording-container {
+    background: rgba(var(--ion-color-danger-rgb), 0.1);
+  }
+}

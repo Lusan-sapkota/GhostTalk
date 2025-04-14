@@ -16,7 +16,9 @@ import {
   IonToast,
   IonSpinner,
   IonActionSheet,
-  IonModal
+  IonModal,
+  IonBadge,
+  IonSearchbar
 } from '@ionic/react';
 import { 
   person, 
@@ -35,9 +37,13 @@ import {
   copyOutline,
   close,
   share,
-  downloadOutline
+  downloadOutline,
+  image as imagesOutline, // Change this import - Ionicons doesn't have 'imagesOutline'
+  diamond,
+  star,
+  chevronBack
 } from 'ionicons/icons';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import './Profile.css';
 import BackHeaderComponent from '../components/BackHeaderComponent';
@@ -68,18 +74,61 @@ const Profile: React.FC = () => {
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [availableAvatars, setAvailableAvatars] = useState<{id: string; name: string; url: string; mimeType?: string}[]>([]);
+  const [loadingAvatars, setLoadingAvatars] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedAlert, setShowUnsavedAlert] = useState(false);
+
+  const [hasProfileChanges, setHasProfileChanges] = useState(false);
+  const [showProfileUnsavedAlert, setShowProfileUnsavedAlert] = useState(false);
+  const [originalProfileData, setOriginalProfileData] = useState({
+    username: '',
+    email: '',
+    bio: '',
+    isOnline: false
+  });
+
   useEffect(() => {
     loadUserProfile();
   }, []);
+  
 
-  const formatMemberSince = (timestamp: number): string => {
+  const formatMemberSince = (timestamp: string | number): string => {
     if (!timestamp) return 'Unknown';
     
     try {
-      const date = new Date(timestamp * 1000);
+      let date;
+      
+      // Check if timestamp is a string with ISO format
+      if (typeof timestamp === 'string' && timestamp.includes('T')) {
+        date = new Date(timestamp);
+      } 
+      // Check if timestamp is a number (unix timestamp in seconds)
+      else if (typeof timestamp === 'number') {
+        date = new Date(timestamp * 1000);
+      } 
+      // Fallback
+      else {
+        date = new Date(timestamp);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date format:', timestamp);
+        return 'Unknown join date';
+      }
+      
       return `Member since ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
     } catch (error) {
-      console.error('Error formatting date:', error);
+      console.error('Error formatting date:', error, timestamp);
       return 'Unknown join date';
     }
   };
@@ -91,6 +140,9 @@ const Profile: React.FC = () => {
       
       if (response.success) {
         const user = response.user;
+        console.log('User data from backend:', user);
+        
+        // Set current values
         setUsername(user.name || 'GhostUser');
         setEmail(user.email || '');
         setBio(user.bio || 'Just a friendly ghost in the digital world.');
@@ -99,6 +151,14 @@ const Profile: React.FC = () => {
         setProStatus(user.proStatus || 'free');
         setGender(user.gender || 'prefer_not_to_say');
         
+        // Store original values for change detection
+        setOriginalProfileData({
+          username: user.name || 'GhostUser',
+          email: user.email || '',
+          bio: user.bio || 'Just a friendly ghost in the digital world.',
+          isOnline: user.isOnline || false
+        });
+        
         // Format registration date correctly
         if (user.registration) {
           setMemberSince(formatMemberSince(user.registration));
@@ -106,14 +166,20 @@ const Profile: React.FC = () => {
         
         // Set avatar if available from the backend
         if (user.avatar) {
+          console.log('Avatar from backend:', user.avatar);
+          
           // If avatar is a full URL
-          if (user.avatar.startsWith('http')) {
+          if (typeof user.avatar === 'string' && user.avatar.startsWith('http')) {
+            console.log('Using full URL for avatar');
             setAvatar(user.avatar);
           } else {
-            // If it's a path or ID that needs to be constructed with the API URL
-            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-            setAvatar(`${apiBaseUrl}/user/avatar/${user.avatar}`);
+            // Use our consistent getAvatarUrl function for all avatar loading
+            console.log(`Setting avatar with ID: ${user.avatar}`);
+            setAvatar(getAvatarUrl(user.avatar));
           }
+        } else {
+          console.log('No avatar found in user data');
+          setAvatar('https://ionicframework.com/docs/img/demos/avatar.svg');
         }
       }
     } catch (err) {
@@ -229,22 +295,143 @@ const Profile: React.FC = () => {
 
   const handleAvatarClick = () => {
     if (isEditing) {
-      setShowPhotoOptions(true);
+      // Load available avatars first
+      loadAvailableAvatars();
+      setShowAvatarSelector(true);
     }
   };
 
+  // Modify the loadAvailableAvatars function to add more logging
+  const loadAvailableAvatars = async () => {
+    setLoadingAvatars(true);
+    
+    // Add a timeout to prevent endless loading
+    const loadingTimeout = setTimeout(() => {
+      setLoadingAvatars(false);
+      setToastMessage('Avatar loading timed out. Please try again.');
+      setShowToast(true);
+    }, 30000); // 30 second timeout
+    
+    try {
+      console.log('Calling getAvailableAvatars...');
+      const response = await userService.getAvailableAvatars();
+      console.log('Avatar API response:', response);
+      
+      // Clear the timeout since we got a response
+      clearTimeout(loadingTimeout);
+      
+      if (response.success && response.avatars) {
+        console.log(`Loaded ${response.avatars.length} avatars from backend`);
+        
+        // Add this warning only if no avatars were returned
+        if (response.avatars.length === 0) {
+          console.warn('Server returned success but no avatars were included');
+        }
+        
+        // Log the first few avatars for debugging
+        if (response.avatars.length > 0) {
+          console.log('First 3 avatars:', response.avatars.slice(0, 3));
+        }
+        
+        setAvailableAvatars(response.avatars);
+        // Reset pagination when loading avatars
+        setCurrentPage(1);
+        setSelectedAvatar(null);
+      } else {
+        console.error('Failed to load avatars - API returned:', response);
+        setToastMessage('Failed to load avatars. Please try again.');
+        setShowToast(true);
+      }
+    } catch (error) {
+      // Clear the timeout in case of error too
+      clearTimeout(loadingTimeout);
+      
+      console.error('Error loading avatars:', error);
+      setToastMessage('Error loading avatars. Please try again.');
+      setShowToast(true);
+    } finally {
+      setLoadingAvatars(false);
+    }
+  };
+
+  // Add this function to create proper avatar URLs
+  // Update the function to consider SVG mime types
+  const getAvatarUrl = (avatarId: string) => {
+    if (!avatarId) {
+      console.log('No avatar ID provided, using default');
+      return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    }
+    
+    // Use the backend proxy endpoint
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const url = `${apiBaseUrl}/user/avatar/${avatarId}`;
+    console.log('Generated avatar URL:', url);
+    return url;
+  };
+
+  const selectAvatar = async (avatarId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await userService.selectAvatar(avatarId);
+      if (response.success) {
+        setAvatar(getAvatarUrl(avatarId));
+        setToastMessage('Avatar updated successfully');
+        setShowToast(true);
+      } else {
+        setToastMessage(response.message || 'Failed to update avatar');
+        setShowToast(true);
+      }
+    } catch (error) {
+      console.error('Error selecting avatar:', error);
+      setToastMessage('Failed to update avatar');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowAvatarSelector(false);
+    }
+  };
+
+  
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement file upload logic with your backend
-      // For now, we'll just create a local URL for preview
-      const localUrl = URL.createObjectURL(file);
-      setAvatar(localUrl);
-      setShowPhotoOptions(false);
-      
-      // Here you would upload the file to your backend
-      // and update the avatar URL accordingly
-    }
+    if (!file) return;
+  
+    // Create a temporary local preview
+    const localUrl = URL.createObjectURL(file);
+    setAvatar(localUrl);
+    setShowPhotoOptions(false);
+    
+    // Upload to the backend
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    setIsLoading(true);
+    userService.uploadAvatar(formData)
+      .then(response => {
+        if (response.success) {
+          setToastMessage('Avatar updated successfully');
+          // Set the new avatar URL from the backend
+          if (response.avatar) {
+            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            setAvatar(`${apiBaseUrl}/user/avatar/${response.avatar}`);
+          }
+        } else {
+          setToastMessage('Failed to update avatar');
+          // Reset to previous avatar
+          loadUserProfile();
+        }
+      })
+      .catch(error => {
+        console.error('Error uploading avatar:', error);
+        setToastMessage('Failed to update avatar');
+        // Reset to previous avatar
+        loadUserProfile();
+      })
+      .finally(() => {
+        setShowToast(true);
+        setIsLoading(false);
+      });
   };
 
   const handleTakePicture = () => {
@@ -252,9 +439,211 @@ const Profile: React.FC = () => {
     setShowPhotoOptions(false);
   };
 
+  // First, ensure you're checking the user's subscription status
+  const isPro = proStatus === 'monthly' || proStatus === 'yearly';
+
+  const renderProBadge = () => {
+    if (!proStatus || proStatus === 'free') return null;
+    
+    if (proStatus === 'yearly') {
+      return (
+        <IonBadge className="pro-badge yearly-pro-badge">
+          <IonIcon icon={diamond} /> Pro Yearly
+        </IonBadge>
+      );
+    } else if (proStatus === 'monthly') {
+      return (
+        <IonBadge className="pro-badge monthly-pro-badge">
+          <IonIcon icon={star} /> Pro Monthly
+        </IonBadge>
+      );
+    }
+    
+    return null;
+  };
+
+  const paginatedAvatars = useMemo(() => {
+    // Debug the data
+    console.log(`Total avatars available: ${availableAvatars.length}`);
+    console.log(`Current search query: "${searchQuery}"`);
+    
+    // Filter by search query
+    let filtered = availableAvatars;
+    
+    // Only filter if search query has actual content
+    if (searchQuery && searchQuery.trim() !== '') {
+      const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
+      
+      filtered = filtered.filter(avatar => {
+        const avatarName = avatar.name?.toLowerCase() || '';
+        // Check if any of the search terms match
+        return searchTerms.some(term => avatarName.includes(term));
+      });
+      
+      console.log(`Search results for "${searchQuery}": ${filtered.length} avatars found`);
+    }
+    
+    // Calculate total pages
+    const total = Math.ceil(filtered.length / itemsPerPage);
+    setTotalPages(Math.max(1, total)); // Ensure at least 1 page
+    
+    // Return paginated results
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    // Reset to page 1 if current page would be empty due to search filtering
+    if (startIndex >= filtered.length && currentPage > 1 && filtered.length > 0) {
+      setCurrentPage(1);
+      return filtered.slice(0, itemsPerPage);
+    }
+    
+    const result = filtered.slice(startIndex, endIndex);
+    console.log(`Showing ${result.length} avatars on page ${currentPage}`);
+    return result;
+  }, [availableAvatars, currentPage, itemsPerPage, searchQuery]);
+
+  useEffect(() => {
+    // Reset to first page whenever search query changes
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Add this useEffect to monitor changes to availableAvatars
+  useEffect(() => {
+    if (availableAvatars.length > 0) {
+      // Make sure currentPage is valid based on total pages
+      const maxPages = Math.ceil(availableAvatars.length / itemsPerPage);
+      if (currentPage > maxPages) {
+        setCurrentPage(1);
+      }
+      console.log(`Avatar array updated. Total: ${availableAvatars.length}, Pages: ${maxPages}`);
+    }
+  }, [availableAvatars, itemsPerPage]);
+
+  const handleSelectAvatar = (avatarId: string) => {
+    setSelectedAvatar(avatarId);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!selectedAvatar) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await userService.selectAvatar(selectedAvatar);
+      if (response.success) {
+        setAvatar(getAvatarUrl(selectedAvatar));
+        setToastMessage('Avatar updated successfully');
+        setShowToast(true);
+        setHasUnsavedChanges(false);
+        setShowAvatarSelector(false);
+      } else {
+        setToastMessage(response.message || 'Failed to update avatar');
+        setShowToast(true);
+      }
+    } catch (error) {
+      console.error('Error selecting avatar:', error);
+      setToastMessage('Failed to update avatar');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCloseAvatarModal = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedAlert(true);
+    } else {
+      setShowAvatarSelector(false);
+    }
+  };
+
+  const discardAvatarChanges = () => {
+    setSelectedAvatar(null);
+    setHasUnsavedChanges(false);
+    setShowAvatarSelector(false);
+    setShowUnsavedAlert(false);
+  };
+
+  // Add this function to check for unsaved changes
+  const hasUnsavedProfileChanges = () => {
+    return bio !== originalProfileData.bio || 
+           isOnline !== originalProfileData.isOnline;
+  };
+
+  // Modify to track changes as user edits
+  const handleBioChange = (value: string) => {
+    setBio(value);
+    setHasProfileChanges(true);
+  };
+
+  // Update the enabling/disabling of edit mode
+  const enableEditMode = () => {
+    setIsEditing(true);
+    setHasProfileChanges(false); // Reset change tracking when entering edit mode
+  };
+
+  const disableEditMode = () => {
+    if (hasUnsavedProfileChanges()) {
+      setShowProfileUnsavedAlert(true);
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const discardProfileChanges = () => {
+    // Reset to original values
+    setBio(originalProfileData.bio);
+    setIsOnline(originalProfileData.isOnline);
+    setHasProfileChanges(false);
+    setIsEditing(false);
+    setShowProfileUnsavedAlert(false);
+  };
+
+  useEffect(() => {
+    // Handle hardware back button on mobile devices
+    const handleHardwareBackButton = (e: CustomEvent<any>) => {
+      if (isEditing && hasUnsavedProfileChanges()) {
+        e.detail.register(10, () => {
+          setShowProfileUnsavedAlert(true);
+        });
+      } else if (showAvatarSelector && hasUnsavedChanges) {
+        e.detail.register(10, () => {
+          setShowUnsavedAlert(true);
+        });
+      }
+    };
+
+    document.addEventListener('ionBackButton', handleHardwareBackButton as EventListener);
+    
+    return () => {
+      document.removeEventListener('ionBackButton', handleHardwareBackButton as EventListener);
+    };
+  }, [isEditing, showAvatarSelector, hasUnsavedChanges]);
+
+  // Add this function to handle back button clicks
+  const handleBack = () => {
+    // Check for unsaved changes in edit mode
+    if (isEditing && hasUnsavedProfileChanges()) {
+      setShowProfileUnsavedAlert(true);
+      return; // Don't navigate back yet
+    }
+    
+    // Check for unsaved avatar selection
+    if (showAvatarSelector && hasUnsavedChanges) {
+      setShowUnsavedAlert(true);
+      return; // Don't navigate back yet
+    }
+    
+    // No unsaved changes, proceed with normal back navigation
+    window.history.back();
+  };
+
   return (
     <IonPage className="ghost-appear">
-      <BackHeaderComponent title="Profile" />
+      <BackHeaderComponent 
+        title="Profile" 
+        onBack={handleBack} 
+      />
       
       <IonContent fullscreen>
         {isLoading ? (
@@ -267,7 +656,21 @@ const Profile: React.FC = () => {
             <div className="profile-header">
               <div className="avatar-upload" onClick={handleAvatarClick}>
                 <IonAvatar className="profile-avatar">
-                  <img src={avatar} alt="Profile" />
+                  {isLoading ? (
+                    <div className="avatar-loading">
+                      <IonSpinner name="crescent" />
+                    </div>
+                  ) : (
+                    <img 
+                      src={avatar} 
+                      alt="Profile"
+                      className={`avatar-image ${avatar.includes('svg') ? 'svg-avatar' : ''}`}
+                      onError={(e) => {
+                        console.log('Avatar failed to load, using default');
+                        e.currentTarget.src = 'https://ionicframework.com/docs/img/demos/avatar.svg';
+                      }}
+                    />
+                  )}
                 </IonAvatar>
                 {isEditing && (
                   <div className="avatar-upload-overlay">
@@ -286,22 +689,11 @@ const Profile: React.FC = () => {
                     copyUserId();
                   }} />
                 </p>
-                <IonChip 
-                  color={proStatus !== 'free' ? "success" : "primary"} 
-                  className="pro-badge"
-                >
-                  <IonLabel>
-                    {proStatus === 'free' ? 'Free User' : 
-                     proStatus === 'monthly' ? 'Pro Monthly' : 'Pro Yearly'}
-                  </IonLabel>
-                </IonChip>
-                
+                {renderProBadge()}
                 <div className="profile-meta">
-                  <div className="profile-meta-item profile-meta-gender">
-                    <IonIcon icon={person} />
-                    {gender === 'male' ? 'Male' : 
-                     gender === 'female' ? 'Female' : 
-                     gender === 'other' ? 'Other' : 'Prefer not to say'}
+                  <div className="profile-meta-item profile-meta-online">
+                    <div className={`online-indicator-profile ${isOnline ? 'online' : 'offline'}`}></div>
+                    {isOnline ? 'Online' : 'Offline'}
                   </div>
                   <div className="profile-meta-item profile-meta-since">
                     <IonIcon icon={calendar} />
@@ -311,15 +703,8 @@ const Profile: React.FC = () => {
               </div>
             </div>
 
-            <div className="profile-settings-link" onClick={() => history.replace('/settings')} style={{ cursor: 'pointer' }}>
-              <div className="profile-settings-link-text">
-                <h4>Privacy & Settings</h4>
-                <p>Manage your privacy, notifications and account settings</p>
-              </div>
-              <IonIcon icon={chevronForward} />
-            </div>
-
             <div className="profile-content">
+
               <IonCard className="ghost-shadow">
                 <IonCardHeader>
                   <h3>
@@ -333,7 +718,7 @@ const Profile: React.FC = () => {
                     <IonInput 
                       value={username} 
                       onIonChange={e => setUsername(e.detail.value!)} 
-                      disabled={!isEditing}
+                      disabled={true}
                     />
                   </IonItem>
                   
@@ -343,7 +728,7 @@ const Profile: React.FC = () => {
                       type="email" 
                       value={email} 
                       onIonChange={e => setEmail(e.detail.value!)} 
-                      disabled={!isEditing}
+                      disabled={true}
                     />
                   </IonItem>
                   
@@ -351,7 +736,7 @@ const Profile: React.FC = () => {
                     <IonLabel position="stacked">Bio</IonLabel>
                     <IonInput 
                       value={bio} 
-                      onIonChange={e => setBio(e.detail.value!)} 
+                      onIonChange={e => handleBioChange(e.detail.value!)} 
                       disabled={!isEditing}
                     />
                   </IonItem>
@@ -372,7 +757,12 @@ const Profile: React.FC = () => {
                     <IonLabel>Online Status</IonLabel>
                     <IonToggle 
                       checked={isOnline} 
-                      onIonChange={handleOnlineStatusChange}
+                      onIonChange={e => {
+                        setIsOnline(e.detail.checked);
+                        setHasProfileChanges(true);
+                        handleOnlineStatusChange(e);
+                      }}
+                      disabled={!isEditing}
                     />
                   </IonItem>
 
@@ -380,7 +770,7 @@ const Profile: React.FC = () => {
                     <IonButton 
                       expand="block" 
                       className="profile-action-btn edit-btn"
-                      onClick={() => setIsEditing(true)}
+                      onClick={enableEditMode}
                     >
                       <IonIcon slot="start" icon={create} />
                       Enable Editing
@@ -396,6 +786,23 @@ const Profile: React.FC = () => {
                       Save Changes
                     </IonButton>
                   )}
+                </IonCardContent>
+              </IonCard>
+
+              <IonCard className="ghost-shadow" onClick={() => history.push('/settings')} style={{ cursor: 'pointer' }}>
+                <IonCardHeader>
+                  <h3>
+                    <IonIcon icon={documentTextOutline} color="primary" />
+                    Privacy and Settings
+                  </h3>
+                </IonCardHeader>
+                <IonCardContent>
+                <h4>
+                  Manage your account settings and privacy options.{' '}
+                  <span style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold' }}>
+                    Click here to get started
+                  </span>
+                </h4>
                 </IonCardContent>
               </IonCard>
 
@@ -439,23 +846,29 @@ const Profile: React.FC = () => {
                 </IonCardContent>
               </IonCard>
 
-              <IonCard className="upgrade-card ghost-shadow">
-                <IonCardHeader>
-                  <h3>Upgrade to GhostTalk Pro</h3>
-                </IonCardHeader>
-                <IonCardContent>
-                  <p>Get premium features and enhance your experience.</p>
-                  <ul>
-                    <li>Ad-free experience</li>
-                    <li>Priority matching</li>
-                    <li>Exclusive chat themes</li>
-                    <li>Extended chat history</li>
-                  </ul>
-                  <IonButton expand="block" color="primary" className="pro-upgrade-btn">
-                    Go Pro
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
+              {!isPro && (
+                <div className="profile-section">
+                  <IonCard className="upgrade-card">
+                    <IonCardContent>
+                      <h3>Upgrade to GhostTalk Pro</h3>
+                      <ul>
+                        <li>24-hour message retention</li>
+                        <li>Unlimited chat rooms</li>
+                        <li>Premium avatars & themes</li>
+                        <li>No advertisements</li>
+                      </ul>
+                      <IonButton 
+                        expand="block" 
+                        className="pro-upgrade-btn"
+                        onClick={() => history.push('/billing')}
+                      >
+                        <IonIcon slot="start" icon={diamond} />
+                        Upgrade to Pro
+                      </IonButton>
+                    </IonCardContent>
+                  </IonCard>
+                </div>
+              )}
             </div>
 
             <IonToast
@@ -463,7 +876,7 @@ const Profile: React.FC = () => {
               onDidDismiss={() => setShowToast(false)}
               message={toastMessage}
               duration={2000}
-              position="bottom"
+              position={isPro ? "top" : "bottom"}
             />
           </>
         )}
@@ -564,12 +977,229 @@ const Profile: React.FC = () => {
             },
             {
               text: 'Choose from Gallery',
-              icon: 'images-outline',
+              icon: imagesOutline, // Changed from 'images-outline'
               handler: () => fileInputRef.current?.click()
             },
             {
               text: 'Cancel',
               role: 'cancel'
+            }
+          ]}
+        />
+
+        {/* Avatar Selector Modal */}
+        <IonModal isOpen={showAvatarSelector} onDidDismiss={handleCloseAvatarModal}>
+          <div className="avatar-modal-header">
+            <h3>Choose Avatar</h3>
+            <IonButton fill="clear" onClick={handleCloseAvatarModal}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </div>
+          
+          <div className="avatar-grid-container">
+            <div className="avatar-search-container">
+              <IonSearchbar
+                className="avatar-search-bar"
+                value={searchQuery}
+                onIonChange={e => setSearchQuery(e.detail.value || '')}
+                placeholder="Search avatars..."
+                animated={true}
+                debounce={300}
+              />
+              
+              {/* Add a reset button to help if things get stuck */}
+              {availableAvatars.length > 0 && paginatedAvatars.length === 0 && (
+                <div className="avatar-reset">
+                  <IonButton 
+                    size="small" 
+                    fill="outline" 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                      setSelectedCategory('all');
+                    }}
+                  >
+                    Reset Filters
+                  </IonButton>
+                </div>
+              )}
+            </div>
+            
+            {/* Simplified categories - since you only have SVGs */}
+            <div className="avatar-categories">
+              <IonChip 
+                className="avatar-category" 
+                color={selectedCategory === 'all' ? 'primary' : undefined} 
+                onClick={() => setSelectedCategory('all')}
+              >
+                All Avatars
+              </IonChip>
+            </div>
+            
+            {loadingAvatars ? (
+              <div className="avatar-loading-container">
+                <IonSpinner name="dots" />
+                <p>Loading avatars...</p>
+              </div>
+            ) : (
+              <>
+                {availableAvatars.length === 0 ? (
+                  <div className="no-avatars-found">
+                    <p>No avatars available from server may be due to some errors</p>
+                    <IonButton 
+                      size="small" 
+                      fill="outline" 
+                      onClick={loadAvailableAvatars}
+                    >
+                      Retry Loading Avatars
+                    </IonButton>
+                  </div>
+                ) : paginatedAvatars.length === 0 && searchQuery.trim() !== '' ? (
+                  <div className="no-avatars-found">
+                    <p>No avatars found matching "{searchQuery}"</p>
+                    <IonButton 
+                      size="small" 
+                      fill="clear" 
+                      onClick={() => setSearchQuery('')}
+                    >
+                      Clear Search
+                    </IonButton>
+                  </div>
+                ) : paginatedAvatars.length === 0 ? (
+                  <div className="no-avatars-found">
+                    <p>No avatars to display. Try adjusting page settings.</p>
+                    <IonButton 
+                      size="small" 
+                      fill="clear" 
+                      onClick={() => setCurrentPage(1)}
+                    >
+                      Go to First Page
+                    </IonButton>
+                  </div>
+                ) : (
+                  <>
+                    <div className="avatar-grid">
+                      {paginatedAvatars.map(avatar => {
+                        const safeUrl = getAvatarUrl(avatar.id);
+                        const isSelected = selectedAvatar === avatar.id;
+                        
+                        return (
+                          <div 
+                            key={avatar.id} 
+                            className={`avatar-option ${isSelected ? 'selected' : ''}`} 
+                            onClick={() => handleSelectAvatar(avatar.id)}
+                          >
+                            <div className="avatar-image-container">
+                              <img 
+                                src={safeUrl} 
+                                alt={avatar.name}
+                                className="avatar-thumbnail svg-avatar"
+                                onError={(e) => {
+                                  console.log(`Avatar image failed to load: ${safeUrl}`);
+                                  e.currentTarget.src = 'https://ionicframework.com/docs/img/demos/avatar.svg';
+                                }} 
+                              />
+                            </div>
+                            <div className="avatar-name">{avatar.name}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {totalPages > 1 && (
+                      <div className="avatar-pagination">
+                        <IonButton 
+                          fill="clear" 
+                          className="pagination-button"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        >
+                          <IonIcon slot="icon-only" icon={chevronBack} />
+                        </IonButton>
+                        
+                        <span className="avatar-page-info">
+                          {currentPage}/{totalPages} ({availableAvatars.length} total)
+                        </span>
+                        
+                        <IonButton 
+                          fill="clear" 
+                          className="pagination-button"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        >
+                          <IonIcon slot="icon-only" icon={chevronForward} />
+                        </IonButton>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          
+          <div className="avatar-modal-footer">
+            <IonButton 
+              fill="outline" 
+              onClick={handleCloseAvatarModal}
+            >
+              Cancel
+            </IonButton>
+            
+            <IonButton 
+              onClick={handleSaveAvatar}
+              disabled={!selectedAvatar || isLoading}
+            >
+              {isLoading ? <IonSpinner name="dots" /> : 'Apply Avatar'}
+            </IonButton>
+          </div>
+          
+          {/* Unsaved Changes Alert */}
+          <IonAlert
+            isOpen={showUnsavedAlert}
+            onDidDismiss={() => setShowUnsavedAlert(false)}
+            cssClass="unsaved-avatar-modal"
+            header="Unsaved Changes"
+            message="You have selected a new avatar but haven't applied it yet. Do you want to discard your selection?"
+            buttons={[
+              {
+                text: 'Cancel',
+                role: 'cancel',
+                cssClass: 'secondary'
+              },
+              {
+                text: 'Discard',
+                handler: discardAvatarChanges,
+                cssClass: 'danger'
+              },
+              {
+                text: 'Apply Avatar',
+                handler: handleSaveAvatar
+              }
+            ]}
+          />
+        </IonModal>
+
+        {/* Profile Unsaved Changes Alert */}
+        <IonAlert
+          isOpen={showProfileUnsavedAlert}
+          onDidDismiss={() => setShowProfileUnsavedAlert(false)}
+          cssClass="unsaved-profile-modal"
+          header="Unsaved Changes"
+          message="You have made changes to your profile but haven't saved them. What would you like to do?"
+          buttons={[
+            {
+              text: 'Continue Editing',
+              role: 'cancel',
+              cssClass: 'secondary'
+            },
+            {
+              text: 'Discard Changes',
+              handler: discardProfileChanges,
+              cssClass: 'danger'
+            },
+            {
+              text: 'Save Changes',
+              handler: handleSaveProfile
             }
           ]}
         />

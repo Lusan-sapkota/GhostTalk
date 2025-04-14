@@ -9,6 +9,7 @@ from appwrite.services.storage import Storage
 from appwrite.services.avatars import Avatars
 from appwrite.query import Query
 from ..utils.name_generator import generate_random_name
+import os
 
 class AppwriteService:
     def __init__(self):
@@ -23,27 +24,30 @@ class AppwriteService:
         self.chats_collection_id = None
         self.rooms_collection_id = None
     
-    def _initialize_client(self):
+    def _initialize_client(self, force=False):
         """Initialize the Appwrite client and services when needed"""
-        if self.client is None:
+        if self.client is None or force:
             self.client = Client()
-            self.client.set_endpoint(current_app.config['APPWRITE_ENDPOINT'])
-            self.client.set_project(current_app.config['APPWRITE_PROJECT_ID'])
-            self.client.set_key(current_app.config['APPWRITE_API_KEY'])
+            self.client.set_endpoint(os.environ.get('APPWRITE_ENDPOINT', 'https://cloud.appwrite.io/v1'))
+            self.client.set_project(os.environ.get('APPWRITE_PROJECT_ID'))
+            
+            # Use the API key from environment
+            api_key = os.environ.get('APPWRITE_API_KEY')
+            if not api_key:
+                print("WARNING: No Appwrite API key found in environment!")
+            self.client.set_key(api_key)
             
             # Initialize services
-            self.users = Users(self.client)
             self.database = Databases(self.client)
             self.storage = Storage(self.client)
-            self.avatars = Avatars(self.client)
+            self.users = Users(self.client)
             
-            # Explicitly get database ID from config - use the exact ID, not a default value
-            self.database_id = current_app.config['APPWRITE_DATABASE_ID']
-            self.users_collection_id = current_app.config['APPWRITE_COLLECTION_ID_AUTH']
-            self.chats_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHATS']
-            self.rooms_collection_id = current_app.config['APPWRITE_COLLECTION_ID_CHAT_ROOMS']
-            # Use APPWRITE_STORAGE_ID_FREE_AVATAR from .env for avatar bucket
-            self.avatar_bucket_id = current_app.config.get('APPWRITE_STORAGE_ID_FREE_AVATAR')
+            # Initialize collection and bucket IDs
+            self.database_id = os.environ.get('APPWRITE_DATABASE_ID')
+            self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_AUTH')
+            self.avatar_bucket_id = os.environ.get('APPWRITE_STORAGE_ID_FREE_AVATAR')
+            
+            print(f"Appwrite client initialized with API key: {api_key[:10]}...{api_key[-5:] if api_key else 'None'}")
     
     def create_user(self, email, password, name=None, gender='prefer_not_to_say', bio=''):
         """Create a new Appwrite user with extended profile"""
@@ -263,6 +267,46 @@ class AppwriteService:
                     'message': message,
                     'timestamp': int(time.time()),
                     'read': False
+                }
+            )
+            
+            return chat
+        except Exception as e:
+            print(f"Error creating chat: {str(e)}")
+            raise e
+
+    def create_chat(self, sender_id, recipient_id, message, is_ghost=False, ghost_duration=None, message_type='text', media_url=None, pending_approval=False):
+        """Create a new chat message with ghost message support"""
+        self._initialize_client()
+        try:
+            chat_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Current timestamp
+            current_time = int(time.time())
+            
+            # Calculate deletion time for ghost messages
+            deletion_time = None
+            if is_ghost and ghost_duration:
+                deletion_time = current_time + int(ghost_duration)
+            
+            # Create chat document
+            chat = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.chats_collection_id,
+                document_id=chat_id,
+                data={
+                    'senderId': sender_id,
+                    'recipientId': recipient_id,
+                    'message': message,
+                    'timestamp': current_time,
+                    'isGhost': is_ghost,
+                    'ghostDuration': ghost_duration,
+                    'deletionTime': deletion_time,
+                    'read': False,
+                    'delivered': False,
+                    'type': message_type,
+                    'mediaUrl': media_url,
+                    'pendingApproval': pending_approval
                 }
             )
             
@@ -761,6 +805,26 @@ class AppwriteService:
             traceback.print_exc()
             return False
 
+    def update_user_online_status(self, user_id, is_online):
+        """Update a user's online status"""
+        self._initialize_client()
+        try:
+            # Update user document
+            result = self.database.update_document(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,
+                document_id=user_id,
+                data={
+                    'isOnline': is_online,
+                    'lastSeen': int(time.time())
+                }
+            )
+            
+            return result
+        except Exception as e:
+            print(f"Error updating user online status: {str(e)}")
+            return None
+
     # Add a utility method for migrating existing users
     def migrate_pro_status_field(self):
         """Migrate isPro boolean field to proStatus enum field"""
@@ -808,3 +872,608 @@ class AppwriteService:
                 'success': False,
                 'message': str(e)
             }
+
+    def get_avatars_from_bucket(self, bucket_id=None, limit=1000):
+        """Get a list of all avatars from the avatar bucket with pagination support"""
+        self._initialize_client()
+        try:
+            # If bucket_id is not provided, try to get from self.avatar_bucket_id
+            if bucket_id is None:
+                bucket_id = self.avatar_bucket_id
+                
+            if not bucket_id:
+                print("Missing required parameter: bucket_id")
+                return []
+                
+            print(f"Getting avatars from bucket: {bucket_id} with limit: {limit}")
+            
+            # Initialize an empty list to collect all files
+            all_files = []
+            offset = 0
+            page_size = 25  # Appwrite's default page size
+            total_files = None
+            
+            # Import Query class for proper Appwrite queries
+            from appwrite.query import Query
+            
+            # Fetch files in batches until we reach the limit or get all files
+            while True:
+                try:
+                    print(f"Trying to fetch batch with offset {offset}...")
+                    
+                    # Use the proper Query objects
+                    queries = [
+                        Query.limit(page_size),
+                        Query.offset(offset)
+                    ]
+                    
+                    batch_result = self.storage.list_files(
+                        bucket_id=bucket_id,
+                        queries=queries
+                    )
+                    
+                    # Get the files from this batch
+                    batch_files = batch_result.get('files', [])
+                    batch_size = len(batch_files)
+                    
+                    # Set total_files if this is the first batch
+                    if total_files is None:
+                        total_files = batch_result.get('total', 0)
+                        print(f"Total files in bucket: {total_files}")
+                    
+                    # Add files from this batch to our collection
+                    all_files.extend(batch_files)
+                    
+                    # Log the progress
+                    print(f"Fetched batch of {batch_size} files. Total so far: {len(all_files)}/{total_files}")
+                    
+                    # Break conditions:
+                    # 1. Batch is smaller than page_size (last batch)
+                    # 2. We've reached the requested limit
+                    # 3. We've fetched all available files
+                    if batch_size < page_size or len(all_files) >= limit or len(all_files) >= total_files:
+                        break
+                        
+                    # Increment offset for next batch
+                    offset += batch_size
+                    
+                except Exception as batch_error:
+                    print(f"Error fetching batch at offset {offset}: {str(batch_error)}")
+                    import traceback
+                    traceback.print_exc()
+                    
+                    # Try a fallback approach - get without pagination
+                    if len(all_files) == 0:
+                        print("Trying fallback: fetching without pagination...")
+                        try:
+                            simple_result = self.storage.list_files(bucket_id=bucket_id)
+                            all_files = simple_result.get('files', [])
+                            print(f"Fallback succeeded! Got {len(all_files)} files.")
+                        except Exception as fallback_error:
+                            print(f"Fallback also failed: {str(fallback_error)}")
+                    
+                    # Break the loop regardless
+                    break
+            
+            print(f"Successfully fetched {len(all_files)} files out of {total_files if total_files is not None else 'unknown'} total")
+            
+            # Process all files we've gathered
+            backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+            
+            avatars = []
+            for file in all_files:
+                file_id = file['$id']
+                
+                avatars.append({
+                    'id': file_id,
+                    'name': file.get('name', 'Avatar'),
+                    'url': f"{backend_base_url}/user/avatar/{file_id}",
+                    'mimeType': file.get('mimeType', 'image/svg+xml')  # Default to SVG
+                })
+            
+            return avatars
+        except Exception as e:
+            print(f"Error getting avatars from bucket: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def get_chat_encryption_key(self, chat_pair_id):
+        """Get encryption key for a chat pair"""
+        self._initialize_client()
+        try:
+            # Try to get the encryption key document
+            query = [
+                Query.equal("chatPairId", chat_pair_id)
+            ]
+            
+            result = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.encryption_keys_collection_id,
+                queries=query
+            )
+            
+            if result['total'] > 0:
+                return result['documents'][0]
+            
+            return None
+        except Exception as e:
+            print(f"Error getting chat encryption key: {str(e)}")
+            return None
+
+    def store_chat_encryption_key(self, chat_pair_id, key_data):
+        """Store an encryption key for a chat pair"""
+        self._initialize_client()
+        try:
+            key_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Create encryption key document
+            key_doc = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.encryption_keys_collection_id,
+                document_id=key_id,
+                data={
+                    'chatPairId': chat_pair_id,
+                    'keyData': key_data,
+                    'createdAt': int(time.time())
+                }
+            )
+            
+            return key_doc
+        except Exception as e:
+            print(f"Error storing chat encryption key: {str(e)}")
+            raise e
+
+    def create_call_record(self, call_data):
+        """Create a record for a call"""
+        self._initialize_client()
+        try:
+            call_id = call_data.get('callId', ''.join(random.choices(string.ascii_lowercase + string.digits, k=20)))
+            
+            # Create call document
+            call = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.calls_collection_id,
+                document_id=call_id,
+                data=call_data
+            )
+            
+            return call
+        except Exception as e:
+            print(f"Error creating call record: {str(e)}")
+            raise e
+
+    def create_friend_request(self, sender_id, recipient_id):
+        """Create a friend request"""
+        self._initialize_client()
+        try:
+            request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Create friend request document
+            request = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.friend_requests_collection_id,
+                document_id=request_id,
+                data={
+                    'senderId': sender_id,
+                    'recipientId': recipient_id,
+                    'status': 'pending',
+                    'timestamp': int(time.time())
+                }
+            )
+            
+            return request
+        except Exception as e:
+            print(f"Error creating friend request: {str(e)}")
+            raise e
+        
+    
+
+    def check_friendship(self, user1_id, user2_id):
+        """Check if two users are friends"""
+        self._initialize_client()
+        try:
+            user1 = self.get_user_document(user1_id)
+            if not user1:
+                return False
+            
+            friends = user1.get('friends', [])
+            return user2_id in friends
+        except Exception as e:
+            print(f"Error checking friendship: {str(e)}")
+            return False
+
+    def create_private_chat(self, sender_id, recipient_id, message=None, is_ghost=False, ghost_duration=None, message_type='text', media_url=None):
+        """Create a new private chat message with ghost message support"""
+        self._initialize_client()
+        
+        try:
+            import random
+            import string
+            import time
+            
+            message_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Current timestamp
+            timestamp = int(time.time())
+            
+            # Calculate deletion time for ghost messages
+            deletion_time = None
+            if is_ghost and ghost_duration:
+                deletion_time = timestamp + int(ghost_duration)
+            
+            # Create message document
+            message_doc = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.messages_collection_id,
+                document_id=message_id,
+                data={
+                    'senderId': sender_id,
+                    'recipientId': recipient_id,
+                    'content': message,
+                    'timestamp': timestamp,
+                    'isGhost': is_ghost,
+                    'ghostDuration': ghost_duration,
+                    'deletionTime': deletion_time,
+                    'isRead': False,
+                    'isDelivered': False,
+                    'type': message_type,
+                    'mediaUrl': media_url
+                }
+            )
+            
+            # Update chat record or create it if doesn't exist
+            chat_pair_id = self._get_chat_pair_id(sender_id, recipient_id)
+            chat_record = self.get_chat_record(chat_pair_id)
+            
+            if chat_record:
+                # Update existing chat record
+                self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.chats_collection_id,
+                    document_id=chat_pair_id,
+                    data={
+                        'lastMessageId': message_id,
+                        'lastMessageTime': timestamp,
+                        'lastMessageSenderId': sender_id
+                    }
+                )
+            else:
+                # Create new chat record
+                self.database.create_document(
+                    database_id=self.database_id,
+                    collection_id=self.chats_collection_id,
+                    document_id=chat_pair_id,
+                    data={
+                        'participants': [sender_id, recipient_id],
+                        'createdAt': timestamp,
+                        'lastMessageId': message_id,
+                        'lastMessageTime': timestamp,
+                        'lastMessageSenderId': sender_id
+                    }
+                )
+            
+            return message_doc
+        except Exception as e:
+            print(f"Error creating private chat message: {str(e)}")
+            raise e
+
+    def get_chat_record(self, chat_pair_id):
+        """Get a chat record by ID"""
+        self._initialize_client()
+        
+        try:
+            chat = self.database.get_document(
+                database_id=self.database_id,
+                collection_id=self.chats_collection_id,
+                document_id=chat_pair_id
+            )
+            return chat
+        except Exception:
+            return None
+
+    def get_chat_messages(self, user_id, other_user_id, limit=50, offset=0):
+        """Get messages between two users"""
+        self._initialize_client()
+        
+        try:
+            from appwrite.query import Query
+            
+            # Create queries to get messages in both directions
+            queries = [
+                Query.equal("senderId", user_id),
+                Query.equal("recipientId", other_user_id)
+            ]
+            
+            # Get messages sent by user
+            sent_messages = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.messages_collection_id,
+                queries=[queries[0], queries[1]]
+            )
+            
+            # Get messages received by user
+            queries = [
+                Query.equal("senderId", other_user_id),
+                Query.equal("recipientId", user_id)
+            ]
+            
+            received_messages = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.messages_collection_id,
+                queries=[queries[0], queries[1]]
+            )
+            
+            # Combine and sort by timestamp
+            all_messages = sent_messages.get('documents', []) + received_messages.get('documents', [])
+            all_messages.sort(key=lambda x: x.get('timestamp', 0))
+            
+            # Limit results
+            start_idx = min(offset, len(all_messages))
+            end_idx = min(offset + limit, len(all_messages))
+            
+            return all_messages[start_idx:end_idx]
+        except Exception as e:
+            print(f"Error getting chat messages: {str(e)}")
+            return []
+
+    def get_chat_encryption_key(self, chat_pair_id):
+        """Get encryption key for a chat pair"""
+        self._initialize_client()
+        
+        try:
+            from appwrite.query import Query
+            
+            # Get the encryption key document
+            result = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.encryption_keys_collection_id,
+                queries=[Query.equal("chatPairId", chat_pair_id)]
+            )
+            
+            if result.get('total', 0) > 0:
+                return result.get('documents', [])[0]
+            
+            return None
+        except Exception as e:
+            print(f"Error getting chat encryption key: {str(e)}")
+            return None
+
+    def store_chat_encryption_key(self, chat_pair_id, key_data):
+        """Store an encryption key for a chat pair"""
+        self._initialize_client()
+        
+        try:
+            import random
+            import string
+            import time
+            
+            key_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Create encryption key document
+            key_doc = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.encryption_keys_collection_id,
+                document_id=key_id,
+                data={
+                    'chatPairId': chat_pair_id,
+                    'keyData': key_data,
+                    'createdAt': int(time.time())
+                }
+            )
+            
+            return key_doc
+        except Exception as e:
+            print(f"Error storing chat encryption key: {str(e)}")
+            raise e
+
+    def create_call_record(self, call_data):
+        """Create a record for a call"""
+        self._initialize_client()
+        
+        try:
+            import random
+            import string
+            
+            call_id = call_data.get('callId', ''.join(random.choices(string.ascii_lowercase + string.digits, k=20)))
+            
+            # Create call document
+            call = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.calls_collection_id,
+                document_id=call_id,
+                data=call_data
+            )
+            
+            return call
+        except Exception as e:
+            print(f"Error creating call record: {str(e)}")
+            raise e
+
+    def update_user_online_status(self, user_id, is_online):
+        """Update a user's online status"""
+        self._initialize_client()
+        
+        try:
+            import time
+            
+            # Update user document
+            result = self.database.update_document(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,
+                document_id=user_id,
+                data={
+                    'isOnline': is_online,
+                    'lastSeen': int(time.time())
+                }
+            )
+            
+            return result
+        except Exception as e:
+            print(f"Error updating user online status: {str(e)}")
+            return None
+
+    def create_friend_request(self, sender_id, recipient_id):
+        """Create a friend request"""
+        self._initialize_client()
+        
+        try:
+            import random
+            import string
+            import time
+            
+            request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+            
+            # Create friend request document
+            request = self.database.create_document(
+                database_id=self.database_id,
+                collection_id=self.friend_requests_collection_id,
+                document_id=request_id,
+                data={
+                    'senderId': sender_id,
+                    'recipientId': recipient_id,
+                    'status': 'pending',
+                    'timestamp': int(time.time())
+                }
+            )
+            
+            return request
+        except Exception as e:
+            print(f"Error creating friend request: {str(e)}")
+            raise e
+
+    def _get_chat_pair_id(self, user1_id, user2_id):
+        """Get a consistent ID for a chat between two users regardless of order"""
+        return '_'.join(sorted([user1_id, user2_id]))
+
+    def check_friendship(self, user1_id, user2_id):
+        """Check if two users are friends"""
+        self._initialize_client()
+        try:
+            user1 = self.get_user_document(user1_id)
+            if not user1:
+                return False
+            
+            friends = user1.get('friends', [])
+            return user2_id in friends
+        except Exception as e:
+            print(f"Error checking friendship: {str(e)}")
+            return False
+
+    def search_users(self, search_query, limit=20, offset=0):
+        """
+        Search for users by username or ID
+        Respects user privacy settings (enableSearch flag)
+        """
+        self._initialize_client()
+        
+        try:
+            from appwrite.query import Query
+            import os
+            
+            # Clean search query
+            original_query = search_query.strip()
+            search_query = original_query.lower()
+            print(f"Searching for users with query: '{search_query}' (original: '{original_query}')")
+            
+            # Build the queries - start with pagination
+            queries = [
+                Query.limit(limit),
+                Query.offset(offset)
+            ]
+            
+            # Add enableSearch filter
+            queries.append(Query.equal("enableSearch", True))
+            
+            # Try multiple search approaches to handle case sensitivity
+            original_users = []
+            lowercase_users = []
+            
+            # Method 1: Try searching with original casing first
+            try:
+                # Get all documents that match privacy settings
+                result = self.database.list_documents(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    queries=[
+                        Query.limit(100),  # Fetch more than needed to filter
+                        Query.equal("enableSearch", True)
+                    ]
+                )
+                
+                all_users = result.get('documents', [])
+                print(f"Found {len(all_users)} users with enableSearch=true")
+                
+                # Manual case-insensitive filtering in Python
+                for user in all_users:
+                    username = user.get('username', '')
+                    user_id = user.get('userId', user.get('$id', ''))
+                    
+                    # Check exact match first (preserves original result order)
+                    if original_query in username or original_query == user_id:
+                        original_users.append(user)
+                    # Then check lowercase match
+                    elif search_query in username.lower() or search_query == user_id.lower():
+                        lowercase_users.append(user)
+                
+                # Combine results, prioritizing exact case matches
+                matched_users = original_users + lowercase_users
+                print(f"After filtering: {len(original_users)} exact matches, {len(lowercase_users)} case-insensitive matches")
+                
+                # Apply pagination manually
+                start_idx = min(offset, len(matched_users))
+                end_idx = min(start_idx + limit, len(matched_users))
+                paginated_users = matched_users[start_idx:end_idx]
+                
+                # Format results
+                users = []
+                for user in paginated_users:
+                    # Skip users who have disabled search visibility (double-check)
+                    if user.get('enableSearch') == False:
+                        continue
+                        
+                    user_data = {
+                        'id': user.get('userId', user.get('$id')),
+                        'name': user.get('username', 'Unknown User'),
+                        'proStatus': user.get('proStatus', 'free'),
+                        'isVerified': user.get('isVerified', False),
+                        'isOnline': user.get('isOnline', False),
+                        'lastSeen': user.get('lastSeen', 0)
+                    }
+                    
+                    # Add avatar if available
+                    if user.get('avatar'):
+                        backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+                        user_data['avatar'] = f"{backend_base_url}/user/avatar/{user.get('avatar')}"
+                    
+                    users.append(user_data)
+                
+                return users
+            except Exception as e:
+                print(f"Error in case-insensitive search: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return []
+                
+        except Exception as e:
+            print(f"Error searching users: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def update_user_visibility(self, user_id, enabled):
+        """Update a user's search visibility"""
+        self._initialize_client()
+        try:
+            result = self.database.update_document(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,
+                document_id=user_id,
+                data={
+                    'enableSearch': enabled
+                }
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating user visibility: {str(e)}")
+            return False

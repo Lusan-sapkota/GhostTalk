@@ -49,6 +49,16 @@ const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({
     if (onSearchChange) onSearchChange(value);
   };
 
+  const handleBack = () => {
+    // If custom back handler is provided, use it
+    if (onBack) {
+      onBack();
+    } else {
+      // Otherwise use default back behavior
+      window.history.back();
+    }
+  };
+
   return (
     <IonHeader className="back-header">
       <IonToolbar color="primary">
@@ -67,7 +77,7 @@ const BackHeaderComponent: React.FC<BackHeaderComponentProps> = ({
           <>
             <IonButtons slot="start">
               {isModal ? (
-                <IonButton onClick={onBack} className="back-button">
+                <IonButton onClick={handleBack} className="back-button">
                   <IonIcon icon={arrowBack} slot="icon-only" />
                 </IonButton>
               ) : (

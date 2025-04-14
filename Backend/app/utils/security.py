@@ -79,3 +79,18 @@ def token_required(f):
     return decorated
 
 require_auth = token_required  # Alias for backward compatibility
+
+def decode_token(token):
+    """
+    Decode a JWT token without validating it (used for identifying user in non-secure contexts)
+    Returns the token payload or None if invalid
+    """
+    try:
+        payload = jwt.decode(
+            token, 
+            current_app.config.get('JWT_SECRET_KEY'), 
+            algorithms=['HS256']
+        )
+        return payload
+    except jwt.PyJWTError:
+        return None

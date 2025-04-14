@@ -141,6 +141,7 @@
 }
 
 .profile-section {
+
   margin-bottom: 24px;
   animation: slide-up 0.4s ease-out;
   animation-fill-mode: both;
@@ -159,17 +160,14 @@
   background: rgba(var(--ion-color-light-rgb), 0.6);
   border-radius: 12px;
   padding: 16px;
-  margin: 24px 0;
+  margin: 24px auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.profile-settings-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  max-width: 500px; /* Limit the width */
+  width: 100%;     /* Take available space up to max-width */
 }
 
 .profile-settings-link-text {
@@ -429,4 +427,519 @@ ion-card-header h3 ion-icon {
 .loading-container p {
   margin-top: 16px;
   color: var(--ion-color-medium);
+}
+
+/* Avatar selector styles */
+.avatar-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--ion-border-color);
+}
+
+.avatar-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.avatar-grid-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 75vh;
+  width: 100%;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns by default */
+  gap: 16px;
+  width: 100%;
+  padding-bottom: 70px; /* Space for the pagination controls */
+}
+
+@media (min-width: 480px) {
+  .avatar-grid {
+    grid-template-columns: repeat(5, 1fr); /* 5 columns on larger phones */
+  }
+}
+
+@media (min-width: 768px) {
+  .avatar-grid {
+    grid-template-columns: repeat(6, 1fr); /* 6 columns on tablets */
+  }
+}
+
+@media (min-width: 992px) {
+  .avatar-grid {
+    grid-template-columns: repeat(8, 1fr); /* 8 columns on desktop */
+  }
+}
+
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.avatar-option:hover {
+  transform: translateY(-5px);
+}
+
+.avatar-option:active {
+  transform: scale(0.95);
+}
+
+.avatar-image-container {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--ion-color-light);
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.avatar-option:hover .avatar-image-container {
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 8px 15px rgba(var(--ion-color-primary-rgb), 0.25);
+}
+
+.avatar-option.selected .avatar-image-container {
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.avatar-option.selected::after {
+  content: "✓";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--ion-color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  animation: scale-in 0.2s ease-out;
+}
+
+@keyframes scale-in {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.avatar-name {
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  color: var(--ion-color-medium);
+  transition: color 0.2s ease;
+}
+
+.avatar-option:hover .avatar-name {
+  color: var(--ion-color-primary);
+}
+
+.avatar-pagination {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background: var(--ion-background-color);
+  border-top: 1px solid rgba(var(--ion-color-light-rgb), 0.7);
+  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
+  margin-top: 12px;
+  z-index: 10;
+}
+
+.pagination-button {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  font-size: 13px;
+  height: 36px;
+}
+
+.avatar-page-info {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  margin: 0 16px;
+}
+
+.avatar-search-container {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.avatar-search-bar {
+  --background: rgba(var(--ion-color-light-rgb), 0.7);
+  --color: var(--ion-color-dark);
+  --placeholder-color: var(--ion-color-medium);
+  --icon-color: var(--ion-color-primary);
+  --clear-button-color: var(--ion-color-medium);
+  --border-radius: 16px;
+  --box-shadow: none;
+  font-size: 14px;
+}
+
+.avatar-categories {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 0 8px 12px;
+  margin-bottom: 16px;
+  width: 100%;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.avatar-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar-category {
+  --background: rgba(var(--ion-color-light-rgb), 0.7);
+  --color: var(--ion-color-medium);
+  --background-checked: var(--ion-color-primary);
+  --color-checked: white;
+  font-size: 12px;
+  height: 28px;
+  --border-radius: 14px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+
+.avatar-category:hover {
+  transform: translateY(-2px);
+}
+
+.unsaved-avatar-modal .alert-wrapper {
+  border-radius: 16px;
+}
+
+.unsaved-avatar-modal .alert-head h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.unsaved-avatar-modal .alert-message {
+  font-size: 15px;
+  color: var(--ion-color-medium);
+}
+
+.avatar-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  width: 100%;
+}
+
+.avatar-loading-container p {
+  margin-top: 16px;
+  color: var(--ion-color-medium);
+  font-size: 14px;
+}
+
+.avatar-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(var(--ion-color-light-rgb), 0.7);
+  position: sticky;
+  bottom: 0;
+  background: var(--ion-background-color);
+  z-index: 20;
+}
+
+.profile-meta-online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.online-indicator-profile {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.online-indicator-profile.online {
+  background-color: var(--ion-color-success);
+  box-shadow: 0 0 4px var(--ion-color-success);
+}
+
+.online-indicator-profile.offline {
+  background-color: var(--ion-color-danger);
+  box-shadow: 0 0 4px var(--ion-color-danger);
+}
+
+.yearly-pro-badge {
+  --background: linear-gradient(135deg, #805ad5, #4c1d95);
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(128, 90, 213, 0.3);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monthly-pro-badge {
+  --background: linear-gradient(135deg, #3182ce, #1a365d);
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pro-badge ion-icon {
+  font-size: 16px;
+}
+
+.avatar-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(var(--ion-color-medium-rgb), 0.1);
+}
+
+/* Add this to your Profile.css file */
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* For SVG files specifically */
+.avatar-image[src$=".svg"] {
+  background-color: var(--ion-color-light);
+  padding: 5px;
+  object-fit: contain;
+}
+
+/* Add these styles for the avatar grid */
+.avatar-image-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--ion-color-light);
+}
+
+.avatar-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.svg-avatar {
+  padding: 5px;
+  object-fit: contain;
+  background-color: var(--ion-color-light);
+}
+
+/* SVG avatar styling - add or update these rules */
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-image[src$=".svg"],
+.avatar-image[src*="avatar"][src*="svg"] {
+  padding: 12px;
+
+  object-fit: contain;
+}
+
+.avatar-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: var(--ion-color-light);
+}
+
+.svg-avatar {
+  padding: 8px;
+  object-fit: contain;
+  background-color: var(--ion-color-light);
+}
+
+.avatar-image-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--ion-color-light);
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.avatar-option:hover .avatar-image-container {
+  border-color: var(--ion-color-primary);
+}
+
+/* Avatar modal fixes */
+.avatar-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid rgba(var(--ion-color-light-rgb), 0.7);
+  position: sticky;
+  top: 0;
+  background: var(--ion-background-color);
+  z-index: 20;
+}
+
+.avatar-grid-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+.avatar-search-container {
+  margin: 12px 0;
+  width: 100%;
+}
+
+/* Fix the avatar grid to prevent overflow */
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  overflow-y: auto;
+  padding-bottom: 85px; /* Space for pagination and footer */
+  max-height: calc(100vh - 200px);
+}
+
+@media (min-width: 480px) {
+  .avatar-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .avatar-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Simplify categories for SVG-only avatars */
+.avatar-categories {
+  margin: 0 0 12px 0;
+  padding: 0;
+}
+
+/* Fix the avatar modal footer */
+.avatar-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(var(--ion-color-light-rgb), 0.7);
+  position: sticky;
+  bottom: 0;
+  background: var(--ion-background-color);
+  z-index: 20;
+  width: 100%;
+}
+
+/* Add these styles for SVG avatars and no results state */
+.svg-avatar {
+  padding: 8px;
+  background-color: var(--ion-color-light);
+  object-fit: contain;
+}
+
+.no-avatars-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: var(--ion-color-medium);
+  text-align: center;
+}
+
+/* Style for the loading overlay */
+.avatar-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  height: 200px;
+}
+
+.avatar-loading-container p {
+  margin-top: 16px;
+  color: var(--ion-color-medium);
+}
+
+/* Make items smaller to fit more on screen */
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.avatar-image-container {
+  width: 56px;
+  height: 56px;
+}
+
+/* Avatar count indicator */
+.avatar-page-info {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  white-space: nowrap;
+}
+
+.avatar-reset {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
 }

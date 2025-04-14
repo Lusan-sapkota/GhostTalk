@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonPage,
   IonHeader,
@@ -31,14 +31,17 @@ import {
   checkmarkCircleOutline, 
   helpCircleOutline,
   alertCircleOutline,
-  sparklesOutline
+  sparklesOutline,
+  informationCircleOutline
 } from 'ionicons/icons';
 import { apiService } from '../services/api.service';
 import './ContactPage.css';
 import '../components/BackHeaderComponent.css';
 import BackHeaderComponent from '../components/BackHeaderComponent';
+import { useAuth } from '../contexts/AuthContext';
 
 const ContactPage: React.FC = () => {
+  const { isAuthenticated, currentUser } = useAuth();
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [subject, setSubject] = useState<string>('');
@@ -50,6 +53,17 @@ const ContactPage: React.FC = () => {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      if (currentUser.name) {
+        setName(currentUser.name);
+      }
+      if (currentUser.email) {
+        setEmail(currentUser.email);
+      }
+    }
+  }, [isAuthenticated, currentUser]);
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
@@ -76,23 +90,42 @@ const ContactPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulating API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get the file from the file input element
+      const fileInput = document.getElementById('attachment') as HTMLInputElement;
+      const attachment = fileInput?.files?.[0];
       
-      // Actual API call would go here
-      // await apiService.post('/support/ticket', { name, email, subject, category, message });
+      // Call the API service
+      const response = await apiService.submitSupportTicket({
+        name,
+        email,
+        subject,
+        category,
+        message,
+        attachment
+      });
       
-      setToastMessage('Your message has been sent successfully!');
-      setToastColor('success');
-      setShowToast(true);
-      setFormSubmitted(true);
-      
-      // Reset form
-      setName('');
-      setEmail('');
-      setSubject('');
-      setCategory('general');
-      setMessage('');
+      if (response.success) {
+        setToastMessage('Your message has been sent successfully!');
+        setToastColor('success');
+        setShowToast(true);
+        setFormSubmitted(true);
+        
+        // Reset form
+        setName('');
+        setEmail('');
+        setSubject('');
+        setCategory('general');
+        setMessage('');
+        
+        // Clear the file input
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      } else {
+        setToastMessage(response.message || 'Failed to send your message. Please try again.');
+        setToastColor('danger');
+        setShowToast(true);
+      }
     } catch (error) {
       console.error('Failed to submit contact form:', error);
       setToastMessage('Failed to send your message. Please try again.');
@@ -144,6 +177,12 @@ const ContactPage: React.FC = () => {
               <IonCard className="contact-form-card">
                 <IonCardHeader>
                   <IonCardTitle>Get in Touch</IonCardTitle>
+                  {isAuthenticated && currentUser && (
+                    <p className="pre-filled-notice">
+                      <IonIcon icon={informationCircleOutline} />
+                      Form pre-filled with your account information
+                    </p>
+                  )}
                 </IonCardHeader>
                 <IonCardContent>
                   <form onSubmit={handleSubmit} className="contact-form">
@@ -165,9 +204,12 @@ const ContactPage: React.FC = () => {
                           value={email} 
                           onIonChange={e => setEmail(e.detail.value!)} 
                           placeholder="youremail@example.com"
+                          disabled={isAuthenticated && !!currentUser?.email}
                         />
                       </IonItem>
                       {formErrors.email && <div className="contact-error-message">{formErrors.email}</div>}
+                      {isAuthenticated && currentUser?.email && 
+                        <div className="contact-info-message">Using your account email</div>}
                     </div>
                     
                     <div className="contact-form-row">

@@ -477,3 +477,103 @@
     --min-height: 48px;
   }
 }
+
+/* Retention section styling */
+.retention-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.retention-description {
+  color: var(--ion-color-medium);
+  margin-bottom: 24px;
+}
+
+.retention-option {
+  margin-bottom: 10px;
+  --background: rgba(var(--ion-color-light-rgb), 0.5);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.retention-option h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.retention-option p {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.pro-upgrade-banner {
+  margin-top: 32px;
+  background: rgba(var(--ion-color-primary-rgb), 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.pro-upgrade-banner ion-icon {
+  font-size: 32px;
+  color: var(--ion-color-primary);
+  margin-bottom: 12px;
+}
+
+.pro-upgrade-banner h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.pro-upgrade-banner p {
+  color: var(--ion-color-medium);
+  margin-bottom: 16px;
+}
+
+.item-description {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.logged-devices-section {
+  margin-top: 16px;
+}
+
+.device-item {
+  --padding-start: 0;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: rgba(var(--ion-color-light-rgb), 0.5);
+}
+
+.device-icon {
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  padding: 10px;
+  border-radius: 10px;
+  margin-right: 14px;
+}
+
+.device-icon ion-icon {
+  font-size: 22px;
+  color: var(--ion-color-primary);
+}
+
+.device-details h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.device-details p {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  margin: 0;
+}
+
+.current-device {
+  color: var(--ion-color-success);
+  font-size: 12px;
+  margin-left: 8px;
+}

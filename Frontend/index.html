@@ -28,7 +28,13 @@
     <meta name="msapplication-TileColor" content="#3880ff" />
     
     <!-- Additional meta tag for content security policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: gap: file: 'unsafe-inline' 'unsafe-eval'; style-src * 'self' 'unsafe-inline' file:; media-src *; img-src * 'self' data: content: file:;">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' data: gap: http://localhost:5000 https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; 
+      connect-src 'self' http://localhost:5000 ws://localhost:* blob:; 
+      style-src 'self' 'unsafe-inline'; 
+      media-src *; 
+      img-src * 'self' data: content: file: blob:;">
     
   </head>
   <body>

@@ -151,7 +151,7 @@ const ChatIndividual: React.FC = () => {
               >
                 <IonAvatar slot="start" className="chat-avatar">
                   <img src={chat.avatar} alt={chat.name} />
-                  {chat.online && <div className="online-indicator"></div>}
+                  {chat.online && <div className="online-indicator-chatindividual"></div>}
                 </IonAvatar>
                 <IonLabel>
                   <h2>{chat.name}</h2>

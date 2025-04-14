@@ -84,6 +84,8 @@ import NotificationsPage from './pages/NotificationsPage';
 import TwoFactorAuth from './pages/TwoFactorAuth';
 import VerifySession from './pages/VerifySession';
 import VerificationNeeded from './pages/VerificationNeeded';
+import BillingPage from './pages/BillingPage';
+import LoggedDevicesPage from './pages/LoggedDevicesPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -635,6 +637,8 @@ const App: React.FC = () => {
                 <Route exact path="/community" component={CommunityPage} />
                 <Route path="/verify-2fa/:userId" component={TwoFactorAuth} />
                 <Route exact path="/verify-session/:token" component={VerifySession} />
+                <Route path="/billing" component={BillingPage} exact />
+                <Route path="/logged-devices" component={LoggedDevicesPage} exact />
                 
                 {/* Settings routes */}
                 

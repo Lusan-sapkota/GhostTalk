@@ -6,18 +6,42 @@ import logging
 from datetime import datetime
 
 class EmailService:
-    def __init__(self):
-        # Get SMTP settings from config
-        self.smtp_host = current_app.config.get('SMTP_HOST', 'smtp.zoho.com')
-        self.smtp_port = current_app.config.get('SMTP_PORT', 587)
-        self.smtp_user = current_app.config.get('SMTP_USER', 'no-reply@ghosttalk.me')
-        self.smtp_pass = current_app.config.get('SMTP_PASS', 'No-reply@7890')
-        self.sender_name = current_app.config.get('SENDER_NAME', 'GhostTalk')
-        self.sender_email = current_app.config.get('SENDER_EMAIL', 'no-reply@ghosttalk.me')
-        self.reply_to = current_app.config.get('REPLY_TO', 'support@ghosttalk.me')
+    def __init__(self, email_type='noreply'):
+        self.email_type = email_type
+        self._config_loaded = False
         
+    def _load_config_if_needed(self):
+        """Load configuration values if they haven't been loaded yet"""
+        if not self._config_loaded:
+            from flask import current_app
+            
+            # Get SMTP settings from config
+            self.smtp_host = current_app.config.get('SMTP_HOST', 'smtp.zoho.com')
+            self.smtp_port = current_app.config.get('SMTP_PORT', 587)
+            
+            # Get credentials based on email type
+            if self.email_type == 'support':
+                self.smtp_user = current_app.config.get('SMTP_USER_SUPPORT')
+                self.smtp_pass = current_app.config.get('SMTP_PASS_SUPPORT')
+                self.sender_email = self.smtp_user
+                self.reply_to = self.smtp_user
+            elif self.email_type == 'billing':
+                self.smtp_user = current_app.config.get('SMTP_USER_BILLING')
+                self.smtp_pass = current_app.config.get('SMTP_PASS_BILLING')
+                self.sender_email = self.smtp_user
+                self.reply_to = self.smtp_user
+            else:  # Default to no-reply
+                self.smtp_user = current_app.config.get('SMTP_USER_NOREPLY')
+                self.smtp_pass = current_app.config.get('SMTP_PASS_NOREPLY')
+                self.sender_email = current_app.config.get('SENDER_EMAIL', 'no-reply@ghosttalk.me')
+                self.reply_to = current_app.config.get('REPLY_TO', 'support@ghosttalk.me')
+                
+            self.sender_name = current_app.config.get('SENDER_NAME', 'GhostTalk')
+            self._config_loaded = True
+    
     def send_email(self, to_email, subject, html_content, text_content=None):
         """Send an email using Zoho SMTP server"""
+        self._load_config_if_needed()
         try:
             print(f"Attempting to send email to {to_email}")
             print(f"SMTP settings: {self.smtp_host}:{self.smtp_port} with user {self.smtp_user}")
@@ -306,3 +330,210 @@ class EmailService:
         """
         
         return self.send_email(to_email, subject, html_content)
+
+    def send_subscription_confirmation(self, to_email, name, request_id, plan, country, billing_details=None):
+        """Send confirmation email to user about their subscription request"""
+        if not to_email:
+            return False
+            
+        subject = f"Your GhostTalk Subscription Request - {request_id}"
+        
+        # Format plan name for display
+        plan_name = "Pro Monthly" if plan == "monthly" else "Pro Yearly"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #5851D8; text-align: center;">GhostTalk Subscription Request</h1>
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+                <p>Hello {name},</p>
+                <p>Thank you for your interest in GhostTalk Pro! We've received your request for the <strong>{plan_name}</strong> plan.</p>
+                
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #5851D8;">
+                    <p><strong>Request ID:</strong> {request_id}</p>
+                    <p><strong>Plan:</strong> {plan_name}</p>
+                    <p><strong>Country:</strong> {country}</p>
+                    <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                    {billing_html}
+                </div>
+                
+                <p>Our team will contact you shortly with further instructions on completing your subscription.</p>
+                <p>If you have any questions, please reply to this email or contact support@ghosttalk.me.</p>
+                <p>Best regards,<br>The GhostTalk Team</p>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #707070; font-size: 12px; text-align: center;">
+                <p>© {datetime.now().year} GhostTalk. All rights reserved.</p>
+            </div>
+        </div>
+        """
+        
+        # Add billing details if available
+        billing_html = ""
+        if billing_details:
+            billing_html = f"""
+            <p><strong>Billing Information:</strong></p>
+            <ul>
+                <li><strong>Payment Method:</strong> {billing_details.get('payment_method', 'Not specified')}</li>
+                <li><strong>Billing Address:</strong> {billing_details.get('billing_address', 'Not specified')}</li>
+            </ul>
+            """
+        
+        return self.send_email(to_email, subject, html_content)
+
+    def send_subscription_notification(self, request_id, name, email, plan, country):
+        """Send notification to billing department about new subscription request"""
+        # Use billing email type or fallback to noreply
+        email_type = 'billing' if hasattr(self, 'smtp_user_billing') else 'noreply'
+        
+        # Initialize proper email service
+        billing_email = EmailService(email_type=email_type)
+        
+        subject = f"New Subscription Request: {request_id}"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #5851D8; text-align: center;">New Subscription Request</h1>
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+                <p><strong>Request ID:</strong> {request_id}</p>
+                <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Plan:</strong> {plan}</p>
+                <p><strong>Country:</strong> {country}</p>
+            </div>
+        </div>
+        """
+        
+        # Send to appropriate billing email
+        billing_email = 'billing@ghosttalk.me'
+        return self.send_email(billing_email, subject, html_content)
+
+    def send_support_ticket_confirmation(self, ticket_data):
+        """Send confirmation email for a new support ticket"""
+        to_email = ticket_data.get('email')
+        if not to_email:
+            return False
+            
+        subject = f"Support Ticket Received - {ticket_data.get('ticket_id')}"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #5851D8; text-align: center;">GhostTalk Support</h1>
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+                <p>Hello {ticket_data.get('name')},</p>
+                <p>Thank you for contacting GhostTalk Support. We have received your request and will get back to you as soon as possible.</p>
+                
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #5851D8;">
+                    <p><strong>Ticket ID:</strong> {ticket_data.get('ticket_id')}</p>
+                    <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                    <p><strong>Name:</strong> {ticket_data.get('name')}</p>
+                    <p><strong>Email:</strong> {ticket_data.get('email')}</p>
+                    <p><strong>Subject:</strong> {ticket_data.get('subject')}</p>
+                    <p><strong>Category:</strong> {ticket_data.get('category')}</p>
+                    <p><strong>Message:</strong></p>
+                    <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        {ticket_data.get('message')}
+                    </div>
+                    {attachment_info}
+                </div>
+                
+                <p>Our support team will review your ticket and respond within 24-48 hours.</p>
+                <p>If you have any additional information to add, please reply to this email.</p>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #707070; font-size: 12px; text-align: center;">
+                <p>© {datetime.now().year} GhostTalk. All rights reserved.</p>
+                <p>This is an automated message, please do not reply to this email.</p>
+            </div>
+        </div>
+        """
+        
+        # Add attachment info if applicable
+        attachment_info = ""
+        if ticket_data.get('attachment_name'):
+            attachment_info = f"""<p><strong>Attachment:</strong> {ticket_data.get('attachment_name')} 
+                                  <span style="color: #5851D8;">(Attached to this email)</span></p>"""
+        
+        return self.send_email(to_email, subject, html_content, attachment_path=ticket_data.get('attachment_path'))
+
+    def send_support_ticket_notification(self, ticket_data):
+        """Send notification to support team about new support ticket"""
+        support_email = current_app.config.get('SUPPORT_EMAIL', 'support@ghosttalk.me')
+        
+        subject = f"New Support Ticket: {ticket_data.get('subject')} - {ticket_data.get('ticket_id')}"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #5851D8; text-align: center;">New Support Ticket</h1>
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+                <p><strong>Ticket ID:</strong> {ticket_data.get('ticket_id')}</p>
+                <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p><strong>User Information:</strong></p>
+                <ul>
+                    <li><strong>Name:</strong> {ticket_data.get('name')}</li>
+                    <li><strong>Email:</strong> {ticket_data.get('email')}</li>
+                </ul>
+                
+                <p><strong>Ticket Details:</strong></p>
+                <ul>
+                    <li><strong>Subject:</strong> {ticket_data.get('subject')}</li>
+                    <li><strong>Category:</strong> {ticket_data.get('category')}</li>
+                    <li><strong>IP Address:</strong> {ticket_data.get('ip_address', 'Not available')}</li>
+                    <li><strong>User Agent:</strong> {ticket_data.get('user_agent', 'Not available')}</li>
+                </ul>
+                
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Message:</strong></p>
+                    <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        {ticket_data.get('message')}
+                    </div>
+                </div>
+                
+                {attachment_info}
+            </div>
+        </div>
+        """
+        
+        # Add attachment info if applicable
+        attachment_info = ""
+        if ticket_data.get('attachment_name'):
+            attachment_info = f"""<p><strong>Attachment:</strong> {ticket_data.get('attachment_name')} 
+                                 <span style="color: #5851D8;">(Attached to this email)</span></p>"""
+        
+        return self.send_email(support_email, subject, html_content, attachment_path=ticket_data.get('attachment_path'))
+
+    def send_subscription_notification(self, request_id, name, email, plan, country, additional_details=None):
+        """Send notification to billing department about new subscription request"""
+        # Use billing email type or fallback to noreply
+        email_type = 'billing' if hasattr(self, 'smtp_user_billing') else 'noreply'
+        
+        # Initialize proper email service
+        billing_email = EmailService(email_type=email_type)
+        
+        subject = f"New Subscription Request: {request_id}"
+        
+        additional_info = ""
+        if additional_details:
+            additional_info = "<p><strong>Additional Information:</strong></p><ul>"
+            for key, value in additional_details.items():
+                additional_info += f"<li><strong>{key}:</strong> {value}</li>"
+            additional_info += "</ul>"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #5851D8; text-align: center;">New Subscription Request</h1>
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+                <p><strong>Request ID:</strong> {request_id}</p>
+                <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Plan:</strong> {plan}</p>
+                <p><strong>Country:</strong> {country}</p>
+                {additional_info}
+            </div>
+        </div>
+        """
+        
+        # Send to appropriate billing email
+        billing_email = 'billing@ghosttalk.me'
+        return self.send_email(billing_email, subject, html_content)

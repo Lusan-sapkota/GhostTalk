@@ -1,4 +1,5 @@
 from .appwrite_service import AppwriteService
+import os
 
 class UserService:
     def __init__(self):
@@ -7,25 +8,39 @@ class UserService:
     def get_user_profile(self, user_id):
         """Get user profile information"""
         try:
-            # Get user from Appwrite
-            user = self.appwrite_service.get_user(user_id)
-            
-            if not user:
+            # Get user document
+            user_doc = self.appwrite_service.get_user_document(user_id)
+            if not user_doc:
                 return {'success': False, 'message': 'User not found'}, 404
             
-            # Return user profile
-            return {
+            # Get user from Appwrite authentication
+            user = self.appwrite_service.get_user(user_id)
+            
+            # Prepare response with ALL fields from the document
+            # Make sure to include the fields exactly as named in the database
+            response = {
                 'success': True,
                 'user': {
                     'id': user['$id'],
                     'email': user['email'],
-                    'name': user['name'],
-                    'registration': user['registration'],
-                    'avatar': user.get('avatar', None),
-                    'proStatus': user.get('proStatus', 'free')
+                    'name': user_doc.get('username', user.get('name', '')),
+                    'proStatus': user_doc.get('proStatus', 'free'),  # Use exact field name
+                    'gender': user_doc.get('gender', 'prefer_not_to_say'),
+                    'bio': user_doc.get('bio', ''),
+                    'avatar': user_doc.get('avatar'),  # Use the avatar field
+                    'avatarId': user_doc.get('avatarId'),  # Include avatarId
+                    'avatarBucketId': user_doc.get('avatarBucketId', os.environ.get('AVATAR_BUCKET_ID')),
+                    'isOnline': user_doc.get('isOnline', False),
+                    'registration': user_doc.get('createdAt')
                 }
-            }, 200
+            }
+            
+            # Debug the response before returning it
+            print(f"User profile response: {response}")
+            
+            return response, 200
         except Exception as e:
+            print(f"Error getting user profile: {str(e)}")
             return {'success': False, 'message': str(e)}, 500
     
     def update_user_profile(self, user_id, data):

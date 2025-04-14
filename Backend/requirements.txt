@@ -1,8 +1,14 @@
-flask 
-flask_cors 
-appwrite 
+flask
+flask_cors
+appwrite
 requests
 python-dotenv
 werkzeug
 pyjwt
 qrcode[pil]
+flask-socketio
+python-socketio
+eventlet
+gevent
+gevent-websocket
+cryptography

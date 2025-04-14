@@ -357,3 +357,22 @@
     font-size: 60px;
   }
 }
+
+.pre-filled-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.contact-info-message {
+  font-size: 12px;
+  color: var(--ion-color-primary);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

@@ -1,0 +1,264 @@
+.billing-page {
+  --background: var(--ion-background-color);
+}
+
+.billing-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.billing-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.billing-header h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.billing-header p {
+  color: var(--ion-color-medium);
+  font-size: 1.1rem;
+}
+
+.merchant-notice-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--ion-color-warning);
+  overflow: visible;
+}
+
+.notice-icon {
+  float: left;
+  margin-right: 15px;
+  color: var(--ion-color-warning);
+  font-size: 28px;
+}
+
+.notice-text {
+  margin: 0;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+.billing-form-card {
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.billing-form-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.billing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.billing-form-row {
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.billing-form-item {
+  --background: transparent;
+  --border-width: 1px;
+  --border-color: rgba(var(--ion-color-primary-rgb), 0.2);
+  --border-radius: 8px;
+  --border-style: solid;
+  --padding-start: 10px;
+  --inner-padding-end: 10px;
+  margin: 0;
+}
+
+.billing-submit-button {
+  margin-top: 20px;
+  height: 48px;
+  --border-radius: 24px;
+  --background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.billing-submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.5);
+}
+
+.submitting-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submitting-text::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.plan-features {
+  background-color: rgba(var(--ion-color-light-rgb), 0.5);
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.plan-features h3 {
+  margin-top: 0;
+  color: var(--ion-color-primary);
+  font-size: 16px;
+}
+
+.plan-features ul {
+  padding-left: 20px;
+  margin: 8px 0 0;
+}
+
+.plan-features li {
+  margin-bottom: 6px;
+  color: var(--ion-color-medium-shade);
+}
+
+/* Success Card */
+.request-success-card {
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  box-shadow: 0 10px 30px rgba(var(--ion-color-primary-rgb), 0.3);
+  animation: success-appear 0.5s ease forwards;
+  max-width: 500px;
+  margin: 40px auto;
+}
+
+@keyframes success-appear {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.request-success-glow {
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  right: -50px;
+  bottom: -50px;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, transparent 70%);
+  opacity: 0.3;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(0.97);
+  }
+}
+
+.request-success-content {
+  text-align: center;
+  padding: 40px 20px;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.request-success-icon {
+  font-size: 70px;
+  margin-bottom: 20px;
+  animation: success-bounce 1s ease-in-out;
+}
+
+@keyframes success-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-30px);
+  }
+  60% {
+    transform: translateY(-15px);
+  }
+}
+
+.request-success-content h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.request-success-content p {
+  margin-bottom: 25px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.new-request-btn {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: white;
+  --border-radius: 24px;
+  font-weight: 600;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .billing-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .billing-container {
+    padding: 15px;
+  }
+  
+  .request-success-card {
+    margin: 20px auto;
+  }
+  
+  .request-success-content {
+    padding: 30px 15px;
+  }
+  
+  .request-success-icon {
+    font-size: 60px;
+  }
+}

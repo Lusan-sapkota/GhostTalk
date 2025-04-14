@@ -1,0 +1,176 @@
+/* Main page styles */
+.gt-device-section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--ion-color-dark);
+  }
+  
+  .gt-device-section-description {
+    color: var(--ion-color-medium);
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  /* Device list styles */
+  .gt-device-list {
+    background: transparent;
+    padding: 0;
+  }
+  
+  .gt-device-item {
+    --padding-start: 0;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background: var(--ion-background-color);
+    overflow: hidden;
+  }
+  
+  .gt-device-icon-container {
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    padding: 12px;
+    border-radius: 10px;
+    margin-right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .gt-device-icon-container ion-icon {
+    font-size: 24px;
+    color: var(--ion-color-primary);
+  }
+  
+  .gt-device-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  .gt-device-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .gt-device-current-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 8px;
+    margin-left: 8px;
+    height: auto;
+    border-radius: 4px;
+  }
+  
+  .gt-device-detail {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--ion-color-medium);
+    margin: 4px 0;
+  }
+  
+  .gt-device-detail ion-icon {
+    font-size: 14px;
+    margin-right: 6px;
+    min-width: 14px;
+  }
+  
+  /* Skeleton loader styles */
+  .gt-device-skeleton-container {
+    padding: 10px 0;
+  }
+  
+  .gt-device-skeleton-item {
+    display: flex;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--ion-background-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .gt-device-skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--ion-color-light);
+    margin-right: 14px;
+  }
+  
+  .gt-device-skeleton-content {
+    flex: 1;
+  }
+  
+  /* Empty state styles */
+  .gt-device-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(var(--ion-color-light-rgb), 0.5);
+    border-radius: 12px;
+    margin-top: 10px;
+  }
+  
+  .gt-device-empty-state ion-icon {
+    font-size: 48px;
+    color: var(--ion-color-medium);
+    margin-bottom: 16px;
+  }
+  
+  .gt-device-empty-state h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--ion-color-dark);
+  }
+  
+  .gt-device-empty-state p {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  
+  /* Dark mode adjustments */
+  :root.dark .gt-device-item {
+    background: rgba(var(--ion-color-dark-rgb), 0.8);
+  }
+  
+  :root.dark .gt-device-skeleton-item {
+    background: rgba(var(--ion-color-dark-rgb), 0.8);
+  }
+  
+  :root.dark .gt-device-empty-state {
+    background: rgba(var(--ion-color-dark-rgb), 0.8);
+  }
+  
+  :root.dark .gt-device-icon-container {
+    background: rgba(var(--ion-color-primary-rgb), 0.2);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 360px) {
+    .gt-device-detail {
+      font-size: 12px;
+    }
+    
+    .gt-device-icon-container {
+      padding: 10px;
+    }
+    
+    .gt-device-icon-container ion-icon {
+      font-size: 20px;
+    }
+  }
+  
+  /* Animation for device items */
+  .gt-device-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .gt-device-item:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }

@@ -32,11 +32,13 @@ import {
 } from 'ionicons/icons';
 import './Home.css';
 import { useState, useEffect, useRef } from 'react';
+import { useHistory } from 'react-router-dom';
 import HeaderComponent from '../components/HeaderComponent';
 import RoamingGhost from '../components/RoamingGhost';
 import PullToRefresh from '../components/PullToRefresh';
 
 const Home: React.FC = () => {
+  const history = useHistory();
   const [searchText, setSearchText] = useState('');
   const [themeChanging, setThemeChanging] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -60,6 +62,11 @@ const Home: React.FC = () => {
       setRefreshing(false);
       event.detail.complete();
     }, 1500);
+  };
+
+  // Add this function to handle navigation with state
+  const navigateToBilling = (plan: string) => {
+    history.push('/billing', { selectedPlan: plan });
   };
 
   return (
@@ -241,7 +248,13 @@ const Home: React.FC = () => {
                           <div className="pricing-header">Monthly</div>
                           <div className="price">$4.99<span>/month</span></div>
                         </div>
-                        <IonButton fill="outline" expand="block">Choose Plan</IonButton>
+                        <IonButton 
+                          fill="outline" 
+                          expand="block" 
+                          onClick={() => navigateToBilling('monthly')}
+                        >
+                          Choose Plan
+                        </IonButton>
                       </div>
                       
                       <div className="pricing-option best-value">
@@ -251,7 +264,12 @@ const Home: React.FC = () => {
                           <div className="price">$39.99<span>/year</span></div>
                           <p className="save-text">Save over 30%</p>
                         </div>
-                        <IonButton expand="block">Choose Plan</IonButton>
+                        <IonButton 
+                          expand="block" 
+                          onClick={() => navigateToBilling('yearly')}
+                        >
+                          Choose Plan
+                        </IonButton>
                       </div>
                       
                       <div className="pricing-note-container">

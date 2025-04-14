@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const BASE_URL = 'http://localhost:5000/api'; // Update this with your actual Flask API URL
 
 export class ApiService {
@@ -30,7 +32,7 @@ export class ApiService {
     }
   }
 
-  // Improve the makeRequest method with better error handling
+  // Update the makeRequest method to remove the problematic header
   public async makeRequest(
     endpoint: string, 
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' = 'GET', 
@@ -51,11 +53,10 @@ export class ApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Add test IP header in development for location testing
-      if (process.env.NODE_ENV === 'development') {
-        // You can change this to any IP to test different locations
-        headers['X-Test-IP'] = '8.8.8.8'; // Google DNS IP for testing
-      }
+      // Remove this problematic header that causes CORS issues
+      // if (process.env.NODE_ENV === 'development') {
+      //   headers['X-Test-IP'] = '8.8.8.8'; // Google DNS IP for testing
+      // }
       
       const response = await fetch(url, {
         method,
@@ -393,6 +394,217 @@ export class ApiService {
       // Silently fail - no console errors
       return null;
     }
+  }
+
+  async submitSupportTicket(data: {
+    name: string;
+    email: string;
+    subject: string;
+    category: string;
+    message: string;
+    attachment?: File;
+  }): Promise<{ success: boolean; message: string; ticketId?: string }> {
+    try {
+      // Check if there's an attachment
+      if (data.attachment) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        formData.append('name', data.name);
+        formData.append('email', data.email);
+        formData.append('subject', data.subject);
+        formData.append('category', data.category);
+        formData.append('message', data.message);
+        formData.append('attachment', data.attachment);
+        
+        const headers: Record<string, string> = {};
+        if (this.token) {
+          headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        
+        // Don't set Content-Type when using FormData - browser will set it with correct boundary
+        const response = await fetch(`${this.API_URL}/support/ticket/with-attachment`, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+        
+        const responseData = await response.json();
+        return responseData;
+      } else {
+        // No attachment - use regular JSON request
+        return this.makeRequest('/support/ticket', 'POST', {
+          name: data.name,
+          email: data.email,
+          subject: data.subject,
+          category: data.category,
+          message: data.message
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting support ticket:', error);
+      return { success: false, message: 'Failed to submit support ticket' };
+    }
+  }
+
+  // Update the requestSubscription method to handle profile fetch errors
+
+  async requestSubscription(data: {
+    plan: string;
+    country: string;
+  }): Promise<{ success: boolean; message: string; requestId?: string }> {
+    try {
+      // Get user info from auth context or storage
+      const token = this.getToken();
+      if (!token) {
+        return { success: false, message: 'You must be logged in to request a subscription' };
+      }
+      
+      // Get user email and name - handle failures gracefully
+      let userEmail = '';
+      let userName = '';
+      
+      try {
+        // Try to get user profile but don't fail if this doesn't work
+        const userData = await this.getCurrentUserProfile();
+        if (userData && userData.success && userData.user) {
+          userEmail = userData.user.email || '';
+          userName = userData.user.name || '';
+        }
+      } catch (profileError) {
+        console.log('Could not fetch user profile, continuing with subscription request');
+        // Don't fail - continue with the subscription request
+      }
+      
+      // If we couldn't get the email from the profile, try localStorage
+      if (!userEmail) {
+        try {
+          const cachedData = localStorage.getItem('userData');
+          if (cachedData) {
+            const parsedData = JSON.parse(cachedData);
+            userEmail = parsedData.email || '';
+            userName = parsedData.name || '';
+          }
+        } catch (e) {
+          console.log('Could not get user data from cache');
+        }
+      }
+      
+      const requestData = {
+        ...data,
+        email: userEmail,
+        name: userName
+      };
+      
+      // Use fetch instead of axios to have more control over the response handling
+      const response = await fetch(`${this.API_URL}/billing/subscription-request`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      // Handle non-JSON responses
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response received:', await response.text());
+        return {
+          success: false,
+          message: `Server returned non-JSON response (${response.status})`
+        };
+      }
+      
+      const responseData = await response.json();
+      return responseData;
+    } catch (error) {
+      console.error('Error requesting subscription:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? `Request failed: ${error.message}` : 'Failed to submit subscription request'
+      };
+    }
+  }
+
+  getBaseUrl(): string {
+    return this.API_URL;
+  }
+
+  // Search users
+  searchUsers(query: string, limit: number = 20, offset: number = 0): Promise<any> {
+    return this.makeRequest(
+      `/search/users?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`,
+      'GET'
+    );
+  }
+
+  // Find a user by ID (useful for QR scanning)
+  // Find a user by ID (useful for QR scanning)
+  getUserById(userId: string): Promise<any> {
+    return this.makeRequest(`/search/by-id/${userId}`, 'GET');
+  }
+
+  // Add these methods to ApiService class
+  async getUserSettings(): Promise<any> {
+    try {
+      const response = await this.makeRequest('/user/settings', 'GET');
+      console.log("API response for settings:", response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      throw error;
+    }
+  }
+
+  async updateUserSettings(settings: {
+    requireMessageApproval?: boolean;
+    enableSearch?: boolean;
+    readReceipts?: boolean;
+    genderVisibility?: string;
+    bioVisibility?: string;
+    emailVisibility?: string;
+    memberSinceVisibility?: string;
+    favoritesRequest?: boolean; // Note: singular, not plural
+    twoFactorAuthEnabled?: boolean;
+    chatRetention?: string;
+    enableNotifications?: boolean; // Add this property
+    notificationsSounds?: string; // Add this property
+  }): Promise<any> {
+    try {
+      const response = await this.makeRequest('/user/settings', 'PUT', settings);
+      console.log("API response for updating settings:", response);
+      return response;
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      throw error;
+    }
+  }
+
+  async updateSearchVisibility(enabled: boolean): Promise<any> {
+    return this.makeRequest('/user/search-visibility', 'PUT', { enableSearch: enabled });
+  }
+
+  // Add these methods to your ApiService class
+
+  // Get all devices where the user is logged in
+  async getLoggedDevices(): Promise<any> {
+    return this.makeRequest('/user/devices', 'GET');
+  }
+
+  // Log out from a specific device
+  async logoutDevice(deviceId: string): Promise<any> {
+    return this.makeRequest(`/user/devices/${deviceId}/logout`, 'POST');
+  }
+
+  // Update device name (optional)
+  async updateDeviceName(deviceId: string, name: string): Promise<any> {
+    return this.makeRequest(`/user/devices/${deviceId}/name`, 'PUT', { name });
+  }
+
+  // Rate the app (to track if user has already rated)
+  async trackAppRating(): Promise<any> {
+    return this.makeRequest('/user/app-rating', 'POST');
   }
 }
 

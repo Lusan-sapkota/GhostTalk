@@ -15,7 +15,6 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonSkeletonText,
-  IonEmptyButton,
   IonFab,
   IonFabButton
 } from '@ionic/react';
@@ -218,7 +217,7 @@ const FavoritesPage: React.FC = () => {
           ) : (
             <div className="default-avatar">{friend.name[0]}</div>
           )}
-          {friend.status === 'Online' && <div className="online-indicator"></div>}
+          {friend.status === 'Online' && <div className="online-indicator-favorites"></div>}
         </IonAvatar>
         
         <IonLabel>

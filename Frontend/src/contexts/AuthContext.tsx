@@ -75,61 +75,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (navigator.onLine) {
               // Use requestIdleCallback for non-critical operations
               const performBackgroundValidation = () => {
-                // Use a silent approach without fetch for connectivity check
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/health`, {
-                  method: 'HEAD',
-                  signal: controller.signal,
-                  mode: 'no-cors' // Prevents CORS errors
-                })
-                  .then(() => {
-                    // Only use silent token validation with full error suppression
-                    clearTimeout(timeoutId);
-                    
-                    // Don't use validateToken() directly - use a wrapped version that suppresses all errors
-                    const silentValidation = async () => {
-                      try {
-                        const token = apiService.getToken();
-                        if (!token) return { success: false };
-                        
-                        // Use a completely silent fetch that won't log to console
-                        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
-                          method: 'GET',
-                          headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json'
-                          },
-                          mode: 'no-cors' // This prevents CORS errors from appearing in console
-                        }).catch(() => null); // Suppress any fetch errors
-                        
-                        // Since no-cors doesn't give us usable response data, 
-                        // just check if we got any response at all
-                        if (response) {
-                          console.debug('Silent health check succeeded');
-                          return { success: true };
-                        }
-                        
-                        return { success: false };
-                      } catch (e) {
-                        // Completely silent error handling
-                        return { success: false };
-                      }
-                    };
-                    
-                    return silentValidation();
+                try {
+                  // Use a controller to be able to abort
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 3000);
+                  
+                  // Use the fetch API with options that won't trigger CORS preflight
+                  fetch(`${apiService.getBaseUrl()}/auth/status`, {
+                    method: 'HEAD', // Change to HEAD to reduce bandwidth
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    },
+                    signal: controller.signal
                   })
                   .then(response => {
-                    if (response.success) {
-                      // The connection is working, but we won't update anything
-                      // Just log success silently
-                      console.debug('Background validation succeeded');
-                    }
+                    clearTimeout(timeoutId);
+                    return { success: response.ok };
                   })
-                  .catch(() => {
-                    // Completely silent error handling
+                  .catch(error => {
+                    // Silently fail - don't display errors for background checks
+                    console.debug('Background validation error (suppressed):', error.name);
+                    return { success: false };
                   });
+                } catch (e) {
+                  // Completely silent error handling
+                  return { success: false };
+                }
               };
               
               // Use requestIdleCallback if available, otherwise setTimeout
@@ -351,6 +322,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       console.log('Session verification successful - user can now access the app');
+    }
+  };
+
+  const silentValidation = async () => {
+    try {
+      const token = apiService.getToken();
+      if (!token) return false;
+      
+      // Use a POST method if GET is not allowed
+      const response = await fetch(`${apiService.getBaseUrl()}/auth/validate`, {
+        method: 'POST', // Try POST instead of GET if you're getting 405 errors
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({}) // Empty body for POST request
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.debug('Silent validation error:', error);
+      return false;
     }
   };
 

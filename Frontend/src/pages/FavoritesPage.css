@@ -95,7 +95,7 @@ ion-avatar {
   color: var(--ion-color-primary);
 }
 
-.online-indicator {
+.online-indicator-favorites {
   position: absolute;
   bottom: -2px;
   right: -2px;

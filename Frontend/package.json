@@ -14,6 +14,7 @@
   "dependencies": {
     "@capacitor/android": "7.2.0",
     "@capacitor/app": "7.0.1",
+    "@capacitor/camera": "^7.0.1",
     "@capacitor/core": "7.2.0",
     "@capacitor/haptics": "7.0.1",
     "@capacitor/ios": "7.2.0",
@@ -26,6 +27,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.8.4",
     "ionicons": "^7.4.0",
+    "jsqr": "^1.4.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router": "^5.3.4",

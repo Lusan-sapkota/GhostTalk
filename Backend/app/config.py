@@ -30,11 +30,24 @@ class Config:
     # Frontend URL for email verification links, etc.
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8101')
     
-    # Add these settings
+    # Email configuration
     SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.zoho.com')
     SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
-    SMTP_USER = os.getenv('SMTP_USER', 'no-reply@ghosttalk.me')
-    SMTP_PASS = os.getenv('SMTP_PASS', 'No-reply@7890')
+
+    # Default (no-reply) email
+    SMTP_USER_NOREPLY = os.getenv('SMTP_USER_NOREPLY', 'no-reply@ghosttalk.me')
+    SMTP_PASS_NOREPLY = os.getenv('SMTP_PASS_NOREPLY', '')  # No default password
     SENDER_NAME = os.getenv('SENDER_NAME', 'GhostTalk')
     SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'no-reply@ghosttalk.me')
     REPLY_TO = os.getenv('REPLY_TO', 'support@ghosttalk.me')
+
+    # Support email
+    SMTP_USER_SUPPORT = os.getenv('SMTP_USER_SUPPORT', 'support@ghosttalk.me')
+    SMTP_PASS_SUPPORT = os.getenv('SMTP_PASS_SUPPORT', '')  # No default password
+
+    # Billing email
+    SMTP_USER_BILLING = os.getenv('SMTP_USER_BILLING', 'billing@ghosttalk.me')
+    SMTP_PASS_BILLING = os.getenv('SMTP_PASS_BILLING', '')  # No default password
+
+    # Add this to your config class
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
