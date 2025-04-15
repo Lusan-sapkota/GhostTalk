@@ -62,7 +62,7 @@ def create_support_ticket_with_attachment():
                 # Secure the filename
                 attachment_name = secure_filename(file.filename)
                 # Create uploads directory if it doesn't exist
-                uploads_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'support_attachments')
+                uploads_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), 'support_attachments')
                 os.makedirs(uploads_dir, exist_ok=True)
                 
                 # Save the file

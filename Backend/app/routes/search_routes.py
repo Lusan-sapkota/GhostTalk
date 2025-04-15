@@ -2,6 +2,18 @@ from flask import Blueprint, request, jsonify
 from ..services.appwrite_service import AppwriteService
 from ..utils.security import token_required
 import os
+from datetime import datetime
+
+def format_date(date_string):
+    """Format a date string into a readable format"""
+    if not date_string:
+        return ""
+    try:
+        # Assuming the date string is in ISO format
+        date_obj = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+        return date_obj.strftime("%B %d, %Y")
+    except Exception:
+        return date_string
 
 search_bp = Blueprint('search', __name__)
 appwrite_service = AppwriteService()
@@ -68,63 +80,67 @@ def search_users():
             'users': []
         }), 500
 
-@search_bp.route('/by-id/<user_id>', methods=['GET'])
-def search_by_id(user_id):
-    """Get a user by their exact ID - useful for QR scanning"""
-    if not user_id:
-        return jsonify({
-            'success': False,
-            'message': 'User ID is required',
-            'user': None
-        }), 400
-    
-    # Clean up ID from QR format if needed
-    if user_id.startswith('GHOST-'):
-        user_id = user_id[6:]
-    
+@search_bp.route('/by-id/<string:user_id>', methods=['GET'])
+@token_required
+def search_by_id(current_user_id, user_id):
+    """Search for a user by their ID"""
     try:
+        appwrite_service._initialize_client()
+        
         # Get user document
         user_doc = appwrite_service.get_user_document(user_id)
         
         if not user_doc:
             return jsonify({
                 'success': False,
-                'message': 'User not found',
-                'user': None
+                'message': 'User not found'
             }), 404
         
-        # Check if user allows being searched
-        if user_doc.get('enableSearch') == False:
+        # Check if user has enableSearch set to false
+        if not user_doc.get('enableSearch', True) and user_id != current_user_id:
             return jsonify({
                 'success': False,
-                'message': 'This user has disabled search visibility',
-                'user': None
-            }), 403
+                'message': 'User has disabled search visibility'
+            }), 404
         
-        # Format user data
-        backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
-        user_data = {
-            'id': user_doc.get('userId', user_doc.get('$id')),
-            'name': user_doc.get('username', 'Unknown User'),
+        # Format user data with proper visibility
+        user = {
+            'id': user_id,
+            'name': user_doc.get('username') or user_doc.get('name', 'Unknown User'),
             'proStatus': user_doc.get('proStatus', 'free'),
             'isVerified': user_doc.get('isVerified', False),
             'isOnline': user_doc.get('isOnline', False),
-            'lastSeen': user_doc.get('lastSeen', 0)
+            'lastSeen': user_doc.get('lastSeen', 0),
+            'bio': user_doc.get('bio', ''),
+            'email': user_doc.get('email', ''),
+            'gender': user_doc.get('gender', 'prefer_not_to_say'),
+            'memberSince': format_date(user_doc.get('registration', '')),
+            'lastActive': user_doc.get('lastSeen', 0),
+            
+            # Include visibility settings
+            'visibility': user_doc.get('visibility', 'limited'),
+            'bioVisibility': user_doc.get('bioVisibility', 'public'),
+            'memberSinceVisibility': user_doc.get('memberSinceVisibility', 'public'),
+            'emailVisibility': user_doc.get('emailVisibility', 'private'),
+            'genderVisibility': user_doc.get('genderVisibility', 'private'),
         }
         
         # Add avatar if available
+        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
         if user_doc.get('avatar'):
-            user_data['avatar'] = f"{backend_base_url}/user/avatar/{user_doc.get('avatar')}"
+            user['avatar'] = f"{backend_url}/user/avatar/{user_doc.get('avatar')}"
+            
+        # Check if they are friends
+        is_friend = appwrite_service.check_friendship(current_user_id, user_id)
+        user['isAdded'] = is_friend
         
         return jsonify({
             'success': True,
-            'user': user_data
+            'user': user
         }), 200
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        print(f"Error searching user by ID: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Error fetching user: {str(e)}',
-            'user': None
+            'message': str(e)
         }), 500

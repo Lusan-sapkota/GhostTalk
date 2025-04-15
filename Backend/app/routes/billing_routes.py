@@ -48,16 +48,24 @@ def request_subscription(current_user_id):
                 email, 
                 name, 
                 request_id, 
-                plan
+                plan,
+                country
             )
             
-            # Also notify billing department
+            # Also notify billing department with additional details (if any)
+            additional_details = {
+                "User ID": current_user_id,
+                "Source": "Website",
+                "Platform": request.user_agent.platform if request.user_agent else "Unknown"
+            }
+            
             email_service.send_subscription_notification(
                 request_id,
                 name,
                 email,
                 plan,
-                country
+                country,
+                additional_details
             )
         except Exception as email_error:
             logging.error(f"Error sending subscription emails: {str(email_error)}")

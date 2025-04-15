@@ -27,10 +27,15 @@ const config: CapacitorConfig = {
       backgroundColor: '#6736e9',
       overlaysWebView: false
     },
-    BarcodeScanner: {
-      cameraDirection: 'back',
-      // These are necessary for iOS permissions
-      NSCameraUsageDescription: 'To scan QR codes for finding other users'
+    plugins: {
+      PushNotifications: {
+        presentationOptions: ["badge", "sound", "alert"]
+      },
+      BarcodeScanner: {
+        cameraDirection: 'back',
+        // These are necessary for iOS permissions
+        NSCameraUsageDescription: 'To scan QR codes for finding other users'
+      }
     }
   }
 };

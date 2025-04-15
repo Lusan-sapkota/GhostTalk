@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -9,6 +9,7 @@ from .routes.chat_routes import chat_bp
 from .routes.friend_routes import friend_bp
 from .routes.search_routes import search_bp
 from .services.websocket_service import WebSocketService, socketio
+from .routes.notification_routes import notification_bp
 
 # Create a global instance
 websocket_service = WebSocketService()
@@ -20,10 +21,23 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Configure CORS properly to accept requests from the frontend
-    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:8100", "http://localhost:8101", "capacitor://localhost"]}}, 
-         supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization", "X-Test-IP", "Accept", "Origin", "X-Requested-With", "X-CSRF-Token"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    CORS(app, resources={r"/api/*": {
+        "origins": "http://localhost:8100",  # Match your frontend origin exactly
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+        "expose_headers": ["Content-Type", "Authorization"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],  # Add HEAD method
+        "supports_credentials": True
+    }})
+    
+    # Add OPTIONS route handler for all routes
+    @app.route('/api/<path:path>', methods=['OPTIONS'])
+    def handle_options(path):
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')  # Match frontend exactly
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,X-Requested-With')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     
     # Debug output to verify configuration loading
     print(f"Loaded database ID: {app.config.get('APPWRITE_DATABASE_ID')}")
@@ -49,6 +63,7 @@ def create_app(config_class=Config):
         app.register_blueprint(billing_bp, url_prefix='/api/billing')
         app.register_blueprint(friend_bp, url_prefix='/api/friend')
         app.register_blueprint(search_bp, url_prefix='/api/search')
+        app.register_blueprint(notification_bp, url_prefix='/api')
     
     # Add a simple health check route
     @app.route('/health', methods=['GET'])

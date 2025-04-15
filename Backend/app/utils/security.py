@@ -57,25 +57,31 @@ def token_required(f):
     """Decorator for routes that require authentication"""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Skip token validation for OPTIONS requests
+        if request.method == 'OPTIONS':
+            return f(*args, **kwargs)
+            
         token = None
         auth_header = request.headers.get('Authorization')
         
-        if (auth_header and auth_header.startswith('Bearer ')):
-            token = auth_header.split(" ")[1]
+        if auth_header:
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'success': False, 'message': 'Invalid token format'}), 401
         
         if not token:
-            return jsonify({'success': False, 'message': 'Authentication token is missing'}), 401
-        
+            return jsonify({'success': False, 'message': 'Token is missing'}), 401
+            
         try:
             data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
             current_user_id = data['sub']
-        except jwt.ExpiredSignatureError:
-            return jsonify({'success': False, 'message': 'Token has expired'}), 401
-        except jwt.InvalidTokenError:
+            # If we reach here, the token is valid
+            return f(current_user_id, *args, **kwargs)
+        except Exception as e:
+            print(f"Token validation error: {str(e)}")
             return jsonify({'success': False, 'message': 'Invalid token'}), 401
-        
-        return f(current_user_id, *args, **kwargs)
-    
+            
     return decorated
 
 require_auth = token_required  # Alias for backward compatibility

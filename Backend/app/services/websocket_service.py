@@ -10,6 +10,8 @@ class WebSocketService:
     def __init__(self, app=None):
         if app:
             self.init_app(app)
+        else:
+            self._initialized = False
     
     def init_app(self, app):
         # Apply the SocketIO instance to the Flask app
@@ -112,9 +114,36 @@ class WebSocketService:
         """Send a notification to a specific user"""
         socketio.emit('notification', notification_data, room=user_id)
     
-    def notify_friend_request(self, user_id, request_data):
-        """Notify a user about a new friend request"""
-        socketio.emit('friend_request', request_data, room=user_id)
+    def notify_friend_request(self, user_id, data):
+        """Send a friend request notification to a user"""
+        self._initialize_if_needed()
+        
+        try:
+            from flask_socketio import emit
+            
+            print(f"Sending notification to {user_id}: {data}")
+            
+            # Emit to the user's room
+            emit('friend_request', data, room=user_id, namespace='/')
+            
+            # Also emit a general notification for the notification system
+            notification_data = {
+                'type': 'notification',
+                'category': 'friend_request',
+                'title': 'New Friend Request' if data.get('type') == 'friend_request' else 'Friend Request Accepted',
+                'message': f"{data.get('senderName', 'Someone')} sent you a friend request" if data.get('type') == 'friend_request' else f"{data.get('userName', 'Someone')} accepted your friend request",
+                'data': data,
+                'timestamp': data.get('timestamp')
+            }
+            
+            emit('notification', notification_data, room=user_id, namespace='/')
+            print(f"Friend request notification sent to {user_id}")
+            return True
+        except Exception as e:
+            print(f"Error sending friend request notification: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
     
     def notify_call(self, user_id, call_data):
         """Notify a user about an incoming call"""
@@ -134,3 +163,13 @@ class WebSocketService:
             return decoded.get('sub')
         except:
             return None
+    
+    def _initialize_if_needed(self):
+        """Lazy initialization to avoid app context issues"""
+        if not self._initialized:
+            # Import Flask-SocketIO functionality
+            from flask_socketio import emit, socketio
+            self.socketio = socketio
+            self.emit = emit
+            self._initialized = True
+            print("WebSocket service initialized successfully")

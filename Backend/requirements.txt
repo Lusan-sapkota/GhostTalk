@@ -12,3 +12,4 @@ eventlet
 gevent
 gevent-websocket
 cryptography
+firebase-admin

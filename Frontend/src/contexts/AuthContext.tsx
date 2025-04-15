@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { apiService } from '../services/api.service';
+import { socketService } from '../services/socket.service';
 
 interface User {
   id: string;
@@ -80,12 +81,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   const controller = new AbortController();
                   const timeoutId = setTimeout(() => controller.abort(), 3000);
                   
-                  // Use the fetch API with options that won't trigger CORS preflight
-                  fetch(`${apiService.getBaseUrl()}/auth/status`, {
-                    method: 'HEAD', // Change to HEAD to reduce bandwidth
+                  // Use a POST request which can handle CORS better than HEAD in some setups
+                  fetch(`${apiService.getBaseUrl()}/auth/validate`, {
+                    method: 'POST',
                     headers: {
-                      'Authorization': `Bearer ${token}`
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
                     },
+                    body: JSON.stringify({}), // Empty body
                     signal: controller.signal
                   })
                   .then(response => {
@@ -204,6 +207,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    const checkAuthState = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          // Your existing auth checking code
+          
+          // Also ensure socket connection is established
+          socketService.ensureConnected(token);
+          
+        } catch (error) {
+          // Error handling
+        }
+      }
+    };
+    
+    checkAuthState();
+  }, []);
+
   const register = async (email: string, password: string, profileData?: any) => {
     setIsLoading(true);
     try {
@@ -218,19 +241,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string, remember: boolean = false) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       setIsLoading(true);
-      console.log(`Auth Context: Logging in ${email} with remember=${remember}`);
+      console.log(`Auth Context: Logging in ${email} with remember=${rememberMe}`);
       
       const response = await apiService.login(email, password);
       
       if (response.success && response.token) {
-        // Store token with remember flag
-        apiService.setToken(response.token, remember);
+        // Store token with apiService
+        apiService.setToken(response.token, rememberMe);
         
+        // Connect socket AFTER setting the token
+        socketService.connect(response.token);
+        
+        console.log("Successfully connected socket after login");
+
         // Explicitly set rememberMe in localStorage if checked
-        if (remember) {
+        if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
         } else {
           localStorage.removeItem('rememberMe');
@@ -243,7 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (response.user) {
           localStorage.setItem('userData', JSON.stringify(response.user));
         }
-        
+
         setIsLoading(false);
         return {
           success: true,
@@ -292,6 +320,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Set current user to null
       setCurrentUser(null);
+
+      // Disconnect socket
+      socketService.disconnect();
     } catch (error) {
       console.error('Logout error:', error);
       

@@ -37,11 +37,16 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import BackHeaderComponent from '../components/BackHeaderComponent';
 import './NotificationsPage.css';
+import { useHistory } from 'react-router-dom';
+import { socket, socketService } from '../services/socket.service';
+import {apiService} from '../services/api.service';
+import { isPlatform } from '@ionic/react';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 // Define notification types
 interface Notification {
   id: string;
-  type: 'friendRequest' | 'message' | 'system' | 'like' | 'update';
+  type: 'friendRequest' | 'friendRequestAccepted' | 'message' | 'system' | 'like' | 'update';
   title: string;
   description: string;
   time: string;
@@ -52,80 +57,348 @@ interface Notification {
   icon: string;
 }
 
+interface FriendRequestAcceptedData {
+  userName: string;
+  userId: string;
+  requestId?: string;
+  timestamp?: string;
+  type: string;
+}
+
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [muteAll, setMuteAll] = useState(false);
   const { isAuthenticated } = useAuth();
+  const history = useHistory();
 
   useEffect(() => {
-    // Simulate loading notifications
-    const timer = setTimeout(() => {
-      setNotifications([
-        {
-          id: 'notif1',
-          type: 'friendRequest',
-          title: 'New Friend Request',
-          description: 'Alex Morgan sent you a friend request',
-          time: '10 min ago',
+    const fetchNotifications = async () => {
+      try {
+        setIsLoading(true);
+        const response = await apiService.makeRequest('/notifications', 'GET');
+        if (response.success && response.notifications) {
+          setNotifications(response.notifications);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchNotifications();
+      
+      // Connect to socket for real-time notifications
+      interface NotificationData {
+        id?: string;
+        type?: 'friendRequest' | 'message' | 'system' | 'like' | 'update';
+        title?: string;
+        message?: string;
+        time?: string;
+        metadata?: any;
+      }
+
+      socket.on('notification', (data: NotificationData) => {
+        console.log('New notification received:', data);
+        
+        const newNotification: Notification = {
+          id: data.id || `notif-${Date.now()}`,
+          type: data.type || 'system',
+          title: data.title || 'New Notification',
+          description: data.message || '',
+          time: data.time || 'Just now',
           read: false,
           actionable: true,
-          actionText: 'View',
-          actionLink: '/favorites',
-          icon: personAdd
-        },
-        {
-          id: 'notif2',
-          type: 'message',
-          title: 'New Message',
-          description: 'Jamie sent you a message: "Hey, how are you doing?"',
-          time: '30 min ago',
-          read: false,
-          actionable: true,
-          actionText: 'Reply',
-          actionLink: '/chat-individual',
-          icon: chatbubbleOutline
-        },
-        {
-          id: 'notif3',
+          actionText: getActionTextByType(data.type || 'system'),
+          actionLink: getActionLinkByType(data.type || 'system', data.metadata),
+          icon: getIconByType(data.type || 'system')
+        };
+        
+        // Add to notifications list
+        setNotifications(prev => [newNotification, ...prev]);
+      });
+      
+      // Friend request specific events
+      interface FriendRequestData {
+        senderName: string;
+        senderId?: string;
+        requestId?: string;
+        timestamp?: string;
+        type?: string;
+      }
+
+      socket.on('friend_request', (data: any) => {
+        console.log('Friend request event received:', data);
+        
+        // Check if this is a new request or an acceptance based on the 'type' field
+        if (data.type === 'friend_request_accepted') {
+          // This is a friend request acceptance
+          const newNotification: Notification = {
+            id: `friend-req-accept-${Date.now()}`,
+            type: 'friendRequestAccepted',
+            title: 'Friend Request Accepted',
+            description: `${data.userName} accepted your friend request`,
+            time: 'Just now',
+            read: false,
+            actionable: true,
+            actionText: 'Message',
+            actionLink: `/chat-individual/${data.userId}`,
+            icon: personAdd
+          };
+          
+          setNotifications(prev => [newNotification, ...prev]);
+          console.log('Added acceptance notification:', newNotification);
+        } else if (data.type === 'friend_request') {
+          // This is a new friend request
+          const newNotification: Notification = {
+            id: `friend-req-${Date.now()}`,
+            type: 'friendRequest',
+            title: 'New Friend Request',
+            description: `${data.senderName} sent you a friend request`,
+            time: 'Just now',
+            read: false,
+            actionable: true,
+            actionText: 'View',
+            actionLink: '/favorites?tab=requests',
+            icon: personAdd
+          };
+          
+          setNotifications(prev => [newNotification, ...prev]);
+          console.log('Added request notification:', newNotification);
+        } else {
+          console.log('Unknown friend request event type:', data.type);
+        }
+      });
+
+      // Add a general catch-all notification handler
+      socket.on('*', (event: string, data: any) => {
+        console.log('Catch-all socket event:', event, data);
+      });
+      
+      // Session login events
+      interface SessionLoginData {
+        device: string;
+        location: string;
+      }
+
+      socket.on('session_login', (data: SessionLoginData) => {
+        const newNotification: Notification = {
+          id: `session-${Date.now()}`,
           type: 'system',
-          title: 'Security Alert',
-          description: 'Your account was accessed from a new device',
-          time: '2 hours ago',
-          read: true,
+          title: 'New Login Detected',
+          description: `Your account was accessed from ${data.device} in ${data.location}`,
+          time: 'Just now',
+          read: false,
           actionable: true,
           actionText: 'Review',
           actionLink: '/settings',
           icon: alertCircleOutline
-        },
-        {
-          id: 'notif4',
-          type: 'like',
-          title: 'Someone liked your message',
-          description: 'Taylor liked your message in "Privacy Discussion"',
-          time: '1 day ago',
-          read: true,
-          actionable: false,
-          icon: heart
-        },
-        {
-          id: 'notif5',
-          type: 'update',
-          title: 'App Update Available',
-          description: 'GhostTalk v2.1 is now available with new features',
-          time: '2 days ago',
-          read: true,
+        };
+        
+        setNotifications(prev => [newNotification, ...prev]);
+      });
+      
+      // Chat message events
+      interface ChatMessageData {
+        senderName: string;
+        messagePreview: string;
+        senderId: string;
+      }
+
+      socket.on('chat_message', (data: ChatMessageData) => {
+        const newNotification: Notification = {
+          id: `chat-${Date.now()}`,
+          type: 'message',
+          title: 'New Message',
+          description: `${data.senderName}: ${data.messagePreview}`,
+          time: 'Just now',
+          read: false,
           actionable: true,
-          actionText: 'Update',
-          actionLink: '/settings',
-          icon: star
-        }
-      ]);
-      setIsLoading(false);
-    }, 1000);
+          actionText: 'Reply',
+          actionLink: `/chat-individual/${data.senderId}`,
+          icon: chatbubbleOutline
+        };
+        
+        setNotifications(prev => [newNotification, ...prev]);
+      });
+    }
     
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      if (isAuthenticated) {
+        socket.off('notification');
+        socket.off('friend_request');
+        socket.off('session_login');
+        socket.off('chat_message');
+      }
+    };
+  }, [isAuthenticated]);
+
+  // Add this to NotificationsPage.tsx to debug socket connections
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Log socket connection status
+      console.log("Socket connected:", socket.connected);
+      
+      if (!socket.connected) {
+        console.log("Socket not connected, attempting to connect...");
+        // Get token and ensure socket is connected with it
+        const token = localStorage.getItem('token');
+        if (token) {
+          socketService.ensureConnected(token);
+        }
+      }
+      
+      // Add connect/disconnect listeners
+      socket.on('connect', () => {
+        console.log('Socket connected!');
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
+      
+      return () => {
+        socket.off('connect');
+        socket.off('disconnect');
+      };
+    }
+  }, [isAuthenticated]);
+
+  // Add a better socket debugging and connection management
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Socket status at initialization:", socket.connected ? "connected" : "disconnected");
+      
+      if (!socket.connected) {
+        // Get token from apiService instead of localStorage
+        const token = apiService.getToken();
+        if (token) {
+          console.log("Attempting to connect socket with token");
+          socketService.ensureConnected(token);
+        } else {
+          console.error("No token available for socket connection");
+        }
+      }
+      
+      // Add connect/disconnect listeners
+      const onConnect = () => {
+        console.log('Socket connected!', socket.id);
+      };
+      
+      const onDisconnect = (reason: string) => {
+        console.log('Socket disconnected:', reason);
+        
+        // Auto-reconnect on disconnection
+        const token = localStorage.getItem('token');
+        if (token) {
+          console.log("Auto-reconnecting socket after disconnect");
+          setTimeout(() => {
+        socketService.ensureConnected(token);
+          }, 1000);
+        }
+      };
+      
+      socket.on('connect', onConnect);
+      socket.on('disconnect', onDisconnect);
+      
+      // Add error handler
+      socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error.message);
+      });
+      
+      // Test connection
+      if (socket.connected) {
+        console.log("Emitting ping to test connection");
+        socket.emit('ping', { time: new Date().toISOString() });
+      }
+      
+      return () => {
+        socket.off('connect', onConnect);
+        socket.off('disconnect', onDisconnect);
+        socket.off('connect_error');
+      };
+    }
+  }, [isAuthenticated]);
+
+  // Add push notification setup for mobile devices
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const setupPushNotifications = async () => {
+      if (isPlatform('capacitor')) {
+        try {
+          // Request permission
+          await PushNotifications.requestPermissions();
+          
+          // Register with FCM
+          await PushNotifications.register();
+          
+          // Register handlers
+          PushNotifications.addListener('registration', async (token) => {
+            console.log('Push registration success, token:', token.value);
+            
+            // Send this token to your backend
+            try {
+              await apiService.makeRequest('/user/push-token', 'POST', {
+                token: token.value
+              });
+            } catch (error) {
+              console.error('Failed to save push token:', error);
+            }
+          });
+          
+          PushNotifications.addListener('registrationError', (error) => {
+            console.error('Push registration failed:', error);
+          });
+          
+          PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log('Push notification received:', notification);
+            
+            // Add the notification to the state
+            const newNotification: Notification = {
+              id: `push-${Date.now()}`,
+              type: notification.data?.type || 'system',
+              title: notification.title || 'New Notification',
+              description: notification.body || '',
+              time: 'Just now',
+              read: false,
+              actionable: true,
+              actionText: getActionTextByType(notification.data?.type || 'system'),
+              actionLink: getActionLinkByType(notification.data?.type || 'system', notification.data),
+              icon: getIconByType(notification.data?.type || 'system')
+            };
+            
+            setNotifications(prev => [newNotification, ...prev]);
+          });
+          
+          PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+            console.log('Push notification action performed:', action);
+            
+            // Handle navigation based on the notification type
+            if (action.notification.data?.type === 'friendRequest') {
+              history.push('/favorites?tab=requests');
+            } else if (action.notification.data?.type === 'friendRequestAccepted') {
+              history.push(`/chat-individual/${action.notification.data.userId}`);
+            } else if (action.notification.data?.type === 'message') {
+              history.push(`/chat-individual/${action.notification.data.senderId}`);
+            }
+          });
+        } catch (error) {
+          console.error('Error setting up push notifications:', error);
+        }
+      }
+    };
+    
+    setupPushNotifications();
+    
+    return () => {
+      if (isPlatform('capacitor')) {
+        PushNotifications.removeAllListeners();
+      }
+    };
+  }, [isAuthenticated, history]);
 
   const handleRefresh = (event: CustomEvent) => {
     // Simulate refreshing notifications
@@ -172,11 +445,72 @@ const NotificationsPage: React.FC = () => {
   const getColorForType = (type: string) => {
     switch(type) {
       case 'friendRequest': return 'primary';
+      case 'friendRequestAccepted': return 'success'; // Use green for acceptances
       case 'message': return 'success';
       case 'system': return 'warning';
       case 'like': return 'danger';
       case 'update': return 'tertiary';
       default: return 'medium';
+    }
+  };
+
+  const handleFriendRequestNotification = (notification: Notification) => {
+    // Navigate to the favorites page and select the requests tab
+    history.push({
+      pathname: '/favorites',
+      search: '?tab=requests'  // Add query parameter to indicate which tab
+    });
+    
+    // Also mark the notification as read
+    handleMarkAsRead(notification.id);
+  };
+
+  const getNotificationAction = (notification: Notification) => {
+    switch(notification.type) {
+      case 'friendRequest':
+        return (
+          <IonButton 
+            fill="outline" 
+            size="small" 
+            className="notification-action"
+            onClick={() => handleFriendRequestNotification(notification)}
+          >
+            View
+          </IonButton>
+        );
+      case 'friendRequestAccepted':
+        return (
+          <IonButton 
+            fill="outline" 
+            size="small" 
+            className="notification-action"
+            routerLink={notification.actionLink}
+          >
+            Message
+          </IonButton>
+        );
+      case 'message':
+        return (
+          <IonButton 
+            fill="outline" 
+            size="small" 
+            className="notification-action"
+            routerLink={notification.actionLink}
+          >
+            Reply
+          </IonButton>
+        );
+      default:
+        return notification.actionable ? (
+          <IonButton 
+            fill="outline" 
+            size="small" 
+            className="notification-action"
+            routerLink={notification.actionLink}
+          >
+            {notification.actionText}
+          </IonButton>
+        ) : null;
     }
   };
 
@@ -232,14 +566,7 @@ const NotificationsPage: React.FC = () => {
               </span>
               
               {notification.actionable && (
-                <IonButton 
-                  fill="clear" 
-                  size="small" 
-                  routerLink={notification.actionLink} 
-                  className="notification-action"
-                >
-                  {notification.actionText}
-                </IonButton>
+                getNotificationAction(notification)
               )}
             </div>
           </IonLabel>
@@ -360,6 +687,37 @@ const NotificationsPage: React.FC = () => {
       </IonContent>
     </IonPage>
   );
+};
+
+const getActionTextByType = (type: string): string => {
+  switch (type) {
+    case 'friendRequest': return 'View';
+    case 'friendRequestAccepted': return 'Message';
+    case 'message': return 'Reply';
+    case 'system': return 'Review';
+    default: return 'View';
+  }
+};
+
+const getActionLinkByType = (type: string, metadata?: any): string => {
+  switch (type) {
+    case 'friendRequest': return '/favorites?tab=requests';
+    case 'friendRequestAccepted': 
+      return metadata?.userId ? `/chat-individual/${metadata.userId}` : '/favorites';
+    case 'message': return metadata?.chatId ? `/chat-individual/${metadata.chatId}` : '/chat';
+    case 'system': return '/settings';
+    default: return '/';
+  }
+};
+
+const getIconByType = (type: string): string => {
+  switch (type) {
+    case 'friendRequest': 
+    case 'friendRequestAccepted': return personAdd;
+    case 'message': return chatbubbleOutline;
+    case 'system': return alertCircleOutline;
+    default: return notificationsOutline;
+  }
 };
 
 export default NotificationsPage;

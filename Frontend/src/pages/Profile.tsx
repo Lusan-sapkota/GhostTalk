@@ -49,6 +49,7 @@ import './Profile.css';
 import BackHeaderComponent from '../components/BackHeaderComponent';
 import { userService, ProfileUpdateData } from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api.service';
 
 const Profile: React.FC = () => {
   const history = useHistory();
@@ -258,21 +259,33 @@ const Profile: React.FC = () => {
   };
 
   const generateQRCode = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.error("Cannot generate QR code: No user ID available");
+      setToastMessage('Failed to generate QR code: User ID not available');
+      setShowToast(true);
+      return;
+    }
     
     setIsGeneratingQR(true);
     try {
-      const response = await userService.generateQRCode(userId);
-      if (response.success) {
-        setQrCodeUrl(response.qrCodeUrl || '');
+      console.log(`Generating QR code for user ID: ${userId}`);
+      
+      // Call the API directly instead of going through userService for debugging
+      const response = await apiService.makeRequest(`/user/qrcode/${userId}`, 'GET');
+      
+      console.log('QR code API response:', response);
+      
+      if (response.success && response.qrCodeUrl) {
+        setQrCodeUrl(response.qrCodeUrl);
         setShowQRModal(true);
       } else {
-        setToastMessage('Failed to generate QR code');
+        console.error('QR code generation failed:', response.message || 'Unknown error');
+        setToastMessage('Failed to generate QR code: ' + (response.message || 'Unknown error'));
         setShowToast(true);
       }
     } catch (error) {
       console.error('Error generating QR code:', error);
-      setToastMessage('Failed to generate QR code');
+      setToastMessage('Failed to generate QR code: Network error');
       setShowToast(true);
     } finally {
       setIsGeneratingQR(false);

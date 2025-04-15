@@ -19,6 +19,7 @@
     "@capacitor/haptics": "7.0.1",
     "@capacitor/ios": "7.2.0",
     "@capacitor/keyboard": "7.0.1",
+    "@capacitor/push-notifications": "^7.0.1",
     "@capacitor/status-bar": "7.0.1",
     "@ionic/pwa-elements": "^3.3.0",
     "@ionic/react": "^8.5.0",
@@ -32,6 +33,7 @@
     "react-dom": "19.0.0",
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
+    "socket.io-client": "^4.8.1",
     "swiper": "^11.2.6"
   },
   "devDependencies": {

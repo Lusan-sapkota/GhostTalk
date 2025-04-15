@@ -23,31 +23,46 @@ class AppwriteService:
         self.users_collection_id = None
         self.chats_collection_id = None
         self.rooms_collection_id = None
+        self._client_initialized = False
     
     def _initialize_client(self, force=False):
-        """Initialize the Appwrite client and services when needed"""
-        if self.client is None or force:
-            self.client = Client()
-            self.client.set_endpoint(os.environ.get('APPWRITE_ENDPOINT', 'https://cloud.appwrite.io/v1'))
-            self.client.set_project(os.environ.get('APPWRITE_PROJECT_ID'))
-            
-            # Use the API key from environment
-            api_key = os.environ.get('APPWRITE_API_KEY')
-            if not api_key:
-                print("WARNING: No Appwrite API key found in environment!")
-            self.client.set_key(api_key)
-            
-            # Initialize services
-            self.database = Databases(self.client)
-            self.storage = Storage(self.client)
-            self.users = Users(self.client)
-            
-            # Initialize collection and bucket IDs
-            self.database_id = os.environ.get('APPWRITE_DATABASE_ID')
-            self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_AUTH')
-            self.avatar_bucket_id = os.environ.get('APPWRITE_STORAGE_ID_FREE_AVATAR')
-            
-            print(f"Appwrite client initialized with API key: {api_key[:10]}...{api_key[-5:] if api_key else 'None'}")
+        """Initialize the Appwrite client"""
+        if not self._client_initialized or force:
+            try:
+                import os
+                from appwrite.client import Client
+                from appwrite.services.account import Account
+                from appwrite.services.databases import Databases
+                from appwrite.services.storage import Storage
+                from appwrite.services.users import Users
+                
+                # Initialize client
+                self.client = Client()
+                self.client.set_endpoint(os.environ.get('APPWRITE_ENDPOINT', 'https://cloud.appwrite.io/v1'))
+                self.client.set_project(os.environ.get('APPWRITE_PROJECT_ID', ''))
+                self.client.set_key(os.environ.get('APPWRITE_API_KEY', ''))
+
+                # Set commonly used collection IDs
+                self.database_id = os.environ.get('APPWRITE_DATABASE_ID', '')
+                self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_USERS', '')
+                self.chats_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_CHATS', '')
+                self.messages_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_MESSAGES', '')
+                self.rooms_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_CHAT_ROOMS', '')
+                self.friend_requests_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_FRIEND_REQUESTS', '')
+                self.calls_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_CALLS', '')
+                self.encryption_keys_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_ENCRYPTION_KEYS', '')
+                
+                # Initialize services
+                self.account = Account(self.client)
+                self.database = Databases(self.client)
+                self.storage = Storage(self.client)
+                self.users = Users(self.client)
+                
+                self._client_initialized = True
+                print(f"Appwrite client initialized with API key: {os.environ.get('APPWRITE_API_KEY', '')[:5]}...{os.environ.get('APPWRITE_API_KEY', '')[-5:]}")
+            except Exception as e:
+                print(f"Error initializing Appwrite client: {str(e)}")
+                raise e
     
     def create_user(self, email, password, name=None, gender='prefer_not_to_say', bio=''):
         """Create a new Appwrite user with extended profile"""
@@ -592,19 +607,41 @@ class AppwriteService:
         return generate_token(user_id)
 
     def get_user_document(self, user_id):
-        """Get a user document by user ID"""
+        """Get a user document from the database"""
         self._initialize_client()
         try:
-            # Try to get the user document
-            user_doc = self.database.get_document(
+            # Ensure we have the correct collection and database IDs
+            if not self.database_id or not self.users_collection_id:
+                print(f"Missing database_id or users_collection_id: DB={self.database_id}, Collection={self.users_collection_id}")
+                # Get from environment or config if not already set
+                self.database_id = os.environ.get('APPWRITE_DATABASE_ID', '')
+                self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_USERS', '')
+            
+            print(f"Getting user document with ID: {user_id}, DB: {self.database_id}, Collection: {self.users_collection_id}")
+            
+            # Try to get the document
+            document = self.database.get_document(
                 database_id=self.database_id,
                 collection_id=self.users_collection_id,
                 document_id=user_id
             )
-            return user_doc
+            
+            return document
         except Exception as e:
             print(f"Error getting user document: {str(e)}")
-            return None
+            
+            # Check for specific error types and provide better diagnostics
+            error_message = str(e)
+            if "route not found" in error_message.lower():
+                print(f"API route error. Check if database={self.database_id} and collection={self.users_collection_id} exist.")
+                # Try to list databases to confirm they exist
+                try:
+                    databases = self.database.list()
+                    print(f"Available databases: {[db['$id'] for db in databases['databases']]}")
+                except Exception as db_err:
+                    print(f"Could not list databases: {str(db_err)}")
+        
+        return None
 
     def send_verification_email(self, email, username, verification_link=None):
         """Send verification email using Appwrite's built-in template system"""
@@ -1046,10 +1083,15 @@ class AppwriteService:
     def create_friend_request(self, sender_id, recipient_id):
         """Create a friend request"""
         self._initialize_client()
+        
         try:
+            import random
+            import string
+            from datetime import datetime
+            
             request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
             
-            # Create friend request document
+            # Create friend request document with proper datetime format
             request = self.database.create_document(
                 database_id=self.database_id,
                 collection_id=self.friend_requests_collection_id,
@@ -1058,7 +1100,7 @@ class AppwriteService:
                     'senderId': sender_id,
                     'recipientId': recipient_id,
                     'status': 'pending',
-                    'timestamp': int(time.time())
+                    'timestamp': datetime.utcnow().isoformat()  # ISO format for datetime
                 }
             )
             
@@ -1066,8 +1108,6 @@ class AppwriteService:
         except Exception as e:
             print(f"Error creating friend request: {str(e)}")
             raise e
-        
-    
 
     def check_friendship(self, user1_id, user2_id):
         """Check if two users are friends"""
@@ -1320,11 +1360,11 @@ class AppwriteService:
         try:
             import random
             import string
-            import time
+            from datetime import datetime
             
             request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
             
-            # Create friend request document
+            # Create friend request document with proper datetime format
             request = self.database.create_document(
                 database_id=self.database_id,
                 collection_id=self.friend_requests_collection_id,
@@ -1333,7 +1373,7 @@ class AppwriteService:
                     'senderId': sender_id,
                     'recipientId': recipient_id,
                     'status': 'pending',
-                    'timestamp': int(time.time())
+                    'timestamp': datetime.utcnow().isoformat()  # ISO format for datetime
                 }
             )
             
@@ -1477,3 +1517,170 @@ class AppwriteService:
         except Exception as e:
             print(f"Error updating user visibility: {str(e)}")
             return False
+
+    def create_user_document(self, user_id, data):
+        """Create a user document if it doesn't exist"""
+        self._initialize_client()
+        try:
+            # First check if document already exists
+            existing = self.get_user_document(user_id)
+            if existing:
+                # Update instead of create
+                return self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data=data
+                )
+            else:
+                # Create new document
+                return self.database.create_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data=data
+                )
+        except Exception as e:
+            print(f"Error creating/updating user document: {str(e)}")
+            return None
+
+    def basic_search_users(self, search_query, limit=20, offset=0):
+        """Basic fallback search method that does simple filtering"""
+        # Force reinitialize to ensure we have the collection ID
+        self._initialize_client(force=True)
+        
+        # Add validation to ensure collection ID is present
+        if not self.users_collection_id:
+            print("ERROR: users_collection_id is empty in basic_search_users!")
+            # Try to load it directly from environment
+            self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_USERS')
+            if not self.users_collection_id:
+                print("Failed to load users_collection_id from environment")
+                return []
+        
+        print(f"Using users_collection_id: {self.users_collection_id}")
+        
+        try:
+            from appwrite.query import Query
+            import os
+            
+            # Get all users with enableSearch=true
+            result = self.database.list_documents(
+                database_id=self.database_id,
+                collection_id=self.users_collection_id,  # This should not be empty now
+                queries=[Query.equal("enableSearch", True), Query.limit(100)]
+            )
+            
+            all_users = result.get('documents', [])
+            print(f"Basic search: Found {len(all_users)} users with enableSearch=true")
+            
+            # Simple filtering
+            search_query = search_query.lower()
+            matched_users = []
+            
+            for user in all_users:
+                username = user.get('username', '').lower()
+                if search_query in username:
+                    matched_users.append(user)
+            
+            # Apply pagination
+            start_idx = min(offset, len(matched_users))
+            end_idx = min(start_idx + limit, len(matched_users))
+            paginated_users = matched_users[start_idx:end_idx]
+            
+            # Format results
+            users = []
+            backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+            
+            for user in paginated_users:
+                # Skip users who have disabled search visibility (double-check)
+                if user.get('enableSearch') == False:
+                    continue
+                    
+                user_data = {
+                    'id': user.get('userId', user.get('$id')),
+                    'name': user.get('username', 'Unknown User'),
+                    'proStatus': user.get('proStatus', 'free'),
+                    'isVerified': user.get('isVerified', False),
+                    'isOnline': user.get('isOnline', False),
+                    'lastSeen': user.get('lastSeen', 0)
+                }
+                
+                # Add avatar if available
+                if user.get('avatar'):
+                    user_data['avatar'] = f"{backend_base_url}/user/avatar/{user.get('avatar')}"
+                
+                users.append(user_data)
+            
+            return users
+            
+        except Exception as e:
+            print(f"Error in basic search: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def validate_collections(self):
+        """Debug method to print and validate collection IDs"""
+        self._initialize_client(force=True)  # Force re-initialization
+        
+        print("\n=== COLLECTION ID VALIDATION ===")
+        print(f"Database ID: {self.database_id}")
+        print(f"Users Collection ID: {self.users_collection_id}")
+        print(f"Friends Collection ID: {self.friend_requests_collection_id}")
+        
+        # Check if users_collection_id is valid
+        if not self.users_collection_id:
+            print("ERROR: users_collection_id is empty!")
+            print("Environment variable value:", os.environ.get('APPWRITE_COLLECTION_ID_USERS'))
+            # Try to load it directly
+            self.users_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_USERS')
+            print(f"After direct loading: {self.users_collection_id}")
+        
+        return self.users_collection_id is not None and len(self.users_collection_id) > 0
+
+    def remove_friend(self, user_id, friend_id):
+        """Remove a friend from a user's friends list"""
+        self._initialize_client()
+        
+        try:
+            # Get user document
+            user = self.get_user_document(user_id)
+            if not user:
+                return False, "User not found"
+            
+            # Get friend document
+            friend = self.get_user_document(friend_id)
+            if not friend:
+                return False, "Friend not found"
+            
+            # Remove from user's friends list
+            friends = user.get('friends', [])
+            if friend_id in friends:
+                friends.remove(friend_id)
+                self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=user_id,
+                    data={
+                        'friends': friends
+                    }
+                )
+            
+            # Remove from friend's friends list
+            friend_friends = friend.get('friends', [])
+            if user_id in friend_friends:
+                friend_friends.remove(user_id)
+                self.database.update_document(
+                    database_id=self.database_id,
+                    collection_id=self.users_collection_id,
+                    document_id=friend_id,
+                    data={
+                        'friends': friend_friends
+                    }
+                )
+            
+            return True, "Friend removed successfully"
+        except Exception as e:
+            print(f"Error removing friend: {str(e)}")
+            return False, str(e)

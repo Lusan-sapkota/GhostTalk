@@ -180,7 +180,7 @@ const ContactPage: React.FC = () => {
                   {isAuthenticated && currentUser && (
                     <p className="pre-filled-notice">
                       <IonIcon icon={informationCircleOutline} />
-                      Form pre-filled with your account information
+                      Form pre-filled with your account information (if didn't showed please refresh)
                     </p>
                   )}
                 </IonCardHeader>

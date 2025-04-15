@@ -606,6 +606,36 @@ export class ApiService {
   async trackAppRating(): Promise<any> {
     return this.makeRequest('/user/app-rating', 'POST');
   }
+
+  // Add the following methods to your apiService class
+
+  async getFriendsList(): Promise<any> {
+    return this.makeRequest('/friend/list', 'GET');
+  }
+
+  async getFriendRequests(): Promise<any> {
+    return this.makeRequest('/friend/requests', 'GET');
+  }
+
+  async sendFriendRequest(userId: string): Promise<any> {
+    return this.makeRequest('/friend/request/send', 'POST', { userId });
+  }
+
+  async acceptFriendRequest(requestId: string): Promise<any> {
+    return this.makeRequest('/friend/request/accept', 'POST', { requestId });
+  }
+
+  async rejectFriendRequest(requestId: string): Promise<any> {
+    return this.makeRequest('/friend/request/reject', 'POST', { requestId });
+  }
+
+  async cancelFriendRequest(requestId: string): Promise<any> {
+    return this.makeRequest('/friend/request/cancel', 'POST', { requestId });
+  }
+
+  async removeFriend(userId: string): Promise<any> {
+    return this.makeRequest('/friend/remove', 'POST', { userId });
+  }
 }
 
 export const apiService = new ApiService();

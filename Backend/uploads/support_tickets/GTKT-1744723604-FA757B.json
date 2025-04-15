@@ -1,0 +1,14 @@
+{
+    "name": "RotatingBasket",
+    "email": "sapkotalusan@gmail.com",
+    "subject": "Hello Test Subject",
+    "category": "general",
+    "message": "Hello Test Message from Lusan.",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+    "attachment_path": "/home/lusan/Desktop/GhostTalk/Backend/uploads/support_attachments/140d3803-fb7a-4fcb-b4fa-fb45e025d7c7_Screen_Shot_2025-04-15_at_02.25.13.png",
+    "attachment_name": "Screen_Shot_2025-04-15_at_02.25.13.png",
+    "ticket_id": "GTKT-1744723604-FA757B",
+    "created_at": "2025-04-15T19:11:44.284114",
+    "status": "open"
+}

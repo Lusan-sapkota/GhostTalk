@@ -1,13 +1,27 @@
-from .appwrite_service import AppwriteService
+from ..services.appwrite_service import AppwriteService
 import os
 
 class UserService:
     def __init__(self):
-        self.appwrite_service = AppwriteService()
-    
+        self._initialized = False
+        self.appwrite_service = None
+
+    def _initialize_if_needed(self):
+        """Lazy initialization to avoid app context issues"""
+        if not self._initialized:
+            # Create a new instance of AppwriteService
+            self.appwrite_service = AppwriteService()
+            # Force initialization of the client
+            self.appwrite_service._initialize_client(force=True)
+            self._initialized = True
+            print("User service initialized successfully")
+
     def get_user_profile(self, user_id):
         """Get user profile information"""
         try:
+            # Initialize Appwrite service if needed
+            self._initialize_if_needed()
+            
             # Get user document
             user_doc = self.appwrite_service.get_user_document(user_id)
             if not user_doc:
@@ -16,19 +30,18 @@ class UserService:
             # Get user from Appwrite authentication
             user = self.appwrite_service.get_user(user_id)
             
-            # Prepare response with ALL fields from the document
-            # Make sure to include the fields exactly as named in the database
+            # Prepare response
             response = {
                 'success': True,
                 'user': {
                     'id': user['$id'],
                     'email': user['email'],
                     'name': user_doc.get('username', user.get('name', '')),
-                    'proStatus': user_doc.get('proStatus', 'free'),  # Use exact field name
+                    'proStatus': user_doc.get('proStatus', 'free'),
                     'gender': user_doc.get('gender', 'prefer_not_to_say'),
                     'bio': user_doc.get('bio', ''),
-                    'avatar': user_doc.get('avatar'),  # Use the avatar field
-                    'avatarId': user_doc.get('avatarId'),  # Include avatarId
+                    'avatar': user_doc.get('avatar'),
+                    'avatarId': user_doc.get('avatarId'),
                     'avatarBucketId': user_doc.get('avatarBucketId', os.environ.get('AVATAR_BUCKET_ID')),
                     'isOnline': user_doc.get('isOnline', False),
                     'registration': user_doc.get('createdAt')
@@ -41,6 +54,8 @@ class UserService:
             return response, 200
         except Exception as e:
             print(f"Error getting user profile: {str(e)}")
+            import traceback
+            traceback.print_exc()  # Add this to get more detailed error info
             return {'success': False, 'message': str(e)}, 500
     
     def update_user_profile(self, user_id, data):
@@ -114,3 +129,15 @@ class UserService:
                 }, 500
         except Exception as e:
             return {'success': False, 'message': str(e)}, 500
+
+    def get_user_by_id(self, user_id):
+        """Get user by ID"""
+        self._initialize_if_needed()
+        
+        try:
+            # Use the appwrite_service to get the user document
+            user = self.appwrite_service.get_user_document(user_id)
+            return user
+        except Exception as e:
+            print(f"Error getting user by ID: {str(e)}")
+            return None

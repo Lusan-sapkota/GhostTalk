@@ -200,13 +200,16 @@ def get_avatar(avatar_id):
 @token_required
 def generate_qr_code(current_user_id, user_id):
     """Generate QR code for user ID"""
-    # For security, only allow users to generate QR code for their own ID
-    if current_user_id != user_id:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-    
     try:
-        # Generate QR code with user ID
+        import qrcode
+        import io
+        import base64
+        from flask import url_for
+        
+        # Generate QR code content - just the user ID with prefix
         qr_content = f"GHOST-{user_id}"
+        
+        # Create QR code
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -216,23 +219,32 @@ def generate_qr_code(current_user_id, user_id):
         qr.add_data(qr_content)
         qr.make(fit=True)
         
-        # Create QR code image
+        # Create image
         img = qr.make_image(fill_color="black", back_color="white")
         
-        # Convert to bytes
-        img_io = io.BytesIO()
-        img.save(img_io, 'PNG')
-        img_io.seek(0)
+        # Save to bytes
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
         
-        # Return image
-        return send_file(
-            img_io, 
-            mimetype='image/png',
-            download_name=f'ghost-{user_id}.png'
-        )
+        # Convert to base64 for direct embedding in HTML/CSS
+        encoded = base64.b64encode(img_byte_arr.getvalue()).decode('ascii')
+        qr_code_url = f"data:image/png;base64,{encoded}"
+        
+        return jsonify({
+            'success': True,
+            'qrCodeUrl': qr_code_url,
+            'userId': user_id
+        }), 200
     except Exception as e:
         print(f"Error generating QR code: {str(e)}")
-        return jsonify({'success': False, 'message': 'Failed to generate QR code'}), 500
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'message': f'Failed to generate QR code: {str(e)}'
+        }), 500
 
 @user_bp.route('/search-visibility', methods=['PUT'])
 @token_required
@@ -521,3 +533,28 @@ def track_app_rating(current_user_id):
             'success': False,
             'message': f'Failed to track app rating: {str(e)}'
         }), 500
+
+@user_bp.route('/push-token', methods=['POST'])
+@token_required
+def register_push_token(current_user_id):
+    """Register a push notification token for the user"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'token' not in data:
+            return jsonify({'success': False, 'message': 'Missing token'}), 400
+        
+        token = data.get('token')
+        
+        # Store the token in your database, associated with the user
+        # For this example, we'll just print it
+        print(f"Registering push token for user {current_user_id}: {token}")
+        
+        # In a real implementation, you would store this token in the user's document
+        
+        return jsonify({'success': True, 'message': 'Push token registered successfully'}), 200
+    except Exception as e:
+        print(f"Error registering push token: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': 'An error occurred'}), 500

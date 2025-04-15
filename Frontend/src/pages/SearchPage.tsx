@@ -116,14 +116,22 @@ const SearchPage: React.FC = () => {
   const handleSearch = async (value: string) => {
     setSearchText(value);
     
-    if (value.length >= 2) {
+    // Check if value starts with GHOST- (case insensitive) and extract the ID part
+    let searchValue = value;
+    if (value.match(/^ghost-/i)) {
+      // Strip the "ghost-" prefix for the API call
+      searchValue = value.replace(/^ghost-/i, '');
+      console.log(`Stripped "ghost-" prefix, searching for ID: ${searchValue}`);
+    }
+    
+    if (searchValue.length >= 2) {
       setIsLoading(true);
       setHasSearched(true);
       setSearchOffset(0); // Reset pagination for new search
       setUsers([]); // Clear previous results
       
       try {
-        const response = await apiService.makeRequest(`/search/users?q=${encodeURIComponent(value)}&limit=${searchLimit}&offset=0`, 'GET');
+        const response = await apiService.makeRequest(`/search/users?q=${encodeURIComponent(searchValue)}&limit=${searchLimit}&offset=0`, 'GET');
         
         if (response.success) {
           setUsers(response.users || []);
@@ -140,7 +148,7 @@ const SearchPage: React.FC = () => {
       } finally {
         setIsLoading(false);
       }
-    } else if (value.length === 0) {
+    } else if (searchValue.length === 0) {
       setUsers([]);
       setHasSearched(false);
       setHasMoreResults(false);
@@ -318,27 +326,30 @@ const SearchPage: React.FC = () => {
     });
   };
   
+  // Update the processQrCode function to better handle QR code data
   const processQrCode = async (content: string) => {
     try {
-      // Check if it's a valid GhostTalk user ID
-      if (content.startsWith('GHOST-')) {
-        const userId = content.replace('GHOST-', '');
-        
-        // Look up the user by ID
-        const response = await apiService.makeRequest(`/search/by-id/${userId}`, 'GET');
-        
-        if (response.success && response.user) {
-          // Add user to search results
-          const newUser = response.user;
-          setUsers([newUser]);
-          setHasSearched(true);
-          setSearchText(`GHOST-${userId}`);
-        } else {
-          setToastMessage(response.message || 'User not found');
-          setShowToast(true);
-        }
+      // Check if it's a valid GhostTalk user ID (with or without GHOST- prefix)
+      let userId = content;
+      
+      // Handle GHOST- prefix if present
+      if (content.match(/^GHOST-/i)) {
+        userId = content.replace(/^GHOST-/i, '');
+      }
+      
+      console.log(`Processing QR code, extracted user ID: ${userId}`);
+      
+      // Look up the user by ID
+      const response = await apiService.makeRequest(`/search/by-id/${userId}`, 'GET');
+      
+      if (response.success && response.user) {
+        // Add user to search results
+        const newUser = response.user;
+        setUsers([newUser]);
+        setHasSearched(true);
+        setSearchText(`GHOST-${userId}`);
       } else {
-        setToastMessage('Invalid QR code - not a GhostTalk user ID');
+        setToastMessage(response.message || 'User not found');
         setShowToast(true);
       }
     } catch (error) {
@@ -357,9 +368,18 @@ const SearchPage: React.FC = () => {
     };
   }, [isProcessingQR]);
 
-  const handleUserClick = async (user: any) => {
+  const handleUserClick = async (user: User) => {
     // Set initial user data
-    setSelectedUser(user);
+    setSelectedUser({
+      ...user,
+      // Add default visibility settings if not already present
+      visibility: user.visibility || 'limited',
+      bioVisibility: user.bioVisibility || 'private',
+      memberSinceVisibility: user.memberSinceVisibility || 'public',
+      emailVisibility: user.emailVisibility || 'private',
+      genderVisibility: user.genderVisibility || 'private'
+    });
+    
     setShowUserProfile(true);
     setShowDetailedProfile(false); // Reset detailed view
   
@@ -367,21 +387,55 @@ const SearchPage: React.FC = () => {
     if (isAuthenticated) {
       try {
         const response = await apiService.getUserById(user.id);
+        console.log("User profile response:", response); // Debug log
+        
         if (response.success && response.user) {
-          // Merge additional user details
-            setSelectedUser((prevUser: User): User => ({
+          // Merge additional user details with type safety
+          // Define interfaces for the API response and detailed user profile
+          interface UserApiResponse {
+            success: boolean;
+            user: {
+              bio?: string;
+              email?: string;
+              gender?: string;
+              memberSince?: string;
+              lastActive?: number;
+              visibility?: string;
+              bioVisibility?: string;
+              memberSinceVisibility?: string;
+              emailVisibility?: string;
+              genderVisibility?: string;
+            };
+          }
+
+          interface DetailedUserProfile extends User {
+            bio?: string;
+            email?: string;
+            gender?: string;
+            memberSince?: string;
+            lastActive?: number;
+            visibility: string;
+            bioVisibility: string;
+            memberSinceVisibility: string;
+            emailVisibility: string;
+            genderVisibility: string;
+          }
+
+          // Type the function with the new interfaces
+          setSelectedUser((prevUser: DetailedUserProfile): DetailedUserProfile => ({
             ...prevUser,
-            bio: response.user.bio,
-            visibility: response.user.visibility || 'limited',
-            bioVisibility: response.user.bioVisibility || 'private',
-            memberSinceVisibility: response.user.memberSinceVisibility || 'public',
-            emailVisibility: response.user.emailVisibility || 'private',
-            genderVisibility: response.user.genderVisibility || 'private',
-            gender: response.user.gender,
+            bio: response.user.bio || prevUser.bio || '',
             email: response.user.email,
+            gender: response.user.gender,
             memberSince: response.user.memberSince,
-            lastActive: response.user.lastActive
-            }));
+            lastActive: response.user.lastActive,
+            // Include visibility settings
+            visibility: response.user.visibility || prevUser.visibility || 'limited',
+            bioVisibility: response.user.bioVisibility || prevUser.bioVisibility || 'private',
+            memberSinceVisibility: response.user.memberSinceVisibility || prevUser.memberSinceVisibility || 'public',
+            emailVisibility: response.user.emailVisibility || prevUser.emailVisibility || 'private',
+            genderVisibility: response.user.genderVisibility || prevUser.genderVisibility || 'private'
+          }));
         }
       } catch (error) {
         console.error('Error fetching detailed user info:', error);
@@ -393,26 +447,32 @@ const SearchPage: React.FC = () => {
     setShowUserProfile(false);
   };
 
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
   const handleAddRemoveFriend = async (userId: string, isAdded: boolean) => {
     if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
     
+    // Set loading state for this specific user
+    setActionInProgress(userId);
+    
     try {
       let response;
       
       if (isAdded) {
-        // Remove friend
-        response = await apiService.makeRequest('/friend/request/remove', 'POST', { userId });
+        // Remove friend - Using the correct endpoint
+        response = await apiService.makeRequest('/friend/remove', 'POST', { userId });
+        
         if (response.success) {
           setToastMessage('Friend removed successfully');
           
           // Update the selected user and users list
-            setSelectedUser((prevUser: User): User => ({
+          setSelectedUser((prevUser: User): User => ({
             ...prevUser,
             isAdded: false
-            }));
+          }));
           
           // Update the users list if this user is there
           setUsers(prevUsers => 
@@ -420,21 +480,48 @@ const SearchPage: React.FC = () => {
               u.id === userId ? {...u, isAdded: false} : u
             )
           );
+          
+          // Also refresh favorites list if we're viewing this user's profile
+          if (showUserProfile && selectedUser?.id === userId) {
+            // You could emit an event or use a context to notify FavoritesPage
+            // For now, we'll rely on the FavoritesPage refreshing on focus
+            console.log('Friend removed, favorites should refresh');
+          }
+        } else {
+          setToastMessage(response.message || 'Failed to remove friend');
+          setShowToast(true);
         }
       } else {
-        // Add friend - using existing handleAddFriend functionality
-        await handleAddFriend(userId);
+        // Add friend - show loading state and send request
+        response = await apiService.makeRequest('/friend/request/send', 'POST', { userId });
         
-        // Update the selected user since handleAddFriend only updates the users list
-        setSelectedUser((prevUser: User): User => ({
-          ...prevUser,
-          isAdded: true
-        }));
+        if (response.success) {
+          setToastMessage('Friend request sent successfully');
+          
+          // Update UI to show the request was sent
+          setSelectedUser((prevUser: User): User => ({
+            ...prevUser,
+            isAdded: true
+          }));
+          
+          // Update the users list if this user is there
+          setUsers(prevUsers => 
+            prevUsers.map(u => 
+              u.id === userId ? {...u, isAdded: true} : u
+            )
+          );
+        } else {
+          setToastMessage(response.message || 'Failed to send friend request');
+          setShowToast(true);
+        }
       }
     } catch (error) {
       console.error('Error updating friend status:', error);
       setToastMessage('Network error when updating friend status');
       setShowToast(true);
+    } finally {
+      // Clear loading state
+      setActionInProgress(null);
     }
   };
 
@@ -448,35 +535,21 @@ const SearchPage: React.FC = () => {
     
     setIsGeneratingQR(true);
     try {
-      // This is how we create the QR code content, similar to backend
-      const qrContent = `GHOST-${userId}`;
+      // Make sure the endpoint is correct and properly configured
+      const response = await apiService.makeRequest(`/user/qrcode/${userId}`, 'GET');
       
-      // For authenticated users, we can use the backend API
-      if (isAuthenticated) {
-        // When requesting a QR code, we need the raw response to create a blob
-        // Fetch the QR code as a blob directly. Assumes makeRequest can return a raw Response or handle blobs.
-        // The fourth argument was removed as 'true' is not compatible with RequestInit.
-        const response = await apiService.makeRequest(`/user/qrcode/${userId}`, 'GET', undefined);
-        
-        // Check if the response is indeed a Response object (might require apiService modification)
-        if (response && response instanceof Response) { 
-          // Get the blob directly from the response
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          setQrCodeUrl(blobUrl);
-          setShowQrCodeModal(true);
-        } else {
-          setToastMessage('Failed to generate QR code');
-          setShowToast(true);
-        }
+      console.log('QR code response:', response); // Debug log
+      
+      if (response.success && response.qrCodeUrl) {
+        setQrCodeUrl(response.qrCodeUrl);
+        setShowQrCodeModal(true);
       } else {
-        // For non-authenticated users, we can show a message about logging in
-        setToastMessage('Please log in to view QR codes');
-        setShowLoginPrompt(true);
+        setToastMessage('Failed to generate QR code: ' + (response.message || 'Unknown error'));
+        setShowToast(true);
       }
     } catch (error) {
       console.error('Error generating QR code:', error);
-      setToastMessage('Failed to generate QR code');
+      setToastMessage('Network error when generating QR code');
       setShowToast(true);
     } finally {
       setIsGeneratingQR(false);
@@ -855,7 +928,7 @@ const SearchPage: React.FC = () => {
                         slot="end"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (selectedUser.id) {
+                          if (selectedUser && selectedUser.id) {
                             generateQRCode(selectedUser.id);
                           }
                         }}
@@ -894,9 +967,16 @@ const SearchPage: React.FC = () => {
                   color={selectedUser.isAdded ? 'danger' : 'secondary'}
                   className="ghost-modal-action-button"
                   onClick={() => handleAddRemoveFriend(selectedUser.id, selectedUser.isAdded)}
+                  disabled={actionInProgress === selectedUser.id}
                 >
-                  <IonIcon slot="start" icon={selectedUser.isAdded ? heart : heartOutline} />
-                  {selectedUser.isAdded ? 'Remove' : 'Add Friend'}
+                  {actionInProgress === selectedUser.id ? (
+                    <IonSpinner name="dots" />
+                  ) : (
+                    <>
+                      <IonIcon slot="start" icon={selectedUser.isAdded ? heart : heartOutline} />
+                      {selectedUser.isAdded ? 'Remove' : 'Add Friend'}
+                    </>
+                  )}
                 </IonButton>
               </div>
               
@@ -924,11 +1004,14 @@ const SearchPage: React.FC = () => {
           </div>
           <div className="qr-code-container">
             {isGeneratingQR ? (
-              <IonSpinner name="circles" />
+              <div className="qr-loading">
+                <IonSpinner name="dots" />
+                <p>Generating QR code...</p>
+              </div>
             ) : (
               <>
                 <img src={qrCodeUrl} alt="QR Code" className="qr-code-image" />
-                <p className="qr-code-id">{selectedUser ? `GHOST-${selectedUser.id}` : ''}</p>
+                <p className="qr-code-id">GHOST-{selectedUser?.id}</p>
                 <div className="qr-code-actions">
                   <IonButton fill="clear" onClick={() => {
                     if (selectedUser) {

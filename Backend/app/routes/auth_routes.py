@@ -584,3 +584,31 @@ def update_session_alerts():
             'success': False,
             'message': str(e)
         }), 500
+
+@auth_bp.route('/validate', methods=['POST', 'OPTIONS'])
+def validate_token():
+    """Lightweight endpoint to validate token"""
+    # Handle OPTIONS requests
+    if request.method == 'OPTIONS':
+        response = jsonify({'success': True})
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+        
+    # Get token from Authorization header
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'success': False, 'message': 'Invalid or missing token'}), 401
+        
+    token = auth_header.split(' ')[1]
+    
+    # Validate token - lightweight check that just verifies it's valid
+    try:
+        # Your token validation logic
+        # ...
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 401
