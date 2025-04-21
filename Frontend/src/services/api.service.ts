@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api'; // Update this with your actual Flask API URL
+const BASE_URL = 'http://192.168.18.2:5000/api'; // Update this with your actual Flask API URL
 
 export class ApiService {
   private API_URL: string;
@@ -8,7 +8,7 @@ export class ApiService {
 
   constructor() {
     // Make sure this points to your running backend
-    this.API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    this.API_URL = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
     console.log('API URL configured as:', this.API_URL);
     
     // Try to load token from both storages (session preferred, local as fallback)
@@ -146,29 +146,24 @@ export class ApiService {
     // Always store token in memory for current session
     this.token = token;
     
-    // Calculate token expiry (e.g., 7 days for remember me, 1 day for session)
+    // Calculate token expiry (e.g., 14 days for remember me, 1 day for session)
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + (remember ? 7 : 1));
+    expiryDate.setDate(expiryDate.getDate() + (remember ? 14 : 1));
     
-    // Always store in sessionStorage (for tab persistence)
+    // Store information in sessionStorage (for current tab)
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('authTokenExpires', expiryDate.toISOString());
+    sessionStorage.setItem('sessionVerified', 'true');
     
-    // Set rememberMe flag in sessionStorage too
-    sessionStorage.setItem('rememberMe', remember ? 'true' : 'false');
-    
-    // If "Remember Me" is checked, also store in localStorage
+    // If "Remember Me" is checked, also store in localStorage for persistence
     if (remember) {
       localStorage.setItem('authToken', token);
       localStorage.setItem('authTokenExpires', expiryDate.toISOString());
       localStorage.setItem('rememberMe', 'true');
-    }
-    
-    // Set initial verification flags to prevent immediate logout
-    sessionStorage.setItem('sessionVerified', 'true');
-    if (remember) {
       localStorage.setItem('sessionVerified', 'true');
     }
+    
+    console.log(`Token stored with remember=${remember}, expires=${expiryDate.toISOString()}`);
   }
   
   clearToken() {
@@ -191,28 +186,39 @@ export class ApiService {
       return this.token;
     }
     
-    // Check if "Remember Me" was used
-    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    // Check sessionStorage (current tab)
+    const sessionToken = sessionStorage.getItem('authToken');
+    const sessionExpiry = sessionStorage.getItem('authTokenExpires');
     
-    // Try to get token from session storage first (for current tab)
-    let token = sessionStorage.getItem('authToken');
-    let expires = sessionStorage.getItem('authTokenExpires');
-    
-    // If not in session storage or expired, and remember me is enabled,
-    // check local storage
-    if ((!token || !expires || new Date(expires) < new Date()) && rememberMe) {
-      token = localStorage.getItem('authToken');
-      expires = localStorage.getItem('authTokenExpires');
+    if (sessionToken && sessionExpiry) {
+      const expiryDate = new Date(sessionExpiry);
+      if (expiryDate > new Date()) {
+        this.token = sessionToken;
+        return sessionToken;
+      }
+      // Clear expired token
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('authTokenExpires');
     }
     
-    // If token exists and is not expired, return it
-    if (token && expires && new Date(expires) > new Date()) {
-      this.token = token; // Restore to memory
-      return token;
+    // Check localStorage (cross-tab/browser persistence)
+    const localToken = localStorage.getItem('authToken');
+    const localExpiry = localStorage.getItem('authTokenExpires');
+    
+    if (localToken && localExpiry) {
+      const expiryDate = new Date(localExpiry);
+      if (expiryDate > new Date()) {
+        this.token = localToken;
+        // Also set in session for this tab
+        sessionStorage.setItem('authToken', localToken);
+        sessionStorage.setItem('authTokenExpires', localExpiry);
+        return localToken;
+      }
+      // Clear expired token
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authTokenExpires');
     }
     
-    // If we got here, token is either missing or expired
-    this.clearToken(); // Clear any invalid tokens
     return null;
   }
 

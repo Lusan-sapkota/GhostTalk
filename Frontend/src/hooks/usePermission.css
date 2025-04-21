@@ -1,0 +1,61 @@
+.web-permissions-info-card {
+  margin: 16px;
+  border-radius: 12px;
+}
+
+.web-permissions-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.web-permissions-header ion-icon {
+  font-size: 24px;
+  margin-right: 10px;
+  color: var(--ion-color-primary);
+}
+
+.web-permissions-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.permissions-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.permissions-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.permissions-list li ion-icon {
+  font-size: 20px;
+  margin-right: 16px;
+  color: var(--ion-color-primary);
+}
+
+.permissions-list li div {
+  display: flex;
+  flex-direction: column;
+}
+
+.permissions-list li strong {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.permissions-list li span {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.permission-info-note {
+  font-size: 13px;
+  margin-top: 16px;
+  font-style: italic;
+}

@@ -6,6 +6,14 @@ interface User {
   id: string;
   name: string;
   email: string;
+  proStatus?: string; // Add this property
+  avatar?: string;    // Also add this commonly used property
+  bio?: string;       // Add commonly used property 
+  gender?: string;    // Add commonly used property
+  isOnline?: boolean; // Add commonly used property
+  isVerified?: boolean; // Add commonly used property
+  registration?: number | string; // Add commonly used property
+  lastSeen?: number;  // Add commonly used property
 }
 
 interface SessionVerificationResponse {
@@ -19,6 +27,7 @@ interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isPro: boolean; // Add this line
   login: (email: string, password: string, remember?: boolean) => Promise<{ 
     success: boolean; 
     message: string;
@@ -35,6 +44,7 @@ export const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   isAuthenticated: false,
   isLoading: true,
+  isPro: false, // Add this line
   login: async () => ({ success: false, message: 'Login failed' }),
   register: async () => ({ success: false }),
   logout: async () => {},
@@ -51,6 +61,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isPro, setIsPro] = useState<boolean>(false); // Add this line
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -75,34 +86,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Only perform background validation if we're online
             if (navigator.onLine) {
               // Use requestIdleCallback for non-critical operations
-              const performBackgroundValidation = () => {
+              const performBackgroundValidation = async () => {
                 try {
-                  // Use a controller to be able to abort
                   const controller = new AbortController();
                   const timeoutId = setTimeout(() => controller.abort(), 3000);
                   
-                  // Use a POST request which can handle CORS better than HEAD in some setups
-                  fetch(`${apiService.getBaseUrl()}/auth/validate`, {
+                  const response = await fetch(`${apiService.getBaseUrl()}/auth/validate`, {
                     method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${token}`,
                       'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({}), // Empty body
+                    body: JSON.stringify({}),
                     signal: controller.signal
-                  })
-                  .then(response => {
-                    clearTimeout(timeoutId);
-                    return { success: response.ok };
-                  })
-                  .catch(error => {
-                    // Silently fail - don't display errors for background checks
-                    console.debug('Background validation error (suppressed):', error.name);
-                    return { success: false };
                   });
+                  
+                  clearTimeout(timeoutId);
+                  
+                  // Actually use the response
+                  if (!response.ok && !!currentUser) {
+                    console.log("Background validation failed - logging out");
+                    apiService.clearToken();
+                    setCurrentUser(null);
+                  }
                 } catch (e) {
-                  // Completely silent error handling
-                  return { success: false };
+                  // Only log the error
+                  console.debug('Background validation error:', e);
                 }
               };
               
@@ -123,78 +132,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         if (token) {
           try {
-            // Try to validate token with backend
-            const response = await apiService.validateToken();
+            // Make a POST request instead of GET if that's what your API expects
+            const response = await apiService.makeRequest('/auth/verify-token', 'POST');
             
             if (response.success && response.user) {
+              // Set the current user from the response
               setCurrentUser(response.user);
+              console.log("Token verification successful, user authenticated:", response.user);
+              
               // Update cache
               localStorage.setItem('userData', JSON.stringify(response.user));
             } else {
-              // If validation failed, check session verification flags
-              if (isSessionVerified) {
-                // If session is verified, try to get user from token or local storage
-                try {
-                  // Check if we have cached user data again
-                  if (cachedUserData) {
-                    const userData = JSON.parse(cachedUserData);
-                    setCurrentUser(userData);
-                    console.log('Restored session from cached user data');
-                    return;
-                  }
-                  
-                  // Try to get profile as fallback
-                  try {
-                    const profileResponse = await apiService.getCurrentUserProfile();
-                    if (profileResponse.success && profileResponse.user) {
-                      setCurrentUser(profileResponse.user);
-                      // Cache user data for future fallbacks
-                      localStorage.setItem('userData', JSON.stringify(profileResponse.user));
-                      return;
-                    }
-                  } catch (networkError) {
-                    // Handle network errors silently if we have a verified session
-                    console.debug('Profile fetch failed, but session is verified');
-                    
-                    // Don't clear token on network errors with verified session
-                    return;
-                  }
-                } catch (e) {
-                  console.debug('Using fallback authentication');
-                  
-                  // For network errors, maintain the session if verified
-                  if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
-                    console.debug('Network error with verified session - keeping session active');
-                    return; // Don't clear token on network errors with verified session
-                  }
-                }
-              }
-              
-              // Only clear token if we're not dealing with network errors
-              if (!(response instanceof TypeError) && !response.message?.includes('Failed to fetch')) {
-                apiService.clearToken();
-                setCurrentUser(null);
-              }
+              console.log("Token verification failed, clearing auth state");
+              apiService.clearToken();
+              setCurrentUser(null);
             }
           } catch (error) {
-            // For network errors with verified session, maintain the session
-            if (isSessionVerified && error instanceof TypeError && error.message.includes('Failed to fetch')) {
-              console.debug('Auth check network error, but session is verified - maintaining session');
-              
-              if (cachedUserData) {
-                try {
-                  const userData = JSON.parse(cachedUserData);
-                  setCurrentUser(userData);
-                  console.log('Restored session from cached user data during network error');
-                  return;
-                } catch (parseError) {
-                  console.debug('Error parsing cached user data');
-                }
-              }
-              return; // Keep the session active
+            console.error("Error during token verification:", error);
+            // Only clear token for auth errors, not network errors
+            if (!(error instanceof TypeError) || !error.message.includes('Failed to fetch')) {
+              apiService.clearToken();
+              setCurrentUser(null);
             }
-            
-            console.debug('Auth check error:', error);
           }
         } else {
           setCurrentUser(null);
@@ -227,6 +186,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthState();
   }, []);
 
+  useEffect(() => {
+    if (currentUser && currentUser.proStatus) {
+      setIsPro(currentUser.proStatus === 'monthly' || currentUser.proStatus === 'yearly');
+    } else {
+      setIsPro(false);
+    }
+  }, [currentUser]);
+
   const register = async (email: string, password: string, profileData?: any) => {
     setIsLoading(true);
     try {
@@ -254,6 +221,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Connect socket AFTER setting the token
         socketService.connect(response.token);
+        
+        // Set current user
+        setCurrentUser(response.user);
+        
+        // Add this console.log to check if user is set correctly
+        console.log("Login successful, user set:", response.user);
         
         console.log("Successfully connected socket after login");
 
@@ -384,6 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         currentUser,
         isLoading,
         isAuthenticated: !!currentUser,
+        isPro, // Add this line
         login,
         register,
         logout,

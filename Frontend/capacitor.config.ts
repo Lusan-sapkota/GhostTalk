@@ -8,8 +8,10 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     iosScheme: 'ionic',
     cleartext: true,
-    // This is key - don't use localhost
-    hostname: undefined
+    hostname: undefined,
+    // For development, specify the correct port
+    // Comment this out for production builds
+    url: 'http://192.168.18.2:8100'
   },
   android: {
     webContentsDebuggingEnabled: true,

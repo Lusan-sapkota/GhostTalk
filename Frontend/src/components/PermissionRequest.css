@@ -1,0 +1,65 @@
+.permission-request-card {
+  margin: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.permission-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.permission-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  margin-right: 12px;
+}
+
+.permission-icon ion-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.permission-description {
+  margin: 12px 0;
+  line-height: 1.5;
+  color: var(--ion-color-medium);
+}
+
+.permission-status {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--ion-color-light);
+}
+
+.permission-status ion-icon {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.permission-actions {
+  margin-top: 16px;
+}
+
+.permission-actions ion-button + ion-button {
+  margin-top: 8px;
+}
+
+/* Dark mode adjustments */
+:root.dark .permission-request-card {
+  background: var(--ion-color-step-100);
+}
+
+:root.dark .permission-status {
+  background: var(--ion-color-step-150);
+}

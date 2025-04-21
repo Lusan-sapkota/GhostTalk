@@ -21,8 +21,8 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Configure CORS properly to accept requests from the frontend
-    CORS(app, resources={r"/api/*": {
-        "origins": "http://localhost:8100",  # Match your frontend origin exactly
+    CORS(app, supports_credentials=True,resources={r"/api/*": {
+        "origins": "http://192.168.18.2:8100",  # Match your frontend origin exactly
         "allow_headers": ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
         "expose_headers": ["Content-Type", "Authorization"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],  # Add HEAD method
@@ -33,7 +33,7 @@ def create_app(config_class=Config):
     @app.route('/api/<path:path>', methods=['OPTIONS'])
     def handle_options(path):
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')  # Match frontend exactly
+        response.headers.add('Access-Control-Allow-Origin', 'http://192.168.18.2:8100')  # Match frontend exactly
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,X-Requested-With')
         response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD')
         response.headers.add('Access-Control-Allow-Credentials', 'true')

@@ -27,11 +27,11 @@ export const fixAndroidPaths = () => {
   }
   
   // Fix navigation for android
-  if (window.history && !window.history._replace) {
+  if (window.history && !(window.history as any)._replace) {
     const originalReplace = window.history.replaceState;
     window.history.replaceState = function(state, title, url) {
       try {
-        if (url && url.startsWith('file:///')) {
+        if (url && typeof url === 'string' && url.startsWith('file:///')) {
           url = url.substring(url.lastIndexOf('/')+1);
           console.log('Fixed URL for history: ' + url);
         }
@@ -40,6 +40,7 @@ export const fixAndroidPaths = () => {
         console.error('History API error:', e);
       }
     };
+    (window.history as any)._replace = true;
   }
   
   // Fix any URLs in the page
@@ -47,6 +48,16 @@ export const fixAndroidPaths = () => {
     const href = link.getAttribute('href');
     if (href) {
       link.setAttribute('href', href.replace(/^\//, ''));
+    }
+  });
+
+  // Fix 192.168.18.2:8100 links
+  document.querySelectorAll('a[href^="http://192.168.18.2:8100"], a[href^="https://192.168.18.2:8100"]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href) {
+      const newHref = href.replace(/https?:\/\/192.168.18.2:8100/g, '');
+      console.log(`Fixing 192.168.18.2:8100 link: ${href} -> ${newHref}`);
+      link.setAttribute('href', newHref);
     }
   });
   

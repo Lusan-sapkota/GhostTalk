@@ -27,7 +27,7 @@ import {
   IonAlert
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-
+import { useLocation as useReactRouterLocation } from 'react-router-dom';
 import { 
   homeOutline,
   compassOutline,
@@ -86,6 +86,7 @@ import VerifySession from './pages/VerifySession';
 import VerificationNeeded from './pages/VerificationNeeded';
 import BillingPage from './pages/BillingPage';
 import LoggedDevicesPage from './pages/LoggedDevicesPage';
+import PermissionsOnboarding from './pages/PermissionsOnboarding';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -124,6 +125,7 @@ import { fixAndroidPaths } from './utils/androidPathFix';
 import FirstLaunch from './plugins/firstLaunch';
 import NotFound from './pages/NotFound';
 import SessionVerificationPrompt from './components/SessionVerificationPrompt';
+import { socket, socketService } from './services/socket.service';
 
 setupIonicReact();
 
@@ -145,7 +147,8 @@ const setupStatusBar = async () => {
 
 const SideMenu: React.FC = () => {
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
-  const { isAuthenticated, logout } = useAuth();
+  // Get all auth data including user at the component level
+  const { isAuthenticated, logout, currentUser } = useAuth();
   const [showThemeInfo, setShowThemeInfo] = useState(false);
 
   useEffect(() => {
@@ -216,7 +219,7 @@ const SideMenu: React.FC = () => {
           <div className="ghost-icon">
             <div className="ghost-eyes"></div>
           </div>
-          <h2>Welcome, Ghost</h2>
+          <h5>Welcome, {isAuthenticated ? (currentUser?.name || 'User') : 'Ghost'}</h5>
           <p>Connect anonymously</p>
         </div>
         
@@ -398,10 +401,15 @@ const SideMenu: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
-  // Move useHistory to the top level of the component
-  const history = useHistory();
+// Define the ConditionalFooter component above the App component
+const ConditionalFooter: React.FC = () => {
+  // Empty implementation since you mentioned you don't need this
+  return null;
+};
 
+const App: React.FC = () => {
+  const history = useHistory();
+  
   // Apply initial theme
   useEffect(() => {
     const darkMode = themeService.getDarkMode();
@@ -473,8 +481,6 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // No need to call useHistory here anymore
-    // Listen for navigation events from native code
     const handleInitialLoad = (event: Event) => {
       try {
         const customEvent = event as CustomEvent;
@@ -601,116 +607,282 @@ const App: React.FC = () => {
     );
   };
 
+  // Add this useEffect
+  useEffect(() => {
+    // More detailed debug
+    const token = apiService.getToken();
+    console.log("Auth debug:", { 
+      isAuthenticated, 
+      hasToken: !!token, 
+      tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+      currentTime: new Date().toISOString()
+    });
+    
+    if (token && !isAuthenticated) {
+      console.warn("Authentication state mismatch: Token exists but not authenticated");
+      // You could add automatic re-verification here if needed
+    }
+  }, [isAuthenticated]);
+
+  // Add this immediately after your existing auth debug useEffect
+
+  // Force auth state update when token verification completes
+  useEffect(() => {
+    // Check if there's a token but we're not authenticated
+    if (apiService.getToken() && !isAuthenticated) {
+      console.warn("Authentication state mismatch: Token exists but not authenticated");
+      
+      // One-time check instead of interval
+      apiService.makeRequest('/auth/verify-token', 'POST')
+        .then(response => {
+          if (response.success && response.user) {
+            // Use the AuthContext to update user state instead of reloading
+            setCurrentUser(response.user);
+            console.log("Authentication state restored");
+          } else {
+            // Clear invalid token
+            apiService.clearToken();
+          }
+        })
+        .catch(error => {
+          console.error("Error during re-authentication:", error);
+        });
+    }
+  }, [isAuthenticated]);
+
+  // Add this in the useEffect after app initialization
+
+  // Store permission request status
+  useEffect(() => {
+    const checkPermissionStatus = async () => {
+      try {
+        // Check if we've already asked for permissions
+        const permissionsAsked = localStorage.getItem('permissionsRequested');
+        
+        if (!permissionsAsked) {
+          // Only show permissions UI once
+          // Your permission code here
+          
+          // Mark as requested
+          localStorage.setItem('permissionsRequested', 'true');
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+      }
+    };
+    
+    checkPermissionStatus();
+  }, []);
+
+  useEffect(() => {
+    // Add padding to content when on tab pages
+    const handleRouteChange = () => {
+      const showTabPages = ['/home', '/chat-individual', '/profile', '/settings'];
+      const shouldShowTabs = showTabPages.some(path => 
+        window.location.pathname === path || window.location.pathname.startsWith(`${path}/`)
+      );
+      
+      // Add or remove class from body based on current route
+      if (shouldShowTabs) {
+        document.body.classList.add('has-tabs');
+      } else {
+        document.body.classList.remove('has-tabs');
+      }
+    };
+    
+    // Initial check
+    handleRouteChange();
+    
+    // Listen for route changes
+    window.addEventListener('ionRouteDidChange', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('ionRouteDidChange', handleRouteChange);
+    };
+  }, []);
+
+  // Add a proper error boundary for the entire app
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error);
+      // Prevent app crash
+      event.preventDefault();
+    };
+    
+    window.addEventListener('error', handleGlobalError);
+    
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+    };
+  }, []);
+
+  // Look for where you handle first launch detection or add this code:
+  useEffect(() => {
+    // Force rendering visibility
+    document.body.style.backgroundColor = 'white';
+    document.body.style.visibility = 'visible';
+    
+    // Check for the force onboarding flag
+    const forceOnboarding = localStorage.getItem('forceOnboarding');
+    
+    if (forceOnboarding === 'true' && Capacitor.isNativePlatform()) {
+      console.log('Force onboarding detected in App.tsx, navigating...');
+      // Add small delay to ensure app is fully initialized
+      setTimeout(() => {
+        history.replace('/onboarding');
+      }, 500);
+    }
+  }, [history]);
+
   return (
-    <IonReactRouter>
-      <AuthProvider>
-        <IonApp>
-          <IonReactRouter>
-            <SideMenu />
-            
-            <IonTabs>
-              <IonRouterOutlet id="main">
-                {/* Special routes that need to be matched first */}
-                <Route path="/onboarding" component={Onboarding} exact={true} />
-                
-                {/* Authentication routes */}
-                <Route exact path="/login" component={Login} />
-                <Route exact path="/register" component={Register} />
-                <Route exact path="/verify-email/:token" component={VerifyEmail} />
-                <Route exact path="/verification-needed" component={VerificationNeeded} />
-                <Route exact path="/magic-link-sent" component={MagicLinkSent} />
-                <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
-                <Route exact path="/reset-password/:token" component={ResetPassword} />
-                <Route exact path="/magic-login/:token" component={MagicLogin} />
-                
-                {/* Public routes */}
-                <Route exact path="/home" component={Home} />
-                <Route exact path="/random-chat" component={RandomChat} />
-                <Route exact path="/chat-room" component={ChatRoom} />
-                <Route exact path="/about" component={About} />
-                <Route exact path="/terms" component={TermsPage} />
-                <Route exact path="/privacy" component={PrivacyPage} />
-                <Route exact path="/support" component={SupportPage} />
-                <Route exact path="/contact" component={ContactPage} />
-                <Route exact path="/search" component={SearchPage} />
-                <Route exact path="/docs" component={DocsPage} />
-                <Route exact path="/community" component={CommunityPage} />
-                <Route path="/verify-2fa/:userId" component={TwoFactorAuth} />
-                <Route exact path="/verify-session/:token" component={VerifySession} />
-                <Route path="/billing" component={BillingPage} exact />
-                <Route path="/logged-devices" component={LoggedDevicesPage} exact />
-                
-                {/* Settings routes */}
-                
-                {/* Protected routes with authentication */}
-                <PrivateRoute exact path="/chat-individual" component={ChatIndividual} />
-                <PrivateRoute exact path="/profile" component={Profile} />
-                <PrivateRoute exact path="/settings" component={Settings} />
-                <PrivateRoute exact path="/favorites" component={FavoritesPage} />
-                <PrivateRoute exact path="/notifications" component={NotificationsPage} />
-                
-                {/* Redirects */}
-                <Route exact path="/" render={() => {
-                  // Check if we should show onboarding based on URL hash
-                  const hash = window.location.hash;
-                  if (hash && hash.includes('/onboarding')) {
-                    console.log('Found onboarding in hash, redirecting');
-                    return <Redirect to="/onboarding" />;
-                  }
-                  return <Redirect to="/home" />;
-                }} />
-                
-                {/* 404 catch-all route - MUST be last */}
-                <Route render={(props) => {
-                  // Check if we're at a route that should be matched by another route
-                  const knownRoutes = [
-                    '/login', '/register', '/home', '/random-chat', '/chat-room', 
-                    '/about', '/terms', '/privacy', '/support', '/contact', 
-                    '/search', '/docs', '/community', '/chat-individual',
-                    '/profile', '/settings', '/favorites', '/notifications',
-                    '/onboarding', '/verify-email', '/magic-link-sent', 
-                    '/password-reset-sent', '/reset-password', '/magic-login', '/verify-2fa', '/verify-session',
-                    '/verification-needed'
-                  ];
-                  
-                  // Check if current path starts with any known route
-                  const isKnownRoute = knownRoutes.some(route => 
-                    props.location.pathname === route || 
-                    props.location.pathname.startsWith(`${route}/`)
-                  );
-                  
-                  // Only show NotFound for unknown routes
-                  return isKnownRoute ? null : <NotFound />;
-                }} />
-              </IonRouterOutlet>
+    <IonApp>
+      <IonReactRouter>
+        <AuthProvider>
+          <SideMenu />
+          
+          <IonTabs>
+            <IonRouterOutlet id="main">
+              {/* Special routes that need to be matched first */}
+              <Route path="/onboarding" component={Onboarding} exact={true} />
+              <Route path="/permissions" component={PermissionsOnboarding} exact={true} />
               
-              {isAuthenticated && (
-              <IonTabBar slot="bottom" className="ghost-shadow">
+              {/* Authentication routes */}
+              <Route exact path="/login" component={Login} />
+              <Route exact path="/register" component={Register} />
+              <Route exact path="/verify-email/:token" component={VerifyEmail} />
+              <Route exact path="/verification-needed" component={VerificationNeeded} />
+              <Route exact path="/magic-link-sent" component={MagicLinkSent} />
+              <Route exact path="/password-reset-sent" component={PasswordResetSent} /> 
+              <Route exact path="/reset-password/:token" component={ResetPassword} />
+              <Route exact path="/magic-login/:token" component={MagicLogin} />
+              
+              {/* Public routes */}
+              <Route exact path="/home" component={Home} />
+              <Route exact path="/random-chat" component={RandomChat} />
+              <Route exact path="/chat-room" component={ChatRoom} />
+              <Route exact path="/about" component={About} />
+              <Route exact path="/terms" component={TermsPage} />
+              <Route exact path="/privacy" component={PrivacyPage} />
+              <Route exact path="/support" component={SupportPage} />
+              <Route exact path="/contact" component={ContactPage} />
+              <Route exact path="/search" component={SearchPage} />
+              <Route exact path="/docs" component={DocsPage} />
+              <Route exact path="/community" component={CommunityPage} />
+              <Route path="/verify-2fa/:userId" component={TwoFactorAuth} />
+              <Route exact path="/verify-session/:token" component={VerifySession} />
+              <Route path="/billing" component={BillingPage} exact />
+              <Route path="/logged-devices" component={LoggedDevicesPage} exact />
+              
+              {/* Protected routes with authentication */}
+              <PrivateRoute exact path="/chat-individual" component={ChatIndividual} />
+              <PrivateRoute exact path="/profile" component={Profile} />
+              <PrivateRoute exact path="/settings" component={Settings} />
+              <PrivateRoute exact path="/favorites" component={FavoritesPage} />
+              <PrivateRoute exact path="/notifications" component={NotificationsPage} />
+              
+              {/* Redirects */}
+              <Route exact path="/" render={() => {
+                // Check if we should show onboarding based on URL hash
+                const hash = window.location.hash;
+                if (hash && hash.includes('/onboarding')) {
+                  console.log('Found onboarding in hash, redirecting');
+                  return <Redirect to="/onboarding" />;
+                }
+                return <Redirect to="/home" />;
+              }} />
+              
+              {/* 404 catch-all route - MUST be last */}
+              <Route render={(props) => {
+                // Check if we're at a route that should be matched by another route
+                const knownRoutes = [
+                  '/login', '/register', '/home', '/random-chat', '/chat-room', 
+                  '/about', '/terms', '/privacy', '/support', '/contact', 
+                  '/search', '/docs', '/community', '/chat-individual',
+                  '/profile', '/settings', '/favorites', '/notifications',
+                  '/onboarding', '/verify-email', '/magic-link-sent', 
+                  '/password-reset-sent', '/reset-password', '/magic-login', '/verify-2fa', '/verify-session',
+                  '/verification-needed'
+                ];
+                
+                // Check if current path starts with any known route
+                const isKnownRoute = knownRoutes.some(route => 
+                  props.location.pathname === route || 
+                  props.location.pathname.startsWith(`${route}/`)
+                );
+                
+                // Only show NotFound for unknown routes
+                return isKnownRoute ? null : <NotFound />;
+              }} />
+            </IonRouterOutlet>
+            
+            {/* Only show tab bar on Android */}
+            {isPlatform('android') && (
+              <IonTabBar slot="bottom" className="custom-tab-bar">
                 <IonTabButton tab="home" href="/home">
                   <IonIcon icon={homeOutline} />
                   <IonLabel>Home</IonLabel>
                 </IonTabButton>
-                <IonTabButton tab="privatechat" href="/chat-individual">
+                
+                <IonTabButton tab="search" href="/search">
+                  <IonIcon icon={searchOutline} />
+                  <IonLabel>Search</IonLabel>
+                </IonTabButton>
+                
+                {/* Protected tabs - use href instead of routerLink */}
+                <IonTabButton tab="chat" href="/chat-individual">
                   <IonIcon icon={chatbubblesOutline} />
                   <IonLabel>Chat</IonLabel>
                 </IonTabButton>
-                <IonTabButton tab="chatRoom" href="/chat-room">
-                  <IonIcon icon={peopleOutline} />
-                  <IonLabel>Rooms</IonLabel>
-                </IonTabButton>
+                
                 <IonTabButton tab="profile" href="/profile">
                   <IonIcon icon={personCircleOutline} />
                   <IonLabel>Profile</IonLabel>
                 </IonTabButton>
+                
+                <IonTabButton tab="settings" href="/settings">
+                  <IonIcon icon={settingsOutline} />
+                  <IonLabel>Settings</IonLabel>
+                </IonTabButton>
               </IonTabBar>
-              )}
-            </IonTabs>
-          </IonReactRouter>
+            )}
+
+          </IonTabs>
+          
           <SessionVerificationPrompt />
-        </IonApp>
-      </AuthProvider>
-    </IonReactRouter>
+          
+          {/* ConditionalFooter is now properly defined */}
+          <ConditionalFooter />
+        </AuthProvider>
+      </IonReactRouter>
+    </IonApp>
   );
 };
 
+
 export default App;
+function setCurrentUser(user: any) {
+  try {
+    // Dispatch an event that AuthProvider can listen for
+    const authEvent = new CustomEvent('auth:user-updated', {
+      detail: { user }
+    });
+    window.dispatchEvent(authEvent);
+    
+    // Also update localStorage if that's how auth state is persisted
+    if (user) {
+      localStorage.setItem('userData', JSON.stringify(user));
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      sessionStorage.setItem('sessionVerified', 'true');
+    }
+    
+    // Notify auth system about the update via socket if available
+    if (socketService && socketService.socket && socketService.socket.connected) {
+      socketService.socket.emit('auth:update-user', user);
+    }
+    
+    console.log('User authentication state updated successfully');
+  } catch (error) {
+    console.error('Failed to update current user:', error);
+  }
+}
+

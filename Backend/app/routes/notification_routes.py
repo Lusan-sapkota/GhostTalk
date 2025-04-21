@@ -9,7 +9,7 @@ def notifications_route():
     """Handle OPTIONS requests separately for CORS"""
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')
+        response.headers.add('Access-Control-Allow-Origin', 'http://192.168.18.2:8100')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET,OPTIONS')
         response.headers.add('Access-Control-Allow-Credentials', 'true')

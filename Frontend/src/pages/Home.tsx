@@ -36,6 +36,7 @@ import { useHistory } from 'react-router-dom';
 import HeaderComponent from '../components/HeaderComponent';
 import RoamingGhost from '../components/RoamingGhost';
 import PullToRefresh from '../components/PullToRefresh';
+import '../hooks/usePermissionStyles';
 
 const Home: React.FC = () => {
   const history = useHistory();

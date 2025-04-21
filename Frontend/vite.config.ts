@@ -3,6 +3,7 @@
 import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { fileURLToPath } from 'url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -24,7 +25,10 @@ export default defineConfig({
   server: {
     hmr: {
       overlay: false
-    }
+    },
+    port: 8100, // Set port explicitly to 8100
+    strictPort: true, // Fail if port is not available instead of incrementing
+    host: '0.0.0.0'
   },
   test: {
     globals: true,

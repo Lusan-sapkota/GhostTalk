@@ -1,0 +1,103 @@
+.permissions-onboarding .permissions-header {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.permissions-onboarding .permissions-icon {
+  margin: 0 auto;
+  width: 80px;
+  height: 80px;
+  background: var(--ion-color-primary);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.permissions-onboarding .permissions-icon ion-icon {
+  font-size: 40px;
+  color: white;
+}
+
+.permissions-onboarding h2 {
+  margin-bottom: 8px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.permissions-onboarding p {
+  color: var(--ion-color-medium);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.permissions-onboarding .step-indicator {
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.permissions-onboarding .finish-section {
+  padding: 24px 16px;
+  margin-top: 24px;
+}
+
+:root.dark .permissions-onboarding .permissions-header {
+  color: var(--ion-color-light);
+}
+
+:root.dark .permissions-onboarding p {
+  color: var(--ion-color-light-shade);
+}
+
+.permissions-page {
+  --background: var(--ion-background-color);
+}
+
+.permissions-container {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.permissions-progress {
+  width: 100%;
+  margin-bottom: 30px;
+  --progress-background: var(--ion-color-primary);
+  height: 8px;
+  border-radius: 4px;
+}
+
+.permissions-intro {
+  text-align: center;
+  margin-bottom: 30px;
+  color: var(--ion-color-medium);
+}
+
+.permission-card {
+  width: 100%;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.permission-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.permission-icon ion-icon {
+  font-size: 48px;
+  color: var(--ion-color-primary);
+}
+
+ion-card-content p {
+  margin-bottom: 20px;
+  text-align: center;
+}

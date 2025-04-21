@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { apiService } from './api.service';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
 
 export interface ProfileUpdateData {
   username?: string;

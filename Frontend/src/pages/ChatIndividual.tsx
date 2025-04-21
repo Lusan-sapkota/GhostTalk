@@ -13,18 +13,22 @@ import {
   IonFabButton,
   IonModal,
   IonInput,
-  IonFooter,
-  IonTextarea,
   IonHeader,
   IonToolbar,
-  IonTitle
+  IonTitle,
+  IonSegment,
+  IonSegmentButton,
+  IonToast
 } from '@ionic/react';
 import { 
   chatbubble, 
   personCircle, 
   add, 
   ellipsisVertical,
-  checkmarkCircle
+  checkmarkCircle,
+  qrCodeOutline,
+  copy,
+  timeOutline
 } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
 import './ChatIndividual.css';
@@ -35,7 +39,7 @@ import { apiService } from '../services/api.service';
 import { useHistory } from 'react-router-dom';
 import HeaderComponent from '../components/HeaderComponent';
 
-// Interface definitions remain unchanged
+// Interface definitions
 interface Chat {
   id: number;
   name: string;
@@ -46,14 +50,27 @@ interface Chat {
   online: boolean;
 }
 
+interface Friend {
+  id: string;
+  name: string;
+  avatar?: string;
+  status?: string;
+}
+
 const ChatIndividual: React.FC = () => {
   const history = useHistory();
-  const { currentUser, isAuthenticated, isLoading } = useAuth();
+  const { currentUser, isAuthenticated, isPro } = useAuth();
   const [darkMode, setDarkMode] = useState(themeService.getDarkMode());
   const [searchText, setSearchText] = useState('');
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [chatId, setChatId] = useState('');
+  const [username, setUsername] = useState('');
+  const [contactMethod, setContactMethod] = useState('id');
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [showLoginPrompt, setShowLoginPrompt] = useState<boolean>(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Update theme state when theme changes
   useEffect(() => {
@@ -63,19 +80,75 @@ const ChatIndividual: React.FC = () => {
     return cleanup;
   }, []);
 
-  const handleStartNewChat = () => {
-    console.log(`Starting chat with ID: ${chatId}`);
-    setIsNewChatModalOpen(false);
-    setChatId('');
-  };
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Load friends from API
+      const loadFriends = async () => {
+        try {
+          const response = await apiService.makeRequest('/friend/list', 'GET');
+          if (response.success) {
+            setFriends(response.friends || []);
+          }
+        } catch (error) {
+          console.error('Error loading friends:', error);
+        }
+      };
+      
+      loadFriends();
+    }
+  }, [isAuthenticated]);
 
-  const handleStartPrivateChat = () => {
+  const handleStartPrivateChat = async () => {
     if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
     
-    handleStartNewChat();
+    let targetUserId = '';
+    
+    // Determine which ID to use based on contact method
+    if (contactMethod === 'id') {
+      // Remove "GHOST-" prefix if present
+      targetUserId = chatId.replace(/^GHOST-/i, '');
+    } else if (contactMethod === 'username') {
+      // Need to look up ID by username
+      setIsCreatingChat(true);
+      try {
+        const response = await apiService.makeRequest(`/search/by-username/${encodeURIComponent(username)}`, 'GET');
+        if (response.success && response.user) {
+          targetUserId = response.user.id;
+        } else {
+          setToastMessage('User not found with that username');
+          setShowToast(true);
+          setIsCreatingChat(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error searching for user:', error);
+        setToastMessage('Failed to find user. Please try again.');
+        setShowToast(true);
+        setIsCreatingChat(false);
+        return;
+      }
+    }
+    
+    if (!targetUserId) {
+      setToastMessage('Please enter a valid user ID or username');
+      setShowToast(true);
+      return;
+    }
+    
+    // Close modal and navigate to chat
+    setIsNewChatModalOpen(false);
+    
+    // Navigate to chat session with this user
+    history.push(`/chat-individual/${targetUserId}`);
+    
+    // Reset form
+    setChatId('');
+    setUsername('');
+    setContactMethod('id');
+    setIsCreatingChat(false);
   };
 
   const handleChatClick = (chatId: number) => {
@@ -89,7 +162,12 @@ const ChatIndividual: React.FC = () => {
 
   const handleSearchChange = (value: string) => {
     setSearchText(value);
-    // Filter chats based on search text will happen automatically due to filteredChats calculation
+  };
+
+  const handleScanQRCode = () => {
+    // Implement QR scanning functionality
+    setToastMessage('QR scanning coming soon');
+    setShowToast(true);
   };
 
   // Mock chats data
@@ -120,8 +198,7 @@ const ChatIndividual: React.FC = () => {
       time: '3h ago',
       unread: 1,
       online: false
-    },
-    // Add more mock chats here
+    }
   ];
 
   // Filter chats based on search text
@@ -134,12 +211,13 @@ const ChatIndividual: React.FC = () => {
   return (
     <IonPage>
       <HeaderComponent 
-        title="Private Chat" 
+        title="Chats" 
+        showSearch={true} 
         onSearchChange={handleSearchChange} 
         searchPlaceholder="Search chats..."
       />
-
-      <IonContent fullscreen>
+      
+      <IonContent>
         {filteredChats.length > 0 ? (
           <IonList className="chat-list">
             {filteredChats.map((chat) => (
@@ -180,7 +258,7 @@ const ChatIndividual: React.FC = () => {
           </IonFabButton>
         </IonFab>
 
-        {/* Modal and Login Prompt remain unchanged */}
+        {/* Chat Creation Modal */}
         <IonModal isOpen={isNewChatModalOpen} onDidDismiss={() => setIsNewChatModalOpen(false)}>
           <IonHeader>
             <IonToolbar color="primary">
@@ -192,47 +270,154 @@ const ChatIndividual: React.FC = () => {
               </IonButtons>
             </IonToolbar>
           </IonHeader>
+          
           <IonContent className="ion-padding">
             <div className="new-chat-info">
               <IonIcon icon={personCircle} color="primary" />
-              <p>
-                Enter the ID of the person you want to chat with. You can share your own ID
-                to let others initiate a chat with you.
-              </p>
+              <p>Connect with someone by entering their username or ID, or select from your favorites.</p>
             </div>
             
-            <IonItem className="chat-id-input">
-              <IonLabel position="floating">Chat ID</IonLabel>
-              <IonInput 
-                value={chatId}
-                onIonChange={e => setChatId(e.detail.value || '')}
-                placeholder="Enter chat ID here"
-              />
-            </IonItem>
+            {/* Session time info for free users */}
+            {isAuthenticated && !isPro && (
+              <div className="session-info">
+                <IonIcon icon={timeOutline} color="warning" />
+                <p>Free users have 1-hour chat sessions. <IonButton fill="clear" size="small" routerLink="/billing">Upgrade to Pro</IonButton></p>
+              </div>
+            )}
+            
+            {/* Segment to toggle between ID, username and favorites */}
+            <IonSegment value={contactMethod} onIonChange={e => setContactMethod(e.detail.value as string)}>
+              <IonSegmentButton value="id">
+                <IonLabel>By ID</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="username">
+                <IonLabel>By Username</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="favorites">
+                <IonLabel>Favorites</IonLabel>
+              </IonSegmentButton>
+            </IonSegment>
+            
+            {contactMethod === 'id' && (
+              <IonItem className="chat-id-input">
+                <IonInput 
+                  value={chatId}
+                  onIonChange={e => setChatId(e.detail.value || '')}
+                  placeholder="Enter GHOST-ID"
+                />
+              </IonItem>
+            )}
+            
+            {contactMethod === 'username' && (
+              <IonItem className="chat-username-input">
+                <IonInput 
+                  value={username}
+                  onIonChange={e => setUsername(e.detail.value || '')}
+                  placeholder="Enter username"
+                />
+              </IonItem>
+            )}
+            
+            {contactMethod === 'favorites' && (
+              <div className="favorites-selection">
+                {friends.length > 0 ? (
+                  <IonList className="favorites-list">
+                    {friends.map((friend) => (
+                      <IonItem 
+                        key={friend.id}
+                        onClick={() => {
+                          setChatId(friend.id);
+                          setContactMethod('id');
+                        }}
+                      >
+                        <IonAvatar slot="start">
+                          {friend.avatar ? (
+                            <img src={friend.avatar} alt={friend.name} />
+                          ) : (
+                            <div className="default-avatar">{friend.name[0]}</div>
+                          )}
+                          {friend.status === 'Online' && <div className="online-indicator-chatindividual"></div>}
+                        </IonAvatar>
+                        <IonLabel>{friend.name}</IonLabel>
+                      </IonItem>
+                    ))}
+                  </IonList>
+                ) : (
+                  <div className="no-favorites">
+                    <p>You don't have any favorites yet</p>
+                    <IonButton 
+                      fill="clear"
+                      routerLink="/favorites"
+                      onClick={() => setIsNewChatModalOpen(false)}
+                    >
+                      Add Friends
+                    </IonButton>
+                  </div>
+                )}
+              </div>
+            )}
             
             <IonButton 
               expand="block"
-              className="start-chat-button ghost-float"
+              className="start-chat-button ghost-shadow"
               onClick={handleStartPrivateChat}
-              disabled={!chatId.trim()}
+              disabled={
+                isCreatingChat || 
+                (contactMethod === 'id' && !chatId.trim()) || 
+                (contactMethod === 'username' && !username.trim())
+              }
             >
-              <IonIcon slot="start" icon={chatbubble} />
-              Start Chat
+              {isCreatingChat ? 'Creating Chat...' : (
+                <>
+                  <IonIcon slot="start" icon={chatbubble} />
+                  Start Chat
+                </>
+              )}
+            </IonButton>
+            
+            <div className="separator">
+              <span>OR</span>
+            </div>
+            
+            <IonButton 
+              expand="block" 
+              fill="outline"
+              className="scan-code-button"
+              onClick={handleScanQRCode}
+            >
+              <IonIcon slot="start" icon={qrCodeOutline} />
+              Scan QR Code
             </IonButton>
             
             <div className="id-share-container">
               <h4>Share your Chat ID</h4>
               <div className="user-id-display">
-                <span className="user-id">{currentUser?.id || 'Login to see your ID'}</span>
+                <span className="user-id">{currentUser?.id ? `GHOST-${currentUser.id}` : 'Login to see your ID'}</span>
                 {currentUser?.id && (
-                  <IonButton fill="clear" size="small">
-                    <IonIcon icon={checkmarkCircle} slot="icon-only" />
+                  <IonButton 
+                    fill="clear" 
+                    size="small"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`GHOST-${currentUser.id}`);
+                      setToastMessage('ID copied to clipboard');
+                      setShowToast(true);
+                    }}
+                  >
+                    <IonIcon icon={copy} slot="icon-only" />
                   </IonButton>
                 )}
               </div>
             </div>
           </IonContent>
         </IonModal>
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={2000}
+          position="top"
+        />
 
         <LoginPrompt 
           isOpen={showLoginPrompt}

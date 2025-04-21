@@ -8,6 +8,7 @@ import { Capacitor } from '@capacitor/core';
 import FirstLaunch from '../plugins/firstLaunch';
 import 'swiper/css';
 import './Onboarding.css';
+import { isAndroidApp } from '../services/permissionService';
 
 const Onboarding: React.FC = () => {
   const history = useHistory();
@@ -20,11 +21,29 @@ const Onboarding: React.FC = () => {
     console.log('Onboarding component mounted');
     
     const checkOnboardingStatus = async () => {
+      // First check if we're in a browser (not Android)
+      const isAndroidApp = localStorage.getItem('isAndroidApp') === 'true';
+      
+      console.log('Checking onboarding status:', { 
+        isAndroidApp, 
+        forceOnboarding: localStorage.getItem('forceOnboarding'),
+        hasSeenOnboarding: localStorage.getItem('hasSeenOnboarding')
+      });
+      
+      if (!isAndroidApp && !Capacitor.isNativePlatform()) {
+        console.log('Web browser detected, skipping onboarding');
+        history.replace('/home');
+        return;
+      }
+      
       // First check for the forced onboarding flag (from native code)
       const forceOnboarding = localStorage.getItem('forceOnboarding');
       
       if (forceOnboarding === 'true') {
         console.log('Force onboarding flag found - showing onboarding');
+        // Force UI update
+        document.body.style.backgroundColor = 'white';
+        document.body.style.visibility = 'visible';
         setShowOnboarding(true);
         setIsLoading(false);
         return;
@@ -38,13 +57,21 @@ const Onboarding: React.FC = () => {
         return;
       }
       
-      // Default to showing onboarding
-      setShowOnboarding(true);
-      setIsLoading(false);
+      // Default to showing onboarding for Android
+      if (isAndroidApp) {
+        setShowOnboarding(true);
+        setIsLoading(false);
+      } else {
+        // Skip for regular web
+        history.replace('/home');
+      }
     };
     
-    // Small delay to ensure everything is loaded
-    setTimeout(checkOnboardingStatus, 500);
+    // Immediate check with backup timeout
+    checkOnboardingStatus();
+    const timeoutId = setTimeout(checkOnboardingStatus, 1500);
+    
+    return () => clearTimeout(timeoutId);
   }, [history]);
   
   // Handle slide change
@@ -60,8 +87,16 @@ const Onboarding: React.FC = () => {
     // Clear the force flag when onboarding is complete
     localStorage.removeItem('forceOnboarding');
     
-    // Navigate to home
-    history.replace('/home');
+    // Check if we're running in an Android app
+    const isAndroidApp = localStorage.getItem('isAndroidApp') === 'true';
+    
+    if (isAndroidApp) {
+      // On Android, navigate to permissions page instead of home
+      history.replace('/permissions');
+    } else {
+      // On web, go directly to home
+      history.replace('/home');
+    }
   };
   
   return (

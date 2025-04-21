@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonHeader,
   IonToolbar,
@@ -17,20 +17,29 @@ import './HeaderComponent.css';
 interface HeaderComponentProps {
   title: string;
   showSearch?: boolean;
+  searchValue?: string; // Add this line
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
 }
 
 const HeaderComponent: React.FC<HeaderComponentProps> = ({ 
   title, 
-  showSearch = true, 
+  showSearch = true,
+  searchValue,  // Add this parameter
   onSearchChange,
   searchPlaceholder = "Search..."
 }) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState(searchValue || ''); // Use the searchValue here
   const { isAuthenticated } = useAuth();
   const [hasNotifications] = useState(false); // This would be connected to a notification service in a real app
+
+  // Update searchText when searchValue changes
+  useEffect(() => {
+    if (searchValue !== undefined) {
+      setSearchText(searchValue);
+    }
+  }, [searchValue]);
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);

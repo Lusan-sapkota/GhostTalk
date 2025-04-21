@@ -107,3 +107,74 @@ ion-tabs ion-tab-bar {
     transform: translateY(-15px);
   }
 }
+
+.custom-tab-bar {
+  --background: var(--ion-background-color);
+  --border: 1px solid var(--ion-border-color);
+  height: 56px;
+}
+
+/* Responsive tab bar for different screens */
+.custom-tab-bar ion-tab-button {
+  position: relative; /* Make sure this is set for proper lock positioning */
+}
+
+/* Fix lock icon positioning */
+.custom-tab-bar .lock-icon {
+  position: absolute;
+  top: 3px;
+  right: 50%; /* Center horizontally */
+  transform: translateX(8px); /* Offset to position near icon */
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  z-index: 10;
+}
+
+.custom-tab-bar .lock-icon ion-icon {
+  font-size: 10px;
+  color: white;
+}
+
+/* Responsive adjustments */
+@media (min-width: 576px) {
+  .custom-tab-bar .lock-icon {
+    top: 6px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .custom-tab-bar .lock-icon ion-icon {
+    font-size: 12px;
+  }
+}
+
+/* Fix tab positioning for Android */
+html.md .custom-tab-bar {
+  padding-bottom: var(--ion-safe-area-bottom, 0);
+}
+
+/* Active tab styling */
+.custom-tab-bar ion-tab-button.tab-selected {
+  --color-selected: var(--ion-color-primary);
+}
+
+/* Show/hide tab bar logic - if needed */
+body.has-tabs ion-content {
+  --padding-bottom: 56px;
+}
+
+/* Make tabs responsive */
+@media (max-width: 360px) {
+  .custom-tab-bar ion-label {
+    font-size: 11px;
+  }
+  
+  .custom-tab-bar ion-icon {
+    font-size: 20px;
+  }
+}
