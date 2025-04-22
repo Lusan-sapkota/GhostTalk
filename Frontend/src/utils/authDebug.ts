@@ -32,7 +32,7 @@ export const debugAuth = async () => {
     
     // Test API connection
     try {
-      const response = await fetch('http://192.168.18.2:5000/api/auth/debug-auth', {
+      const response = await fetch('http://localhost:5000/api/auth/debug-auth', {
         method: 'GET',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });

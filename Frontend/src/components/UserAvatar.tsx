@@ -21,7 +21,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ avatarId, bucketId, username })
       setIsSvg(isSvgFile);
       
       // For backend-served avatars
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       setAvatarUrl(`${apiBaseUrl}/user/avatar/${avatarId}`);
     } else {
       // Fallback to initials avatar

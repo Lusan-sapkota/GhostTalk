@@ -591,7 +591,7 @@ def validate_token():
     # Handle OPTIONS requests
     if request.method == 'OPTIONS':
         response = jsonify({'success': True})
-        response.headers.add('Access-Control-Allow-Origin', 'http://192.168.18.2:8100')
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
         response.headers.add('Access-Control-Allow-Credentials', 'true')

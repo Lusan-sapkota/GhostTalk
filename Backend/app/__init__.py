@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -22,24 +22,58 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Configure CORS properly to accept requests from the frontend
-    CORS(app, supports_credentials=True,resources={r"/api/*": {
-        "origins": "http://192.168.18.2:8100",  # Match your frontend origin exactly
-        "allow_headers": ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
-        "expose_headers": ["Content-Type", "Authorization"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],  # Add HEAD method
-        "supports_credentials": True
-    }})
+    # Define all allowed origins - both localhost and GitHub Codespaces
+    codespace_prefix = "automatic-engine-xqqxj997v77hv67q"
+    allowed_origins = [
+        f"https://{codespace_prefix}-8100.app.github.dev",  # GitHub Codespaces frontend
+        "http://localhost:8100",                            # Local development frontend
+        "https://localhost:8100",                           # Secure local frontend
+        "http://localhost:3000",                            # Alternative local port
+        "null"                                              # For file:// protocol in some tests
+    ]
     
-    # Add OPTIONS route handler for all routes
-    @app.route('/api/<path:path>', methods=['OPTIONS'])
-    def handle_options(path):
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://192.168.18.2:8100')  # Match frontend exactly
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,X-Requested-With')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Use a single robust CORS handler for all responses
+    @app.after_request
+    def handle_cors(response):
+        origin = request.headers.get('Origin', '')
+        
+        # Always allow any GitHub Codespaces domain
+        if origin and (".github.dev" in origin or 
+                       origin in allowed_origins or 
+                       origin.startswith('http://localhost') or
+                       origin.startswith('https://localhost')):
+            
+            # Set CORS headers for this response
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, X-Requested-With"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            
+            # Print debug info for troubleshooting
+            print(f"CORS: Allowing origin: {origin}")
+            
         return response
+    
+    # Dedicated OPTIONS handler for preflight requests
+    @app.route('/api/<path:path>', methods=['OPTIONS'])
+    def options_handler(path):
+        response = jsonify({'status': 'ok'})
+        origin = request.headers.get('Origin', '')
+        
+        # Use the same origin check logic as the after_request handler
+        if origin and (".github.dev" in origin or 
+                      origin in allowed_origins or 
+                      origin.startswith('http://localhost') or
+                      origin.startswith('https://localhost')):
+            
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, X-Requested-With"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            
+            print(f"OPTIONS: Allowing origin: {origin} for path: {path}")
+            
+        return response, 200
     
     # Debug output to verify configuration loading
     print(f"Loaded database ID: {app.config.get('APPWRITE_DATABASE_ID')}")

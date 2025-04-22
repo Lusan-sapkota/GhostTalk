@@ -1,14 +1,36 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://192.168.18.2:5000/api'; // Update this with your actual Flask API URL
+const BASE_URL = 'http://localhost:5000/api'; // Update this with your actual Flask API URL
 
 export class ApiService {
   private API_URL: string;
   private token: string | null = null;
 
   constructor() {
-    // Make sure this points to your running backend
-    this.API_URL = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
+    // Get the current hostname from the browser
+    const hostname = window.location.hostname;
+    
+    // Determine if we're running in GitHub Codespaces
+    const isGitHubCodespaces = hostname.includes('.github.dev');
+    
+    if (isGitHubCodespaces) {
+      // Extract the codespace prefix (remove any port number that might be part of it)
+      const baseHostnameParts = hostname.split('.');
+      const codespaceWithPort = baseHostnameParts[0]; // e.g. "automatic-engine-xqqxj997v77hv67q-8100"
+      
+      // Remove any port suffix from the codespace name
+      const codespacePrefix = codespaceWithPort.replace(/-\d+$/, ''); // Remove port suffix
+      
+      // Create URL with backend port
+      this.API_URL = `https://${codespacePrefix}-5000.${baseHostnameParts.slice(1).join('.')}`;
+      console.log('Codespaces API URL constructed as:', this.API_URL);
+    } else {
+      // Regular local development
+      this.API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    }
+    
+    // Add /api to the URL path
+    this.API_URL = `${this.API_URL}/api`;
     console.log('API URL configured as:', this.API_URL);
     
     // Try to load token from both storages (session preferred, local as fallback)

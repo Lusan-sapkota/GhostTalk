@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
     hostname: undefined,
     // For development, specify the correct port
     // Comment this out for production builds
-    url: 'http://192.168.18.2:8100'
+    url: 'http://localhost:8100'
   },
   android: {
     webContentsDebuggingEnabled: true,

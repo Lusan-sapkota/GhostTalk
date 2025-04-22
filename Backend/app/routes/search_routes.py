@@ -126,7 +126,7 @@ def search_by_id(current_user_id, user_id):
         }
         
         # Add avatar if available
-        backend_url = os.environ.get('BACKEND_URL', 'http://192.168.18.2:5000/api')
+        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
         if user_doc.get('avatar'):
             user['avatar'] = f"{backend_url}/user/avatar/{user_doc.get('avatar')}"
             

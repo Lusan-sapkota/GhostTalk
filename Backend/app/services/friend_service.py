@@ -311,7 +311,7 @@ class FriendService:
             
             # Get API base URL for avatar URLs
             import os
-            backend_url = os.environ.get('BACKEND_URL', 'http://192.168.18.2:5000/api')
+            backend_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
             
             for friend_id in friends_list:
                 friend = self.appwrite_service.get_user_document(friend_id)
