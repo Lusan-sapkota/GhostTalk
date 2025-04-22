@@ -32,7 +32,7 @@ Our platform combines cutting-edge encryption technology with intuitive design t
 Privacy isn't just a feature—it's a fundamental right. GhostTalk was built from the ground up with this principle at its core. Unlike conventional messaging platforms that collect vast amounts of user data, we've designed our system to minimize data collection while maximizing security. Every design decision and technical implementation reflects our commitment to user privacy and autonomy.
 
 <div align="center">
-  <img src="https://placehold.co/1200x300/6a64ff/FFFFFF/png?text=GhostTalk+Banner" width="800" />
+  <img src="https://placehold.co/1200x300/6a64ff/FFFFFF/png?text=Encryption+Communication+Reimagined" width="800" />
 </div>
 
 ## 🔐 Privacy First Messaging
