@@ -10,6 +10,8 @@ from .routes.friend_routes import friend_bp
 from .routes.search_routes import search_bp
 from .services.websocket_service import WebSocketService, socketio
 from .routes.notification_routes import notification_bp
+from app.routes.content_filter_routes import content_filter_bp
+from app.routes.community_routes import community_bp
 
 # Create a global instance
 websocket_service = WebSocketService()
@@ -64,6 +66,8 @@ def create_app(config_class=Config):
         app.register_blueprint(friend_bp, url_prefix='/api/friend')
         app.register_blueprint(search_bp, url_prefix='/api/search')
         app.register_blueprint(notification_bp, url_prefix='/api')
+        app.register_blueprint(content_filter_bp, url_prefix='/api/content-filter')
+        app.register_blueprint(community_bp, url_prefix='/api/community')
     
     # Add a simple health check route
     @app.route('/health', methods=['GET'])

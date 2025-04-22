@@ -51,6 +51,8 @@ class AppwriteService:
                 self.friend_requests_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_FRIEND_REQUESTS', '')
                 self.calls_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_CALLS', '')
                 self.encryption_keys_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_ENCRYPTION_KEYS', '')
+                self.community_posts_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_COMMUNITY_POSTS', '')
+                self.comments_collection_id = os.environ.get('APPWRITE_COLLECTION_ID_COMMENTS', '')
                 
                 # Initialize services
                 self.account = Account(self.client)

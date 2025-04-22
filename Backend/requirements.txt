@@ -1,15 +1,28 @@
-flask
-flask_cors
-appwrite
-requests
+# Core dependencies
+Flask
+Flask-Cors
 python-dotenv
-werkzeug
-pyjwt
-qrcode[pil]
-flask-socketio
-python-socketio
-eventlet
-gevent
-gevent-websocket
+gunicorn
+
+# Database and storage
+appwrite
+pymongo
+redis
+
+# Authentication
+PyJWT
+bcrypt
+
+# Utilities
+requests
+validators
+pyotp
 cryptography
-firebase-admin
+
+# For GhostGuard content moderation
+pandas
+scikit-learn
+nltk
+spacy
+transformers
+torch

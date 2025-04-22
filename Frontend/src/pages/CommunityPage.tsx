@@ -26,7 +26,12 @@ import {
   IonToolbar,
   IonTitle,
   IonButtons,
-  IonBackButton
+  IonBackButton,
+  IonInput,
+  IonTextarea,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner
 } from '@ionic/react';
 import {
   peopleOutline,
@@ -49,9 +54,12 @@ import {
   logoFacebook,
   logoInstagram,
   logoGithub,
-  closeOutline
+  closeOutline,
+  alertCircleOutline,
+  add
 } from 'ionicons/icons';
 import BackHeaderComponent from '../components/BackHeaderComponent';
+import { apiService } from '../services/api.service';
 import './CommunityPage.css';
 
 // Mock data for the community page
@@ -127,6 +135,14 @@ const CommunityPage: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showGuidelines, setShowGuidelines] = useState<boolean>(false);
+  const [newPostTitle, setNewPostTitle] = useState<string>('');
+  const [newPostContent, setNewPostContent] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showContentWarning, setShowContentWarning] = useState<boolean>(false);
+  const [showNewPostModal, setShowNewPostModal] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('General');
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
 
   const handleSegmentChange = (e: CustomEvent) => {
     setSegment(e.detail.value);
@@ -205,6 +221,120 @@ const CommunityPage: React.FC = () => {
       </IonCard>
     ));
   };
+
+  const handleSubmitPost = async () => {
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
+      setToastMessage('Please provide both title and content for your post');
+      setShowToast(true);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // First check content with GhostGuard
+      const checkResponse = await apiService.makeRequest('/community/check-content', 'POST', {
+        text: `${newPostTitle} ${newPostContent}`
+      });
+      
+      if (checkResponse.success && !checkResponse.isAppropriate) {
+        // Content is flagged as inappropriate
+        setShowContentWarning(true);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // If content is appropriate, proceed with posting
+      const response = await apiService.makeRequest('/community/post', 'POST', {
+        title: newPostTitle,
+        content: newPostContent,
+        category: selectedCategory || 'General'
+      });
+      
+      if (response.success) {
+        // Reset form and show success message
+        setNewPostTitle('');
+        setNewPostContent('');
+        setToastMessage('Post created successfully!');
+        setShowToast(true);
+        
+        // Refresh posts
+        // Add code to refresh posts here...
+      } else {
+        setToastMessage(response.message || 'Failed to create post');
+        setShowToast(true);
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      setToastMessage('Network error when creating post');
+      setShowToast(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderNewPostModal = () => (
+    <IonModal isOpen={showNewPostModal} onDidDismiss={() => setShowNewPostModal(false)}>
+      <div className="new-post-header">
+        <h2>Create New Post</h2>
+        <IonButton fill="clear" onClick={() => setShowNewPostModal(false)}>
+          <IonIcon icon={closeOutline} />
+        </IonButton>
+      </div>
+      
+      <div className="new-post-content">
+        <IonItem className="post-title-input">
+          <IonLabel position="floating">Post Title</IonLabel>
+          <IonInput 
+            value={newPostTitle} 
+            onIonChange={e => setNewPostTitle(e.detail.value || '')}
+          />
+        </IonItem>
+        
+        <IonItem className="post-content-input">
+          <IonLabel position="floating">Post Content</IonLabel>
+          <IonTextarea 
+            rows={8}
+            value={newPostContent} 
+            onIonChange={e => setNewPostContent(e.detail.value || '')}
+          />
+        </IonItem>
+        
+        <IonItem className="post-category-select">
+          <IonLabel>Category</IonLabel>
+          <IonSelect value={selectedCategory} onIonChange={e => setSelectedCategory(e.detail.value)}>
+            {categories.map(category => (
+              <IonSelectOption key={category.name} value={category.name}>{category.name}</IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+      </div>
+      
+      <div className="new-post-actions">
+        <IonButton expand="block" onClick={handleSubmitPost} disabled={isSubmitting}>
+          {isSubmitting ? <IonSpinner name="dots" /> : 'Post to Community'}
+        </IonButton>
+      </div>
+    </IonModal>
+  );
+
+  const renderContentWarningModal = () => (
+    <IonModal isOpen={showContentWarning} onDidDismiss={() => setShowContentWarning(false)}>
+      <div className="warning-modal-content">
+        <div className="warning-icon">
+          <IonIcon icon={alertCircleOutline} color="danger" />
+        </div>
+        <h2>Content Warning</h2>
+        <p>
+          Our GhostGuard system has detected potentially inappropriate content in your post.
+          Please review our community guidelines and revise your content.
+        </p>
+        <IonButton expand="block" onClick={() => setShowContentWarning(false)}>
+          Revise My Post
+        </IonButton>
+      </div>
+    </IonModal>
+  );
 
   return (
     <IonPage className="community-page">
@@ -357,7 +487,7 @@ const CommunityPage: React.FC = () => {
         </div>
         
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton className="community-fab-button">
+          <IonFabButton className="community-fab-button" onClick={() => setShowNewPostModal(true)}>
             <IonIcon icon={addOutline} />
           </IonFabButton>
         </IonFab>
@@ -440,6 +570,9 @@ const CommunityPage: React.FC = () => {
             </div>
           </IonContent>
         </IonModal>
+
+        {renderNewPostModal()}
+        {renderContentWarningModal()}
       </IonContent>
     </IonPage>
   );
