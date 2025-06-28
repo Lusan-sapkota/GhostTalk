@@ -9,17 +9,6 @@ auth_bp = Blueprint('auth', __name__)
 auth_service = AuthService()
 username_repository = UsernameRepository()
 
-@auth_bp.route('/<path:path>', methods=['OPTIONS'])
-def options_handler(path):
-    """Handle OPTIONS requests for CORS preflight checks"""
-    response = jsonify({})
-    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Max-Age', '86400')  # 24 hours
-    return response
-
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """Register a new user"""
@@ -591,7 +580,7 @@ def validate_token():
     # Handle OPTIONS requests
     if request.method == 'OPTIONS':
         response = jsonify({'success': True})
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8100')
+        response.headers.add('Access-Control-Allow-Origin', 'http://192.168.18.2:8100')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
         response.headers.add('Access-Control-Allow-Credentials', 'true')

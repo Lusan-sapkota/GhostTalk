@@ -51,12 +51,12 @@ export const fixAndroidPaths = () => {
     }
   });
 
-  // Fix localhost:8100 links
-  document.querySelectorAll('a[href^="http://localhost:8100"], a[href^="https://localhost:8100"]').forEach(link => {
+  // Fix 192.168.18.2:8100 links
+  document.querySelectorAll('a[href^="http://192.168.18.2:8100"], a[href^="https://192.168.18.2:8100"]').forEach(link => {
     const href = link.getAttribute('href');
     if (href) {
-      const newHref = href.replace(/https?:\/\/localhost:8100/g, '');
-      console.log(`Fixing localhost:8100 link: ${href} -> ${newHref}`);
+      const newHref = href.replace(/https?:\/\/192.168.18.2:8100/g, '');
+      console.log(`Fixing 192.168.18.2:8100 link: ${href} -> ${newHref}`);
       link.setAttribute('href', newHref);
     }
   });

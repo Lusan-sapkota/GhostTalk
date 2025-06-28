@@ -22,13 +22,18 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Define all allowed origins - both localhost and GitHub Codespaces
+    # Define all allowed origins - both 192.168.18.2 and GitHub Codespaces
     codespace_prefix = "automatic-engine-xqqxj997v77hv67q"
     allowed_origins = [
         f"https://{codespace_prefix}-8100.app.github.dev",  # GitHub Codespaces frontend
-        "http://localhost:8100",                            # Local development frontend
-        "https://localhost:8100",                           # Secure local frontend
-        "http://localhost:3000",                            # Alternative local port
+        "http://192.168.18.2:8100",                            # Local development frontend
+        "https://192.168.18.2:8100",                           # Secure local frontend
+        "http://192.168.18.2:3000",                            # Alternative local port
+        "http://localhost:8100",                               # Localhost frontend
+        "https://localhost:8100",                              # Secure localhost frontend
+        "http://localhost:3000",                               # Alternative localhost port
+        "http://127.0.0.1:8100",                               # 127.0.0.1 frontend
+        "https://127.0.0.1:8100",                              # Secure 127.0.0.1 frontend
         "null"                                              # For file:// protocol in some tests
     ]
     
@@ -37,11 +42,15 @@ def create_app(config_class=Config):
     def handle_cors(response):
         origin = request.headers.get('Origin', '')
         
-        # Always allow any GitHub Codespaces domain
+        # Always allow any GitHub Codespaces domain and local development
         if origin and (".github.dev" in origin or 
                        origin in allowed_origins or 
+                       origin.startswith('http://192.168.18.2') or
+                       origin.startswith('https://192.168.18.2') or
                        origin.startswith('http://localhost') or
-                       origin.startswith('https://localhost')):
+                       origin.startswith('https://localhost') or
+                       origin.startswith('http://127.0.0.1') or
+                       origin.startswith('https://127.0.0.1')):
             
             # Set CORS headers for this response
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -63,8 +72,12 @@ def create_app(config_class=Config):
         # Use the same origin check logic as the after_request handler
         if origin and (".github.dev" in origin or 
                       origin in allowed_origins or 
+                      origin.startswith('http://192.168.18.2') or
+                      origin.startswith('https://192.168.18.2') or
                       origin.startswith('http://localhost') or
-                      origin.startswith('https://localhost')):
+                      origin.startswith('https://localhost') or
+                      origin.startswith('http://127.0.0.1') or
+                      origin.startswith('https://127.0.0.1')):
             
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"

@@ -38,8 +38,8 @@ def get_client_ip():
     client_ip = request.remote_addr
     print(f"[IP DETECTION] Using fallback remote_addr: {client_ip}")
     
-    # For development environments, use a fallback IP for testing when we detect localhost
-    if client_ip in ('127.0.0.1', 'localhost', '::1'):
+    # For development environments, use a fallback IP for testing when we detect 192.168.18.2
+    if client_ip in ('127.0.0.1', '192.168.18.2', '::1'):
         test_ip = request.headers.get('X-Test-IP')
         if test_ip:
             print(f"[IP DETECTION] Development mode: using test IP {test_ip}")

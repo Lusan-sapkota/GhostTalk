@@ -4,9 +4,8 @@
 .DS_Store
 Thumbs.db
 *.log
-# Temporarily allow env files for private repo
-# *.env
-# *.env.*.local
+*.env
+*.env.*.local
 *.swp
 *.swo
 *.bak
@@ -35,8 +34,7 @@ Frontend/.vscode/
 Frontend/package-lock.json
 Frontend/yarn.lock
 Frontend/pnpm-lock.yaml
-# Temporarily allow env files for private repo
-# Frontend/.env.local
+Frontend/.env.local
 Frontend/.env.development.local
 Frontend/.env.production.local
 Frontend/*.tsbuildinfo
@@ -50,9 +48,8 @@ Backend/*.pyo
 Backend/*.pyd
 Backend/*.db
 Backend/*.sqlite3
-# Temporarily allow env files for private repo
-# Backend/.env
-# Backend/.flaskenv
+Backend/.env
+Backend/.flaskenv
 Backend/.python-version
 Backend/.mypy_cache/
 Backend/.pytest_cache/
@@ -61,7 +58,7 @@ Backend/.idea/
 Backend/instance/
 Backend/venv/
 Backend/.venv/
-# Backend/env/
+Backend/env/
 Backend/*.egg-info/
 Backend/.coverage
 Backend/htmlcov/

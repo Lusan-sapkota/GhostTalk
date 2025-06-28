@@ -8,5 +8,5 @@ export const isAndroidApp = (): boolean => {
 
 export const isAndroidOrDev = (): boolean => {
   // Returns true if Android app or local development
-  return isAndroidApp() || window.location.hostname === 'localhost';
+  return isAndroidApp() || window.location.hostname === '192.168.18.2';
 };

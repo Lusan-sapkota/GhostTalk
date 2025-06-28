@@ -376,7 +376,7 @@ const Profile: React.FC = () => {
     }
     
     // Use the backend proxy endpoint
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
     const url = `${apiBaseUrl}/user/avatar/${avatarId}`;
     console.log('Generated avatar URL:', url);
     return url;
@@ -426,7 +426,7 @@ const Profile: React.FC = () => {
           setToastMessage('Avatar updated successfully');
           // Set the new avatar URL from the backend
           if (response.avatar) {
-            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000/api';
             setAvatar(`${apiBaseUrl}/user/avatar/${response.avatar}`);
           }
         } else {

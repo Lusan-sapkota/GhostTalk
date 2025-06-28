@@ -67,7 +67,7 @@ public class MainActivity extends BridgeActivity {
     // Force background color
     webView.setBackgroundColor(Color.WHITE);
     
-    // Set default app URL to load local files instead of localhost
+    // Set default app URL to load local files instead of 192.168.18.2
     // This is critical - we need to ensure we're starting with file:// URLs
     webView.loadUrl("file:///android_asset/public/index.html");
     
@@ -85,18 +85,18 @@ public class MainActivity extends BridgeActivity {
           Log.d(TAG, "Loading resource: " + url);
         }
         
-        // Intercept and redirect localhost requests for resources
-        // Updated to handle IP address instead of localhost
-        if (url.contains("localhost:8100") || url.contains("localhost:8101")) {
+        // Intercept and redirect 192.168.18.2 requests for resources
+        // Updated to handle IP address instead of 192.168.18.2
+        if (url.contains("192.168.18.2:8100") || url.contains("192.168.18.2:8101")) {
           // Extract path after IP:port
           String path;
-          if (url.contains("localhost:8100")) {
-            path = url.substring(url.indexOf("localhost:8100") + "localhost:8100".length());
-          } else if (url.contains("localhost:8101")) {
-            path = url.substring(url.indexOf("localhost:8101") + "localhost:8101".length());
+          if (url.contains("192.168.18.2:8100")) {
+            path = url.substring(url.indexOf("192.168.18.2:8100") + "192.168.18.2:8100".length());
+          } else if (url.contains("192.168.18.2:8101")) {
+            path = url.substring(url.indexOf("192.168.18.2:8101") + "192.168.18.2:8101".length());
           } else {
-            // Generic handling for other localhost URLs
-            int portIndex = url.indexOf("localhost:") + "localhost:".length();
+            // Generic handling for other 192.168.18.2 URLs
+            int portIndex = url.indexOf("192.168.18.2:") + "192.168.18.2:".length();
             int pathIndex = url.indexOf("/", portIndex);
             if (pathIndex > 0) {
               path = url.substring(pathIndex);
@@ -126,17 +126,17 @@ public class MainActivity extends BridgeActivity {
         String url = request.getUrl().toString();
         Log.d(TAG, "URL loading: " + url);
         
-        // REMOVED localhost references - only handle IP URLs
-        if (url.contains("localhost:8100") || url.contains("localhost:8101")) {
+        // REMOVED 192.168.18.2 references - only handle IP URLs
+        if (url.contains("192.168.18.2:8100") || url.contains("192.168.18.2:8101")) {
           
           String path;
-          if (url.contains("localhost:8100")) {
+          if (url.contains("192.168.18.2:8100")) {
             // Extract path after IP:8100
-            int startIndex = url.indexOf("localhost:8100") + "localhost:8100".length();
+            int startIndex = url.indexOf("192.168.18.2:8100") + "192.168.18.2:8100".length();
             path = url.substring(startIndex);
           } else {
             // Extract path after IP:8101
-            int startIndex = url.indexOf("localhost:8101") + "localhost:8101".length();
+            int startIndex = url.indexOf("192.168.18.2:8101") + "192.168.18.2:8101".length();
             path = url.substring(startIndex);
           }
           
@@ -148,8 +148,8 @@ public class MainActivity extends BridgeActivity {
           return true;
         }
         
-        // Handle deep links - REMOVED localhost reference
-        if (url.contains("localhost") && url.contains("/")) {
+        // Handle deep links - REMOVED 192.168.18.2 reference
+        if (url.contains("192.168.18.2") && url.contains("/")) {
           String path = url.substring(url.indexOf("/", 8));
           Log.d("DeepLink", "Path component: " + path);
           
@@ -165,13 +165,13 @@ public class MainActivity extends BridgeActivity {
         super.onPageStarted(view, url, favicon);
         Log.d(TAG, "Page starting: " + url);
         
-        // If we detect a localhost or IP URL starting to load, immediately redirect
-        if (url.contains("localhost:8100") || url.contains("localhost:8101")) {
+        // If we detect a 192.168.18.2 or IP URL starting to load, immediately redirect
+        if (url.contains("192.168.18.2:8100") || url.contains("192.168.18.2:8101")) {
           String path;
-          if (url.contains("localhost:8100")) {
-            path = url.substring(url.indexOf("localhost:8100") + "localhost:8100".length());
+          if (url.contains("192.168.18.2:8100")) {
+            path = url.substring(url.indexOf("192.168.18.2:8100") + "192.168.18.2:8100".length());
           } else {
-            path = url.substring(url.indexOf("localhost:8101") + "localhost:8101".length());
+            path = url.substring(url.indexOf("192.168.18.2:8101") + "192.168.18.2:8101".length());
           }
           
           if (path.isEmpty() || path.equals("/")) path = "/index.html";
@@ -216,7 +216,7 @@ public class MainActivity extends BridgeActivity {
             "      if (url && url.startsWith('file:///')) {" +
             "        url = url.substring(url.lastIndexOf('/')+1);" +
             "        console.log('Fixed URL for history: ' + url);" +
-            "      } else if (url && (url.indexOf('localhost:8100') > -1 || url.indexOf('localhost:8101') > -1)) {" +
+            "      } else if (url && (url.indexOf('192.168.18.2:8100') > -1 || url.indexOf('192.168.18.2:8101') > -1)) {" +
             "        url = url.replace(/https?:\\/\\/192\\.168\\.18\\.2:\\d+/g, '');" +
             "        console.log('Fixed IP URL for history: ' + url);" +
             "      }" +
@@ -228,7 +228,7 @@ public class MainActivity extends BridgeActivity {
             "};" +
             
             // Fix 4: Fix all IP references in the DOM
-            "document.querySelectorAll('[href*=\"localhost:8100\"], [href*=\"localhost:8101\"], [src*=\"localhost:8100\"], [src*=\"localhost:8101\"]').forEach(function(el) {" +
+            "document.querySelectorAll('[href*=\"192.168.18.2:8100\"], [href*=\"192.168.18.2:8101\"], [src*=\"192.168.18.2:8100\"], [src*=\"192.168.18.2:8101\"]').forEach(function(el) {" +
             "  var attrName = el.hasAttribute('href') ? 'href' : 'src';" +
             "  var attrValue = el.getAttribute(attrName);" +
             "  if (attrValue) {" +
@@ -242,7 +242,7 @@ public class MainActivity extends BridgeActivity {
             "if (!window._originalFetch) {" +
             "  window._originalFetch = window.fetch;" +
             "  window.fetch = function(url, options) {" +
-            "    if (typeof url === 'string' && (url.includes('localhost:8100') || url.includes('localhost:8101'))) {" +
+            "    if (typeof url === 'string' && (url.includes('192.168.18.2:8100') || url.includes('192.168.18.2:8101'))) {" +
             "      url = url.replace(/https?:\\/\\/192\\.168\\.18\\.2:\\d+/g, '');" +
             "      console.log('Intercepted fetch to IP, redirecting to:', url);" +
             "    }" +
@@ -253,7 +253,7 @@ public class MainActivity extends BridgeActivity {
             // Fix for XHR - update to handle any IP port
             "var originalOpen = XMLHttpRequest.prototype.open;" +
             "XMLHttpRequest.prototype.open = function(method, url, async, user, password) {" +
-            "  if (typeof url === 'string' && (url.includes('localhost:8100') || url.includes('localhost:8101'))) {" +
+            "  if (typeof url === 'string' && (url.includes('192.168.18.2:8100') || url.includes('192.168.18.2:8101'))) {" +
             "    url = url.replace(/https?:\\/\\/192\\.168\\.18\\.2:\\d+/g, '');" +
             "    console.log('Intercepted XHR to IP, redirecting to:', url);" +
             "  }" +
@@ -291,19 +291,19 @@ public class MainActivity extends BridgeActivity {
         // More verbose logging for debugging
         Log.d(TAG, "Attempting to recover from WebView error...");
         
-        // REMOVED localhost check - only handle IP URLs
-        if (failingUrl.contains("localhost")) {
+        // REMOVED 192.168.18.2 check - only handle IP URLs
+        if (failingUrl.contains("192.168.18.2")) {
           String path = "";
           
-          if (failingUrl.contains("localhost:8100")) {
-            path = failingUrl.substring(failingUrl.indexOf("localhost:8100") + "localhost:8100".length());
-            Log.d(TAG, "Extracted path from localhost:8100: " + path);
-          } else if (failingUrl.contains("localhost:8101")) {
-            path = failingUrl.substring(failingUrl.indexOf("localhost:8101") + "localhost:8101".length());
-            Log.d(TAG, "Extracted path from localhost:8101: " + path);
+          if (failingUrl.contains("192.168.18.2:8100")) {
+            path = failingUrl.substring(failingUrl.indexOf("192.168.18.2:8100") + "192.168.18.2:8100".length());
+            Log.d(TAG, "Extracted path from 192.168.18.2:8100: " + path);
+          } else if (failingUrl.contains("192.168.18.2:8101")) {
+            path = failingUrl.substring(failingUrl.indexOf("192.168.18.2:8101") + "192.168.18.2:8101".length());
+            Log.d(TAG, "Extracted path from 192.168.18.2:8101: " + path);
           } else {
             // Generic IP handling - extract whatever port it might have
-            int portStartIdx = failingUrl.indexOf("localhost:") + "localhost:".length();
+            int portStartIdx = failingUrl.indexOf("192.168.18.2:") + "192.168.18.2:".length();
             int portEndIdx = failingUrl.indexOf("/", portStartIdx);
             
             if (portEndIdx > 0) {

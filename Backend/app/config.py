@@ -28,7 +28,7 @@ class Config:
     APPWRITE_COLLECTION_ID_CHAT_ROOMS = os.environ.get('APPWRITE_COLLECTION_ID_CHAT_ROOMS')
     
     # Frontend URL for email verification links, etc.
-    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8100')
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://192.168.18.2:8100')
     
     # Email configuration
     SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.zoho.com')

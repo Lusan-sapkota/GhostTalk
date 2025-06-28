@@ -997,7 +997,7 @@ class AppwriteService:
             print(f"Successfully fetched {len(all_files)} files out of {total_files if total_files is not None else 'unknown'} total")
             
             # Process all files we've gathered
-            backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+            backend_base_url = os.environ.get('BACKEND_URL', 'http://192.168.18.2:5000/api')
             
             avatars = []
             for file in all_files:
@@ -1485,7 +1485,7 @@ class AppwriteService:
                     
                     # Add avatar if available
                     if user.get('avatar'):
-                        backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+                        backend_base_url = os.environ.get('BACKEND_URL', 'http://192.168.18.2:5000/api')
                         user_data['avatar'] = f"{backend_base_url}/user/avatar/{user.get('avatar')}"
                     
                     users.append(user_data)
@@ -1592,7 +1592,7 @@ class AppwriteService:
             
             # Format results
             users = []
-            backend_base_url = os.environ.get('BACKEND_URL', 'http://localhost:5000/api')
+            backend_base_url = os.environ.get('BACKEND_URL', 'http://192.168.18.2:5000/api')
             
             for user in paginated_users:
                 # Skip users who have disabled search visibility (double-check)

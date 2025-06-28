@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api'; // Update this with your actual Flask API URL
+const BASE_URL = 'http://192.168.18.2:5000/api'; // Update this with your actual Flask API URL
 
 export class ApiService {
   private API_URL: string;
@@ -26,7 +26,7 @@ export class ApiService {
       console.log('Codespaces API URL constructed as:', this.API_URL);
     } else {
       // Regular local development
-      this.API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      this.API_URL = import.meta.env.VITE_API_URL || 'http://192.168.18.2:5000';
     }
     
     // Add /api to the URL path
