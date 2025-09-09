@@ -1,0 +1,62 @@
+# === GLOBAL IGNORE RULES ===
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS/Editor files
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# === BACKEND (Python) ===
+backend/__pycache__/
+backend/env/
+backend/.venv/
+backend/venv/
+backend/**/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/*.sqlite3
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.env
+backend/.env.*
+
+# === FRONTEND (Node.js/React/Next.js) ===
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+frontend/dist-ssr/
+frontend/out/
+frontend/.env
+frontend/.env.*
+frontend/.local
+
+# Optional build artifacts (frontend)
+frontend/build/
+frontend/.turbo/
+frontend/.vercel/
+
+# Lock files (optional based on workflow)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Monorepo Tools (optional)
+.nx/
+/.kiro/*
