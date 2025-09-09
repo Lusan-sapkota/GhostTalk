@@ -38,19 +38,15 @@ backend/.env
 backend/.env.*
 
 # === FRONTEND (Node.js/React/Next.js) ===
-frontend/node_modules/
-frontend/.next/
-frontend/dist/
-frontend/dist-ssr/
-frontend/out/
-frontend/.env
-frontend/.env.*
-frontend/.local
+frontend/GhostTalk/node_modules/
+frontend/GhostTalk/.env
+frontend/GhostTalk/.env.*
+frontend/GhostTalk/.local
 
 # Optional build artifacts (frontend)
-frontend/build/
-frontend/.turbo/
-frontend/.vercel/
+frontend/GhostTalk/build/
+frontend/GhostTalk/.turbo/
+frontend/GhostTalk/.vercel/
 
 # Lock files (optional based on workflow)
 package-lock.json
