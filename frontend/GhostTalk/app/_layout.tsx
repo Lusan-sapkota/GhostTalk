@@ -3,10 +3,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
 import 'react-native-reanimated';
 
 import '../global.css';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -14,16 +17,31 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+  const [isAuthed, setIsAuthed] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    (async () => {
+      const token = await AsyncStorage.getItem('token');
+      setIsAuthed(!!token);
+    })();
+  }, []);
+
+  // Wait for both fonts and auth state before rendering to avoid hook order changes
+  const ready = loaded && isAuthed !== null;
+  if (!ready) return null;
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* @ts-ignore */}
       <View className={colorScheme === 'dark' ? 'dark' : ''} style={{ flex: 1 }}>
-        <Stack>
+  <Stack
+          initialRouteName={isAuthed ? '(tabs)' : 'screens/Login'}
+          screenOptions={{
+            headerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background },
+            headerTintColor: Colors[colorScheme ?? 'light'].text,
+            contentStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background },
+          }}
+        >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Login" options={{ title: 'Login' }} />
           <Stack.Screen name="screens/Register" options={{ title: 'Register' }} />
@@ -36,7 +54,7 @@ export default function RootLayout() {
           <Stack.Screen name="screens/CreatePost" options={{ title: 'Create Post' }} />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style="auto" />
+  <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </View>
     </ThemeProvider>
   );

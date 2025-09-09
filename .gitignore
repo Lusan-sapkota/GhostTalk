@@ -42,6 +42,7 @@ frontend/GhostTalk/node_modules/
 frontend/GhostTalk/.env
 frontend/GhostTalk/.env.*
 frontend/GhostTalk/.local
+frontend/GhostTalk/expo-env.d.ts
 
 # Optional build artifacts (frontend)
 frontend/GhostTalk/build/

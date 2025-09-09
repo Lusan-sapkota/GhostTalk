@@ -1,17 +1,35 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://localhost:8000'; // Change this to your backend URL
+// Resolve a backend base URL that works on device, emulator, and web
+function resolveApiBaseUrl() {
+  // Try to infer LAN IP from Expo Go config when running in dev
+  const hostUri = (Constants as any)?.expoGoConfig?.hostUri || (Constants as any)?.expoConfig?.hostUri;
+  let host = undefined as string | undefined;
+  if (typeof hostUri === 'string') {
+    // e.g. "192.168.18.43:8081"
+    host = hostUri.split(':')[0];
+  }
+  if (!host) {
+    host = Platform.select({ android: '10.0.2.2', ios: 'localhost', default: 'localhost' });
+  }
+  return `http://${host}:8000`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Type': 'application/json',
   },
 });
 
 // Add token to requests if available
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); // Or AsyncStorage for React Native
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Token ${token}`;
   }

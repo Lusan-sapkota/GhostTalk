@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFeedPosts, Post } from '../api';
 import PostItem from '../../components/PostItem';
 
 export default function HomeScreen({ navigation }: any) {
+  const scheme = useColorScheme();
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     fetchPosts();
+    (async () => {
+      const t = await AsyncStorage.getItem('token');
+      if (!t) {
+        navigation.replace('screens/Login');
+      }
+    })();
   }, []);
 
   const fetchPosts = async () => {
@@ -32,9 +43,10 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <TouchableOpacity onPress={() => navigation.navigate('screens/CreatePost')} style={{ backgroundColor: 'blue', padding: 10 }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>Create Post</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[scheme ?? 'light'].background }}>
+      <View style={{ flex: 1 }}>
+      <TouchableOpacity onPress={() => navigation.navigate('screens/CreatePost')} style={{ backgroundColor: Colors[scheme ?? 'light'].primary, padding: 12, margin: 12, borderRadius: 12 }}>
+        <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Create Post ✍️</Text>
       </TouchableOpacity>
       <FlatList
         data={posts}
@@ -47,7 +59,9 @@ export default function HomeScreen({ navigation }: any) {
             onPress={handlePostPress}
           />
         )}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: Colors[scheme ?? 'light'].icon }}>No posts yet.</Text>}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createPost } from '../api';
 
 const CreatePost: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const scheme = useColorScheme();
 
   const handleCreatePost = async () => {
     try {
@@ -17,8 +21,8 @@ const CreatePost: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, marginBottom: 20 }}>Create Post</Text>
+    <SafeAreaView style={{ flex: 1, padding: 20, backgroundColor: Colors[scheme ?? 'light'].background }}>
+      <Text style={{ fontSize: 24, marginBottom: 20, color: Colors[scheme ?? 'light'].text }}>Create Post ✍️</Text>
       <TextInput
         placeholder="Title"
         value={title}
@@ -32,10 +36,10 @@ const CreatePost: React.FC<{ navigation: any }> = ({ navigation }) => {
         multiline
         style={{ borderWidth: 1, padding: 10, marginBottom: 20, height: 100 }}
       />
-      <TouchableOpacity onPress={handleCreatePost} style={{ backgroundColor: 'blue', padding: 10 }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>Create Post</Text>
+      <TouchableOpacity onPress={handleCreatePost} style={{ backgroundColor: Colors[scheme ?? 'light'].primary, padding: 12, borderRadius: 10 }}>
+        <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Create</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
