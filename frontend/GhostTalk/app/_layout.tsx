@@ -25,6 +25,15 @@ export default function RootLayout() {
       <View className={colorScheme === 'dark' ? 'dark' : ''} style={{ flex: 1 }}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Login" options={{ title: 'Login' }} />
+          <Stack.Screen name="screens/Register" options={{ title: 'Register' }} />
+          <Stack.Screen name="screens/Home" options={{ title: 'Home' }} />
+          <Stack.Screen name="screens/Profile" options={{ title: 'Profile' }} />
+          <Stack.Screen name="screens/Friends" options={{ title: 'Friends' }} />
+          <Stack.Screen name="screens/ChatList" options={{ title: 'Chats' }} />
+          <Stack.Screen name="screens/ChatRoom" options={{ title: 'Chat' }} />
+          <Stack.Screen name="screens/PostDetail" options={{ title: 'Post' }} />
+          <Stack.Screen name="screens/CreatePost" options={{ title: 'Create Post' }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />
