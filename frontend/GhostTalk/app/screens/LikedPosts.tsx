@@ -1,21 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Animated, Easing, Image } from 'react-native';
+import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Easing } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getProfile, getUserPosts, Post, Profile as ProfileType, likePost, savePost } from '../api';
+import { getLikedPosts, Post, likePost, savePost } from '../api';
 import PostItem from '../../components/PostItem';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Profile: React.FC = () => {
-  const router = useRouter();
+export default function LikedPostsScreen() {
   const scheme = useColorScheme();
-  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    fetchProfile();
+    fetchLikedPosts();
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1.08, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
@@ -24,25 +27,26 @@ const Profile: React.FC = () => {
     ).start();
   }, []);
 
-  const fetchProfile = async () => {
+  const fetchLikedPosts = async () => {
     try {
-      const response = await getProfile();
-      
-      // The API returns { user: {...}, profile: {...} }
-      // We need to combine them into the expected Profile structure
-      const combinedProfile = {
-        id: response.data.profile.id,
-        user: response.data.user,
-        is_online: response.data.profile.is_online,
-        bio: response.data.profile.bio,
-        image: response.data.profile.image
-      };
-      
-      setProfile(combinedProfile);
-      const postsResponse = await getUserPosts(response.data.user.username);
-      setPosts(postsResponse.data.posts);
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        router.replace('/screens/Login');
+        return;
+      }
+      const response = await getLikedPosts();
+      setPosts(response?.data?.liked_posts ?? []);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error fetching liked posts:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchLikedPosts();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -74,24 +78,22 @@ const Profile: React.FC = () => {
     router.push({ pathname: '/screens/PostDetail', params: { post: JSON.stringify(post) } });
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await fetchProfile();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  if (!profile) return <Text>Loading...</Text>;
-
   return (
-    <View style={{ flex: 1, padding: 10, backgroundColor: Colors[scheme ?? 'light'].background }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', color: Colors[scheme ?? 'light'].text }}>{profile?.user?.username || 'Unknown User'}</Text>
-      <Text style={{ color: Colors[scheme ?? 'light'].text }}>{profile.bio}</Text>
-      <TouchableOpacity onPress={() => {}} style={{ backgroundColor: 'blue', padding: 10, marginVertical: 10 }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>Edit Profile</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[scheme ?? 'light'].background }}>
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: Colors[scheme ?? 'light'].icon + '20' }]}>
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color={Colors[scheme ?? 'light'].text}
+          onPress={() => router.back()}
+          style={{ marginRight: 16 }}
+        />
+        <Text style={[styles.headerTitle, { color: Colors[scheme ?? 'light'].text }]}>
+          Liked Posts
+        </Text>
+      </View>
+
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id.toString()}
@@ -103,20 +105,42 @@ const Profile: React.FC = () => {
             onPress={handlePostPress}
           />
         )}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors[scheme ?? 'light'].tint}
+          />
+        }
         ListEmptyComponent={
           <View style={{ alignItems: 'center', marginTop: 48 }}>
             <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
+              <Ionicons name="heart-outline" size={52} color={Colors[scheme ?? 'light'].icon} />
             </Animated.View>
-            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No posts yet</Text>
-            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>Share your first whisper…</Text>
+            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+              No liked posts yet
+            </Text>
+            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
+              Like posts to see them here
+            </Text>
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
-export default Profile;
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+});

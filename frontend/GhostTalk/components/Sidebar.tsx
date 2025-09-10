@@ -58,6 +58,36 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
     router.push('/screens/Search');
   };
 
+  const handleSavedPostsPress = () => {
+    onClose();
+    router.push('/screens/SavedPosts');
+  };
+
+  const handleLikedPostsPress = () => {
+    onClose();
+    router.push('/screens/LikedPosts');
+  };
+
+  const handleMyPostsPress = () => {
+    onClose();
+    router.push('/screens/MyPosts');
+  };
+
+  const handleAboutPress = () => {
+    onClose();
+    router.push('/screens/About');
+  };
+
+  const handleLegalPress = () => {
+    onClose();
+    router.push('/screens/Legal');
+  };
+
+  const handleContactPress = () => {
+    onClose();
+    router.push('/screens/Contact');
+  };
+
   const handleLogoutPress = () => {
     Alert.alert(
       'Logout',
@@ -135,6 +165,21 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
               onPress={handleProfilePress}
             />
             <SidebarItem
+              icon="document-text-outline"
+              label="My Posts"
+              onPress={handleMyPostsPress}
+            />
+            <SidebarItem
+              icon="bookmark-outline"
+              label="Saved Posts"
+              onPress={handleSavedPostsPress}
+            />
+            <SidebarItem
+              icon="heart-outline"
+              label="Liked Posts"
+              onPress={handleLikedPostsPress}
+            />
+            <SidebarItem
               icon="search-outline"
               label="Search"
               onPress={handleSearchPress}
@@ -143,6 +188,21 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
               icon="settings-outline"
               label="Settings"
               onPress={handleSettingsPress}
+            />
+            <SidebarItem
+              icon="information-circle-outline"
+              label="About"
+              onPress={handleAboutPress}
+            />
+            <SidebarItem
+              icon="help-circle-outline"
+              label="Help & Legal"
+              onPress={handleLegalPress}
+            />
+            <SidebarItem
+              icon="call-outline"
+              label="Contact"
+              onPress={handleContactPress}
             />
             <SidebarItem
               icon="log-out-outline"

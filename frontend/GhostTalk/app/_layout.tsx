@@ -59,6 +59,13 @@ export default function RootLayout() {
           <Stack.Screen name="screens/CreatePost" options={{ title: 'Create Post' }} />
           <Stack.Screen name="screens/Search" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Settings" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/About" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Legal" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Contact" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/SavedPosts" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/LikedPosts" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/MyPosts" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
   <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

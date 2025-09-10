@@ -8,9 +8,11 @@ interface CommentItemProps {
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({ comment, onLike }) => {
+  const authorName = comment?.user?.username || 'Unknown User';
+  
   return (
     <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
-      <Text style={{ fontWeight: 'bold' }}>{comment.user.username}</Text>
+      <Text style={{ fontWeight: 'bold' }}>{authorName}</Text>
       <Text>{comment.body}</Text>
       <TouchableOpacity onPress={() => onLike(comment.id, comment.post_id)}>
         <Text>Like ({comment.likes_count})</Text>

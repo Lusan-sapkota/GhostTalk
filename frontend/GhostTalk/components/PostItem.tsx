@@ -19,6 +19,10 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress }) =>
   const iconColor = Colors[scheme ?? 'light'].icon;
   const subtle = scheme === 'dark' ? '#aaa' : '#666';
 
+  // Handle case where author might be undefined
+  const authorName = post?.author?.username || 'Unknown User';
+  const authorDisplay = post?.author?.first_name || post?.author?.username || 'Unknown User';
+
   return (
     <View style={{ paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: scheme === 'dark' ? '#222' : '#eee' }}>
       {/* Header */}
@@ -28,7 +32,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress }) =>
             <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
           </View>
           <View>
-            <Text style={{ fontWeight: '700' }}>{post.author.username}</Text>
+            <Text style={{ fontWeight: '700', color: Colors[scheme ?? 'light'].text }}>{authorName}</Text>
             <Text style={{ fontSize: 11, color: subtle }}>{new Date(post.date_posted).toLocaleDateString()}</Text>
           </View>
         </View>

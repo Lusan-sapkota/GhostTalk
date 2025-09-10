@@ -147,7 +147,7 @@ export default function ChatsScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: Colors[scheme ?? 'light'].text, fontWeight: '600' }}>
-                {item.user.username}
+                {item?.user?.username || 'Unknown User'}
               </Text>
               <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 12, marginTop: 2 }}>
                 Tap to open conversation

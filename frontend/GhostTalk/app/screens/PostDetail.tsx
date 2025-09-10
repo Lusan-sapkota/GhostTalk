@@ -33,7 +33,7 @@ const PostDetail: React.FC<{ route: any }> = ({ route }) => {
     <View style={{ flex: 1, padding: 10 }}>
       <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{post.title}</Text>
       <Text>{post.content}</Text>
-      <Text>By {post.author.username}</Text>
+      <Text>By {post?.author?.username || 'Unknown User'}</Text>
       <TextInput
         placeholder="Add a comment"
         value={newComment}
