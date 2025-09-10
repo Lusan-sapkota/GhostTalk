@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
-from .models import Profile
+from .models import Profile, OTP
 from django.contrib.auth.models import User
 from django.dispatch import receiver 
 from django.contrib.auth.signals import user_logged_in, user_logged_out
@@ -15,6 +15,9 @@ from friend.friend_request_status import FriendRequestStatus
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 
 @receiver(user_logged_in)
@@ -67,7 +70,7 @@ def register(request):
             # r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
             # result = r.json()
 
-            # if result['success']:
+                        # if result['success']:
                 form.save()
                 username = form.cleaned_data.get('username')
                 return JsonResponse({'status': 'created', 'username': username}, status=201)
@@ -77,7 +80,106 @@ def register(request):
     return JsonResponse({'error': 'invalid data'}, status=400)
 
 
-""" User profile """
+""" User account creation with OTP """
+@csrf_exempt
+@require_http_methods(["POST"])
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            # Create user but don't save yet
+            user = form.save(commit=False)
+            user.is_active = False  # User is not active until OTP verification
+            user.save()
+            
+            # Create OTP for the user
+            otp_obj, created = OTP.objects.get_or_create(user=user)
+            otp_code = otp_obj.generate_otp()
+            
+            # Send OTP via email
+            try:
+                subject = 'Your OTP for GhostTalk Registration'
+                html_message = render_to_string('users/otp_email.html', {
+                    'user': user,
+                    'otp_code': otp_code
+                })
+                plain_message = strip_tags(html_message)
+                
+                send_mail(
+                    subject,
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                
+                return JsonResponse({
+                    'status': 'otp_sent', 
+                    'message': 'OTP sent to your email',
+                    'user_id': user.id,
+                    'email': user.email
+                }, status=200)
+                
+            except Exception as e:
+                # If email fails, delete the user and return error
+                user.delete()
+                return JsonResponse({'error': 'Failed to send OTP email'}, status=500)
+            
+    return JsonResponse({'error': 'Invalid form data'}, status=400)
+
+
+""" OTP Verification """
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_otp(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        otp_code = request.POST.get('otp_code')
+        
+        if not user_id or not otp_code:
+            return JsonResponse({'error': 'User ID and OTP code are required'}, status=400)
+        
+        try:
+            user = User.objects.get(id=user_id)
+            otp_obj = OTP.objects.get(user=user)
+            
+            if otp_obj.is_expired():
+                return JsonResponse({'error': 'OTP has expired'}, status=400)
+            
+            if otp_obj.otp_code == otp_code:
+                # Mark OTP as verified and activate user
+                otp_obj.is_verified = True
+                otp_obj.save()
+                user.is_active = True
+                user.save()
+                
+                # Create user profile
+                Profile.objects.get_or_create(user=user)
+                
+                return JsonResponse({
+                    'status': 'verified',
+                    'message': 'Account verified successfully',
+                    'username': user.username
+                }, status=200)
+            else:
+                return JsonResponse({'error': 'Invalid OTP code'}, status=400)
+                
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except OTP.DoesNotExist:
+            return JsonResponse({'error': 'OTP not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': 'Verification failed'}, status=500)            
+            
+@csrf_exempt
+@require_http_methods(["GET"])
+def check_username(request):
+    username = request.GET.get('username')
+    if not username:
+        return JsonResponse({'error': 'Username required'}, status=400)
+    available = not User.objects.filter(username=username).exists()
+    return JsonResponse({'available': available})
 @csrf_exempt
 @login_required
 @require_http_methods(["GET", "POST"])

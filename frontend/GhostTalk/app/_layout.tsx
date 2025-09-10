@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { View, SafeAreaView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
 import 'react-native-reanimated';
@@ -33,7 +33,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* @ts-ignore */}
-      <View className={colorScheme === 'dark' ? 'dark' : ''} style={{ flex: 1 }}>
+      <SafeAreaView className={colorScheme === 'dark' ? 'dark' : ''} style={{ flex: 1, backgroundColor: Colors[colorScheme ?? 'light'].background }}>
   <Stack
           initialRouteName={isAuthed ? '(tabs)' : 'screens/Login'}
           screenOptions={{
@@ -43,8 +43,9 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="screens/Login" options={{ title: 'Login' }} />
-          <Stack.Screen name="screens/Register" options={{ title: 'Register' }} />
+          <Stack.Screen name="screens/Login" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Register" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/OTPVerification" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Home" options={{ title: 'Home' }} />
           <Stack.Screen name="screens/Profile" options={{ title: 'Profile' }} />
           <Stack.Screen name="screens/Friends" options={{ title: 'Friends' }} />
@@ -55,7 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" />
         </Stack>
   <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      </View>
+      </SafeAreaView>
     </ThemeProvider>
   );
 }

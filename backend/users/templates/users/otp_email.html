@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostTalk - OTP Verification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .otp-code {
+            background-color: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            display: inline-block;
+        }
+        .otp-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .brand {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👻 GhostTalk</h1>
+            <p>Verify Your Account</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #333; margin-bottom: 20px;">Welcome, {{ user.first_name }}!</h2>
+            
+            <p class="message">
+                Thank you for registering with GhostTalk. To complete your account setup and start whispering with your friends, please verify your email address.
+            </p>
+            
+            <div class="otp-code">
+                <div class="otp-number">{{ otp_code }}</div>
+            </div>
+            
+            <p class="message">
+                Enter this 6-digit code in the app to verify your account. This code will expire in 10 minutes.
+            </p>
+            
+            <div class="warning">
+                ⚠️ <strong>Security Notice:</strong> Never share this code with anyone. Our team will never ask for your verification code.
+            </div>
+            
+            <p style="font-size: 14px; color: #777; margin-top: 30px;">
+                If you didn't create an account with GhostTalk, please ignore this email.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>
+                <span class="brand">GhostTalk</span> - Connect with your friends in the shadows
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                This is an automated message. Please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

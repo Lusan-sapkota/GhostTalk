@@ -24,43 +24,42 @@ const Login: React.FC = () => {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20, backgroundColor: Colors[scheme ?? 'light'].background }}>
+    <View style={{ flex: 1, justifyContent: 'flex-start', paddingTop: 40, paddingHorizontal: 20, paddingBottom: 20, backgroundColor: Colors[scheme ?? 'light'].background }}>
       {/* Logo */}
       <View style={{ alignItems: 'center', marginBottom: 16 }}>
-        <Image source={require('../../assets/images/icon.png')} style={{ width: 72, height: 72, borderRadius: 16 }} />
+      <Image source={require('../../assets/images/icon.png')} style={{ width: 72, height: 72, borderRadius: 16 }} />
       </View>
       {/* Segmented control */}
       <View style={{ flexDirection: 'row', borderRadius: 12, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: Colors[scheme ?? 'light'].icon }}>
-        <TouchableOpacity onPress={() => setMode('signin')} style={{ flex: 1, backgroundColor: mode==='signin'? Colors[scheme ?? 'light'].primary : 'transparent', paddingVertical: 10 }}>
-          <Text style={{ textAlign: 'center', color: mode==='signin' ? 'white' : Colors[scheme ?? 'light'].text, fontWeight: '600' }}>Sign In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/screens/Register')} style={{ flex: 1, backgroundColor: mode==='signup'? Colors[scheme ?? 'light'].primary : 'transparent', paddingVertical: 10 }}>
-          <Text style={{ textAlign: 'center', color: mode==='signup' ? 'white' : Colors[scheme ?? 'light'].text, fontWeight: '600' }}>Sign Up</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => setMode('signin')} style={{ flex: 1, backgroundColor: mode==='signin'? Colors[scheme ?? 'light'].primary : 'transparent', paddingVertical: 10 }}>
+        <Text style={{ textAlign: 'center', color: mode==='signin' ? 'white' : Colors[scheme ?? 'light'].text, fontWeight: '600' }}>Sign In</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push('/screens/Register')} style={{ flex: 1, backgroundColor: mode==='signup'? Colors[scheme ?? 'light'].primary : 'transparent', paddingVertical: 10 }}>
+        <Text style={{ textAlign: 'center', color: mode==='signup' ? 'white' : Colors[scheme ?? 'light'].text, fontWeight: '600' }}>Sign Up</Text>
+      </TouchableOpacity>
       </View>
-      <Text style={{ fontSize: 22, marginBottom: 8, color: Colors[scheme ?? 'light'].text, fontWeight: '700' }}>Welcome back 👋</Text>
-      <Text style={{ marginBottom: 16, color: Colors[scheme ?? 'light'].icon }}>Sign in to continue</Text>
+      <Text style={{ fontSize: 22, marginBottom: 8, color: Colors[scheme ?? 'light'].text, fontWeight: '700' }}>Welcome, Ghost</Text>
+      <Text style={{ marginBottom: 16, color: Colors[scheme ?? 'light'].icon }}>Sign in to continue your whispers</Text>
       <TextInput
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-        style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
+      placeholder="Username"
+      value={username}
+      onChangeText={setUsername}
+      style={{ borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 10, color: Colors[scheme ?? 'light'].text, borderColor: Colors[scheme ?? 'light'].icon, backgroundColor: Colors[scheme ?? 'light'].background }}
+      placeholderTextColor={Colors[scheme ?? 'light'].icon}
       />
       <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={{ borderWidth: 1, padding: 10, marginBottom: 20 }}
+      placeholder="Password"
+      value={password}
+      onChangeText={setPassword}
+      secureTextEntry
+      style={{ borderWidth: 1, padding: 10, marginBottom: 20, borderRadius: 10, color: Colors[scheme ?? 'light'].text, borderColor: Colors[scheme ?? 'light'].icon, backgroundColor: Colors[scheme ?? 'light'].background }}
+      placeholderTextColor={Colors[scheme ?? 'light'].icon}
       />
       <TouchableOpacity onPress={handleLogin} style={{ backgroundColor: Colors[scheme ?? 'light'].primary, padding: 12, borderRadius: 10 }}>
-        <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Login</Text>
+      <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Login</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Implement password reset flow')} style={{ marginTop: 12 }}>
-        <Text style={{ textAlign: 'center', color: Colors[scheme ?? 'light'].highlight }}>Forgot password?</Text>
-      </TouchableOpacity>
-  <TouchableOpacity onPress={() => router.push('/screens/Register')} style={{ marginTop: 10 }}>
-        <Text style={{ textAlign: 'center', color: Colors[scheme ?? 'light'].highlight }}>Don't have an account? Register</Text>
+      <Text style={{ textAlign: 'center', color: Colors[scheme ?? 'light'].highlight }}>Forgot password?</Text>
       </TouchableOpacity>
     </View>
   );

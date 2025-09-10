@@ -39,8 +39,11 @@ api.interceptors.request.use(async (config) => {
 export default api;
 
 // User APIs
-export const registerUser = (username: string, email: string, password: string) =>
-  api.post('/user/register/', { username, email, password1: password, password2: password });
+export const registerUser = (firstName: string, lastName: string, username: string, email: string, password: string) =>
+  api.post('/user/register/', { first_name: firstName, last_name: lastName, username, email, password1: password, password2: password });
+
+export const verifyOTP = (userId: number, otpCode: string) =>
+  api.post('/user/verify-otp/', { user_id: userId, otp_code: otpCode });
 
 export const loginUser = (username: string, password: string) =>
   api.post('/api/auth/token/', { username, password });
