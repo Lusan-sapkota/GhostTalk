@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, SafeAreaView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authUtils } from './api';
 import React from 'react';
 import 'react-native-reanimated';
 
@@ -21,8 +22,8 @@ export default function RootLayout() {
 
   React.useEffect(() => {
     (async () => {
-      const token = await AsyncStorage.getItem('token');
-      setIsAuthed(!!token);
+      const isAuthenticated = await authUtils.isAuthenticated();
+      setIsAuthed(isAuthenticated);
     })();
   }, []);
 
@@ -45,6 +46,9 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Login" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Register" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/ForgotPassword" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/PasswordResetOTP" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/NewPassword" options={{ headerShown: false }} />
           <Stack.Screen name="screens/OTPVerification" options={{ headerShown: false }} />
           <Stack.Screen name="screens/Home" options={{ title: 'Home' }} />
           <Stack.Screen name="screens/Profile" options={{ title: 'Profile' }} />
@@ -53,6 +57,8 @@ export default function RootLayout() {
           <Stack.Screen name="screens/ChatRoom" options={{ title: 'Chat' }} />
           <Stack.Screen name="screens/PostDetail" options={{ title: 'Post' }} />
           <Stack.Screen name="screens/CreatePost" options={{ title: 'Create Post' }} />
+          <Stack.Screen name="screens/Search" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/Notifications" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
   <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

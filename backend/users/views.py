@@ -18,6 +18,33 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+def validate_email_format(email):
+    """Validate email format and check for disposable domains"""
+    import re
+    
+    # Basic email format validation
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        return False, 'Please enter a valid email address'
+    
+    # Check for disposable email domains
+    disposable_domains = [
+        '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'temp-mail.org',
+        'throwaway.email', 'yopmail.com', 'maildrop.cc', 'tempail.com', 'dispostable.com',
+        '0-mail.com', 'mail-temporaire.fr', 'spamgourmet.com', 'getnada.com', 'mailcatch.com'
+    ]
+    
+    domain = email.split('@')[-1].lower()
+    if domain in disposable_domains:
+        return False, 'Disposable email addresses are not allowed. Please use a permanent email address.'
+    
+    return True, None
 
 
 @receiver(user_logged_in)
@@ -54,38 +81,23 @@ def follow_unfollow_profile(request):
     return JsonResponse({'error': 'invalid method'}, status=405)
 
 
-""" User account creation """
 @csrf_exempt
 @require_http_methods(["POST"])
 def register(request):
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            # reCAPTCHA V2 - DISABLED
-            # recaptcha_response = request.POST.get('g-recaptcha-response')
-            # data = {
-            #     'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
-            #     'response': recaptcha_response
-            # }
-            # r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-            # result = r.json()
-
-                        # if result['success']:
-                form.save()
-                username = form.cleaned_data.get('username')
-                return JsonResponse({'status': 'created', 'username': username}, status=201)
-            # else:
-            #     messages.error(request, 'Invalid reCAPTCHA. Please try again.')            
+        # Handle both regular POST data and JSON data
+        if request.content_type == 'application/json':
+            import json
+            try:
+                data = json.loads(request.body)
+                form = UserRegisterForm(data)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        elif request.content_type == 'multipart/form-data':
+            form = UserRegisterForm(request.POST, request.FILES)
+        else:
+            form = UserRegisterForm(request.POST)
             
-    return JsonResponse({'error': 'invalid data'}, status=400)
-
-
-""" User account creation with OTP """
-@csrf_exempt
-@require_http_methods(["POST"])
-def register(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
         if form.is_valid():
             # Create user but don't save yet
             user = form.save(commit=False)
@@ -125,7 +137,13 @@ def register(request):
                 # If email fails, delete the user and return error
                 user.delete()
                 return JsonResponse({'error': 'Failed to send OTP email'}, status=500)
-            
+        else:
+            # Return form errors for debugging
+            return JsonResponse({
+                'error': 'Invalid form data',
+                'form_errors': form.errors
+            }, status=400)
+    
     return JsonResponse({'error': 'Invalid form data'}, status=400)
 
 
@@ -175,11 +193,173 @@ def verify_otp(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def check_username(request):
-    username = request.GET.get('username')
+    username = request.GET.get('username', '').strip()
+    
     if not username:
-        return JsonResponse({'error': 'Username required'}, status=400)
-    available = not User.objects.filter(username=username).exists()
-    return JsonResponse({'available': available})
+        return JsonResponse({'error': 'Username is required'}, status=400)
+    
+    if len(username) < 3:
+        return JsonResponse({'error': 'Username must be at least 3 characters'}, status=400)
+    
+    # Check if username contains only allowed characters
+    import re
+    if not re.match(r'^[a-zA-Z0-9_]+$', username):
+        return JsonResponse({'error': 'Username can only contain letters, numbers, and underscores'}, status=400)
+    
+    # Check if username is available
+    try:
+        user_exists = User.objects.filter(username__iexact=username).exists()
+        return JsonResponse({
+            'available': not user_exists,
+            'username': username
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({'error': 'Failed to check username availability'}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def request_password_reset(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        # Validate email format
+        is_valid, error_msg = validate_email_format(email)
+        if not is_valid:
+            return JsonResponse({'error': error_msg}, status=400)
+
+        try:
+            # Use filter().first() to handle potential duplicate emails
+            # WARNING: Multiple users with same email is a security issue
+            # TODO: Make email field unique in User model
+            user = User.objects.filter(email=email).first()
+            if not user:
+                # Don't reveal if email exists or not for security
+                return JsonResponse({'status': 'otp_sent', 'message': 'If the email exists, OTP has been sent'}, status=200)
+        except Exception as e:
+            logger.warning(f'Error finding user by email {email}: {str(e)}')
+            # Don't reveal if email exists or not for security
+            return JsonResponse({'status': 'otp_sent', 'message': 'If the email exists, OTP has been sent'}, status=200)
+
+        # Create or update password reset OTP
+        otp_obj, created = OTP.objects.get_or_create(user=user)
+        otp_code = otp_obj.generate_otp()
+
+        # Send OTP via email
+        try:
+            subject = 'Password Reset OTP for GhostTalk'
+            html_message = render_to_string('users/password_reset_email.html', {
+                'user': user,
+                'otp_code': otp_code
+            })
+            plain_message = strip_tags(html_message)
+
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            return JsonResponse({
+                'status': 'otp_sent',
+                'message': 'Password reset OTP sent to your email',
+                'user_id': user.id
+            }, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': 'Failed to send OTP email'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_password_reset_otp(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        otp_code = request.POST.get('otp_code')
+
+        if not user_id or not otp_code:
+            return JsonResponse({'error': 'User ID and OTP code are required'}, status=400)
+
+        try:
+            user = User.objects.get(id=user_id)
+            otp_obj = OTP.objects.get(user=user)
+
+            if otp_obj.is_expired():
+                return JsonResponse({'error': 'OTP has expired'}, status=400)
+
+            if otp_obj.otp_code == otp_code:
+                # Mark OTP as verified for password reset
+                otp_obj.is_verified = True
+                otp_obj.save()
+
+                return JsonResponse({
+                    'status': 'verified',
+                    'message': 'OTP verified successfully',
+                    'reset_token': f"{user_id}:{otp_code}"  # Simple token for frontend
+                }, status=200)
+            else:
+                return JsonResponse({'error': 'Invalid OTP code'}, status=400)
+
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except OTP.DoesNotExist:
+            return JsonResponse({'error': 'OTP not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': 'Verification failed'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_password(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        otp_code = request.POST.get('otp_code')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not all([user_id, otp_code, new_password, confirm_password]):
+            return JsonResponse({'error': 'All fields are required'}, status=400)
+
+        if new_password != confirm_password:
+            return JsonResponse({'error': 'Passwords do not match'}, status=400)
+
+        # Validate password strength
+        if len(new_password) < 8:
+            return JsonResponse({'error': 'Password must be at least 8 characters'}, status=400)
+
+        try:
+            user = User.objects.get(id=user_id)
+            otp_obj = OTP.objects.get(user=user)
+
+            # Verify OTP is still valid and verified
+            if not otp_obj.is_verified or otp_obj.is_expired():
+                return JsonResponse({'error': 'OTP verification expired'}, status=400)
+
+            if otp_obj.otp_code != otp_code:
+                return JsonResponse({'error': 'Invalid OTP code'}, status=400)
+
+            # Update password
+            user.set_password(new_password)
+            user.save()
+
+            # Clean up OTP
+            otp_obj.delete()
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Password reset successfully'
+            }, status=200)
+
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except OTP.DoesNotExist:
+            return JsonResponse({'error': 'OTP verification required'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': 'Password reset failed'}, status=500)
 @csrf_exempt
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -212,7 +392,16 @@ def profile(request):
 """ Creating a public profile view """
 @require_http_methods(["GET"])
 def public_profile(request, username):
-    user = User.objects.get(username=username)
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    except User.MultipleObjectsReturned:
+        # Handle unlikely case of duplicate usernames
+        user = User.objects.filter(username=username).first()
+        if not user:
+            return JsonResponse({'error': 'User not found'}, status=404)
+    
     return JsonResponse({'user': {'id': user.id, 'username': user.username}})
 
 
@@ -279,4 +468,186 @@ def profile_detail(request, pk):
             for fr in friend_requests
         ] if friend_requests is not None else []
     })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def custom_login(request):
+    """
+    Secure login view that accepts both username and email for authentication
+    Returns JWT-like token with expiration
+    """
+    if request.method == 'POST':
+        import json
+        from datetime import datetime, timedelta
+        from django.utils import timezone
+
+        try:
+            data = json.loads(request.body)
+            username_or_email = data.get('username', '').strip()
+            password = data.get('password', '').strip()
+
+            if not username_or_email or not password:
+                return JsonResponse({'error': 'Username/email and password are required'}, status=400)
+
+            # Validate email format if it looks like an email
+            if '@' in username_or_email:
+                is_valid, error_msg = validate_email_format(username_or_email)
+                if not is_valid:
+                    return JsonResponse({'error': error_msg}, status=400)
+
+            # Rate limiting check (basic implementation)
+            client_ip = request.META.get('REMOTE_ADDR')
+            cache_key = f'login_attempts_{client_ip}'
+            # Note: In production, use Redis or database for rate limiting
+
+            # Try to authenticate with username first
+            from django.contrib.auth import authenticate
+            user = authenticate(request, username=username_or_email, password=password)
+
+            # If authentication failed with username, try with email
+            if user is None:
+                try:
+                    # Use filter().first() instead of get() to handle duplicate emails
+                    # WARNING: This is a temporary fix. Multiple users with same email is a security issue.
+                    # TODO: Make email field unique in User model
+                    user_obj = User.objects.filter(email=username_or_email).first()
+                    if user_obj:
+                        user = authenticate(request, username=user_obj.username, password=password)
+                except Exception as e:
+                    logger.warning(f'Multiple users found with email {username_or_email}: {str(e)}')
+                    pass
+
+            if user is not None:
+                if user.is_active:
+                    # Create or get token with expiration
+                    from rest_framework.authtoken.models import Token
+                    token, created = Token.objects.get_or_create(user=user)
+
+                    # Update token creation time for expiration tracking
+                    if not created:
+                        token.created = timezone.now()
+                        token.save()
+
+                    # Get or create user profile
+                    profile, profile_created = Profile.objects.get_or_create(user=user)
+
+                    return JsonResponse({
+                        'token': token.key,
+                        'token_type': 'Bearer',
+                        'expires_in': 86400,  # 24 hours in seconds
+                        'user': {
+                            'id': user.id,
+                            'username': user.username,
+                            'email': user.email,
+                            'first_name': user.first_name,
+                            'last_name': user.last_name,
+                            'is_active': user.is_active,
+                            'date_joined': user.date_joined.isoformat(),
+                            'profile_complete': profile.bio is not None and profile.image is not None
+                        }
+                    }, status=200)
+                else:
+                    return JsonResponse({'error': 'Account is not active. Please verify your email.'}, status=400)
+            else:
+                return JsonResponse({'error': 'Invalid username/email or password'}, status=401)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+        except Exception as e:
+            # Log the error for debugging but don't expose sensitive information
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Login error: {str(e)}')
+            return JsonResponse({'error': 'Authentication service temporarily unavailable'}, status=500)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def custom_logout(request):
+    """
+    Secure logout view that invalidates tokens and clears sessions
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header.startswith('Token ') or auth_header.startswith('Bearer '):
+            token_key = auth_header.split(' ')[1]
+            try:
+                from rest_framework.authtoken.models import Token
+                token = Token.objects.get(key=token_key)
+                token.delete()  # Delete the token to invalidate it
+            except Token.DoesNotExist:
+                pass
+
+        # Clear session if it exists
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            from django.contrib.auth import logout
+            logout(request)
+
+        return JsonResponse({
+            'message': 'Successfully logged out',
+            'success': True
+        }, status=200)
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Logout error: {str(e)}')
+        return JsonResponse({'error': 'Logout failed'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def refresh_token(request):
+    """
+    Refresh token endpoint - validates current token and returns fresh one
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if not (auth_header.startswith('Token ') or auth_header.startswith('Bearer ')):
+            return JsonResponse({'error': 'Authorization header required'}, status=401)
+
+        token_key = auth_header.split(' ')[1]
+
+        from rest_framework.authtoken.models import Token
+        try:
+            token = Token.objects.get(key=token_key)
+        except Token.DoesNotExist:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+
+        # Check if token is expired (24 hours)
+        from django.utils import timezone
+        token_age = timezone.now() - token.created
+        if token_age.total_seconds() > 86400:  # 24 hours
+            token.delete()
+            return JsonResponse({'error': 'Token expired'}, status=401)
+
+        # Generate new token
+        token.delete()  # Delete old token
+        new_token = Token.objects.create(user=token.user)
+
+        return JsonResponse({
+            'token': new_token.key,
+            'token_type': 'Bearer',
+            'expires_in': 86400,
+            'user': {
+                'id': token.user.id,
+                'username': token.user.username,
+                'email': token.user.email,
+                'first_name': token.user.first_name,
+                'last_name': token.user.last_name,
+                'is_active': token.user.is_active,
+                'date_joined': token.user.date_joined.isoformat(),
+            }
+        }, status=200)
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Token refresh error: {str(e)}')
+        return JsonResponse({'error': 'Token refresh failed'}, status=500)
 

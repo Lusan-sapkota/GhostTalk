@@ -60,7 +60,16 @@ def _serialize_user(u: User):
     return {"id": u.id, "username": u.username, "first_name": u.first_name, "last_name": u.last_name}
 
 
-def _serialize_post(p: Post):
+def _serialize_post(p: Post, user=None):
+    liked = False
+    saved = False
+    if user is not None and getattr(user, 'is_authenticated', False):
+        try:
+            liked = p.likes.filter(id=user.id).exists()
+            saved = p.saves.filter(id=user.id).exists()
+        except Exception:
+            liked = False
+            saved = False
     return {
         "id": p.id,
         "title": p.title,
@@ -70,6 +79,9 @@ def _serialize_post(p: Post):
         "author": _serialize_user(p.author),
         "likes_count": p.total_likes(),
         "saves_count": p.total_saves(),
+        "liked": liked,
+        "saved": saved,
+        "comments_count": p.comments.filter(reply=None).count(),
     }
 
 
@@ -88,7 +100,8 @@ def _serialize_comment(c: Comment):
 @require_http_methods(["GET"])
 def first(request):
     posts = Post.objects.all().order_by("-date_posted")
-    return JsonResponse({"posts": [_serialize_post(p) for p in posts]}, status=200)
+    user = request.user if getattr(request, 'user', None) and request.user.is_authenticated else None
+    return JsonResponse({"posts": [_serialize_post(p, user) for p in posts]}, status=200)
 
 """ Posts of following user profiles """
 @login_required
@@ -121,7 +134,7 @@ def posts_of_following_profiles(request):
         'profile': _serialize_user(request.user),
         'page': posts_list.number,
         'num_pages': paginator.num_pages,
-        'posts': [_serialize_post(p) for p in posts_list.object_list],
+        'posts': [_serialize_post(p, request.user) for p in posts_list.object_list],
     })
 
 
@@ -250,7 +263,7 @@ def post_list(request):
     return JsonResponse({
         'page': posts_list.number,
         'num_pages': paginator.num_pages,
-        'posts': [_serialize_post(p) for p in posts_list.object_list],
+        'posts': [_serialize_post(p, request.user) for p in posts_list.object_list],
         'suggested_users': [_serialize_user(u) for u in random_users],
     })
 
@@ -273,7 +286,7 @@ def user_posts(request, username):
         'author': _serialize_user(user),
         'page': posts_list.number,
         'num_pages': paginator.num_pages,
-        'posts': [_serialize_post(p) for p in posts_list.object_list],
+        'posts': [_serialize_post(p, request.user) for p in posts_list.object_list],
     })
 
 
@@ -348,7 +361,7 @@ def PostDetailView(request,pk):
 
     # return full JSON detail
     return JsonResponse({
-        'post': _serialize_post(stuff),
+        'post': _serialize_post(stuff, request.user),
         'total_likes': context["total_likes"],
         'liked': context["liked"],
         'total_saves': context["total_saves"],
@@ -368,7 +381,7 @@ def post_create(request):
     if not title:
         return JsonResponse({'error': 'title is required'}, status=400)
     post = Post.objects.create(title=_safe_text(title, max_len=200), content=_safe_text(content or ""), author=request.user)
-    return JsonResponse({'post': _serialize_post(post)}, status=201)
+    return JsonResponse({'post': _serialize_post(post, request.user)}, status=201)
 
 
 
@@ -394,7 +407,7 @@ def post_update(request, pk):
     if content is not None:
         post.content = _safe_text(content)
     post.save()
-    return JsonResponse({'post': _serialize_post(post)})
+    return JsonResponse({'post': _serialize_post(post, request.user)})
 
 
 """ Delete post """
@@ -428,7 +441,8 @@ def search(request):
         allpostsAuthor = Post.objects.filter(author__username = query)
         allposts = allpostsAuthor.union(allpostsTitle)
     
-    return JsonResponse({'results': [_serialize_post(p) for p in allposts]})
+    user = request.user if getattr(request, 'user', None) and request.user.is_authenticated else None
+    return JsonResponse({'results': [_serialize_post(p, user) for p in allposts]})
 
 
 """ Liked posts """
@@ -440,7 +454,7 @@ def AllLikeView(request):
     context = {
         'liked_posts':liked_posts
     }
-    return JsonResponse({'liked_posts': [_serialize_post(p) for p in liked_posts]})
+    return JsonResponse({'liked_posts': [_serialize_post(p, request.user) for p in liked_posts]})
 
 
 """ Saved posts """
@@ -452,5 +466,5 @@ def AllSaveView(request):
     context = {
         'saved_posts':saved_posts
     }
-    return JsonResponse({'saved_posts': [_serialize_post(p) for p in saved_posts]})
+    return JsonResponse({'saved_posts': [_serialize_post(p, request.user) for p in saved_posts]})
 

@@ -14,7 +14,19 @@ const Friends: React.FC<{ navigation: any }> = ({ navigation }) => {
     try {
       // Assume user id is 1 for now
       const response = await getFriendsList(1);
-      setFriends(response.data.friends.map((f: any) => ({ ...f, user: f })));
+      setFriends(response.data.friends.map((f: any) => ({
+        id: f.id,
+        user: {
+          id: f.id,
+          username: f.username,
+          first_name: f.first_name,
+          last_name: f.last_name,
+          email: f.email
+        },
+        is_online: f.is_online || false,
+        bio: f.bio,
+        image: f.image
+      })));
     } catch (error) {
       console.error(error);
     }

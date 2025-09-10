@@ -1,24 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, getUserPosts, Post, Profile as ProfileType } from '../api';
 import PostItem from '../../components/PostItem';
+import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function ProfileScreen({ navigation }: any) {
+export default function ProfileScreen() {
+  const router = useRouter();
+  const scheme = useColorScheme();
+  const colors = Colors[scheme ?? 'light'];
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    fetchProfile();
+    (async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        router.replace('/screens/Login');
+        return;
+      }
+      await fetchProfile();
+    })();
   }, []);
 
   const fetchProfile = async () => {
     try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
       const response = await getProfile();
       setProfile(response.data.profile);
-      const postsResponse = await getUserPosts(response.data.user.username);
-      setPosts(postsResponse.data.posts);
+      const username = response?.data?.user?.username;
+      if (username) {
+        const postsResponse = await getUserPosts(username);
+        setPosts(postsResponse.data.posts ?? []);
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching profile:', error);
     }
   };
 
@@ -31,30 +54,69 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const handlePostPress = (post: Post) => {
-    navigation.navigate('screens/PostDetail', { post });
+    router.push({ pathname: '/screens/PostDetail', params: { post: JSON.stringify(post) } });
   };
 
   if (!profile) return <Text>Loading...</Text>;
 
   return (
-    <View style={{ flex: 1, padding: 10 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>{profile.user.username}</Text>
-      <Text>{profile.bio}</Text>
-      <TouchableOpacity onPress={() => navigation.navigate('screens/EditProfile')} style={{ backgroundColor: 'blue', padding: 10, marginVertical: 10 }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>Edit Profile</Text>
-      </TouchableOpacity>
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <PostItem
-            post={item}
-            onLike={handleLike}
-            onSave={handleSave}
-            onPress={handlePostPress}
-          />
-        )}
-      />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Profile
+        </Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={() => {}}
+            style={[styles.editButton, { backgroundColor: colors.tint }]}
+          >
+            <Ionicons name="settings-outline" size={16} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={{ padding: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.text }}>{profile.user.username}</Text>
+        <Text style={{ color: colors.icon, marginTop: 4 }}>{profile.bio}</Text>
+        <TouchableOpacity onPress={() => {}} style={{ backgroundColor: colors.tint, padding: 12, marginVertical: 16, borderRadius: 8 }}>
+          <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Edit Profile</Text>
+        </TouchableOpacity>
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <PostItem
+              post={item}
+              onLike={handleLike}
+              onSave={handleSave}
+              onPress={handlePostPress}
+            />
+          )}
+        />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

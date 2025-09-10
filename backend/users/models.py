@@ -52,9 +52,9 @@ class Relationship(models.Model):
 
 class OTP(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    otp_code = models.CharField(max_length=6)
+    otp_code = models.CharField(max_length=6, default='')
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(default=timezone.now)
     is_verified = models.BooleanField(default=False)
 
     def generate_otp(self):

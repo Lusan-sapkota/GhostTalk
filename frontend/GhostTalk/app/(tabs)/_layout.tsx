@@ -1,60 +1,55 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
+import { Stack } from 'expo-router';
+import { View, Animated, Easing, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import TopNavbar from '@/components/TopNavbar';
+import Sidebar from '@/components/Sidebar';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+  const slideX = React.useRef(new Animated.Value(320)).current;
+
+  const openDrawer = () => {
+    setOpen(true);
+    Animated.timing(slideX, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  };
+  const closeDrawer = () => {
+    Animated.timing(slideX, { toValue: 320, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setOpen(false);
+    });
+  };
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].icon,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-            backgroundColor: Colors[colorScheme ?? 'light'].background,
-          },
-          default: { backgroundColor: Colors[colorScheme ?? 'light'].background },
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[colorScheme ?? 'light'].background }} edges={['top', 'bottom']}>
+      <TopNavbar navigation={null} onMenuPress={openDrawer} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background },
         }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="explore" />
+        <Stack.Screen name="friends" />
+        <Stack.Screen name="chats" />
+      </Stack>
+
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={open}
+        onClose={closeDrawer}
+        slideX={slideX}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="friends"
-        options={{
-          title: 'Friends',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: 'Chats',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="message.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  // Styles removed - sidebar is now handled by Sidebar component
+});
