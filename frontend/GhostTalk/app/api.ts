@@ -78,7 +78,32 @@ api.interceptors.request.use(async (config) => {
 
 // Handle response errors globally
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check if response is HTML (Django login page)
+    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+      console.warn('Received HTML login page - user not authenticated');
+
+      // Determine the type of authentication page
+      let errorMessage = 'Authentication required';
+      if (response.data.includes('login') || response.data.includes('Login')) {
+        errorMessage = 'Please log in to continue';
+      } else if (response.data.includes('password') || response.data.includes('Password')) {
+        errorMessage = 'Session expired. Please log in again';
+      } else if (response.data.includes('403') || response.data.includes('Forbidden')) {
+        errorMessage = 'Access denied. Please log in with proper permissions';
+      }
+
+      // Clear invalid token
+      AsyncStorage.removeItem('token');
+      AsyncStorage.removeItem('user');
+
+      // Create a custom error
+      const authError = new Error(errorMessage);
+      authError.name = 'AuthenticationError';
+      throw authError;
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
@@ -120,6 +145,9 @@ api.interceptors.response.use(
     // Handle network errors and log response body for easier debugging
     if (!error.response) {
       console.error('Network error - check your internet connection');
+      const networkError = new Error('Network connection failed. Please check your internet connection and try again.');
+      networkError.name = 'NetworkError';
+      return Promise.reject(networkError);
     } else {
       try {
         console.warn('API error response:', {
