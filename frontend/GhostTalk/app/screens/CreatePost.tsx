@@ -29,7 +29,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -87,13 +87,14 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false, // Make cropping optional
         quality: 0.8,
+        allowsMultipleSelection: true, // Allow multiple images
       });
 
       if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+        const newImages = result.assets.map(asset => asset.uri);
+        setSelectedImages(prev => [...prev, ...newImages]);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image');
@@ -110,21 +111,24 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false, // Make cropping optional
         quality: 0.8,
       });
 
       if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+        setSelectedImages(prev => [...prev, result.assets[0].uri]);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to take photo');
     }
   };
 
-  const removeImage = () => {
-    setSelectedImage(null);
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearImages = () => {
+    setSelectedImages([]);
   };
 
   const handleCreatePost = async () => {
@@ -140,18 +144,19 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
       formData.append('title', title.trim());
       formData.append('content', content.trim());
 
-      // Add image if selected
-      if (selectedImage) {
+      // Add images if selected
+      for (let i = 0; i < selectedImages.length; i++) {
+        const imageUri = selectedImages[i];
         // Get file extension and create proper filename
-        const fileExtension = selectedImage.split('.').pop()?.toLowerCase() || 'jpg';
-        const fileName = `post_image_${Date.now()}.${fileExtension}`;
+        const fileExtension = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `post_image_${Date.now()}_${i}.${fileExtension}`;
 
         // For React Native, we need to create a file object from the URI
-        const response = await fetch(selectedImage);
+        const response = await fetch(imageUri);
         const blob = await response.blob();
 
-        formData.append('image', {
-          uri: selectedImage,
+        formData.append('images', {
+          uri: imageUri,
           name: fileName,
           type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`,
         } as any);
@@ -181,7 +186,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
             onPress: () => {
               setTitle('');
               setContent('');
-              setSelectedImage(null);
+              setSelectedImages([]);
               setIsPrivate(false);
               if (onPostCreated) {
                 onPostCreated();
@@ -503,46 +508,45 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
               Media
             </Text>
 
-            {selectedImage ? (
-              <View style={{
-                position: 'relative',
-                marginBottom: 12,
-              }}>
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={{
-                    width: '100%',
-                    height: 200,
-                    borderRadius: 12,
-                    backgroundColor: colors.tabIconDefault + '20',
-                  }}
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  onPress={removeImage}
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    padding: 8,
-                    borderRadius: 20,
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                  }}
-                >
-                  <Ionicons name="close" size={20} color="white" />
-                </TouchableOpacity>
+            {selectedImages.length > 0 ? (
+              <View style={{ marginBottom: 12 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {selectedImages.map((imageUri, index) => (
+                      <View key={index} style={{ position: 'relative' }}>
+                        <Image
+                          source={{ uri: imageUri }}
+                          style={{
+                            width: 120,
+                            height: 120,
+                            borderRadius: 12,
+                            backgroundColor: colors.tabIconDefault + '20',
+                          }}
+                          resizeMode="cover"
+                        />
+                        <TouchableOpacity
+                          onPress={() => removeImage(index)}
+                          style={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            padding: 4,
+                            borderRadius: 12,
+                            backgroundColor: 'rgba(0,0,0,0.6)',
+                          }}
+                        >
+                          <Ionicons name="close" size={16} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
                 <Text style={{
-                  position: 'absolute',
-                  bottom: 8,
-                  left: 8,
-                  color: 'white',
+                  color: colors.tabIconDefault,
                   fontSize: 12,
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 8,
+                  textAlign: 'center',
                 }}>
-                  Image selected
+                  {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''} selected
                 </Text>
               </View>
             ) : (

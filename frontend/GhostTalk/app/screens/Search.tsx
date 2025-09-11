@@ -16,11 +16,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { searchPosts, Post } from '../api';
+import { searchPosts, searchUsers, Post } from '../api';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavbar from '../../components/TopNavbar';
 import Sidebar from '../../components/Sidebar';
+
+interface User {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  is_online: boolean;
+  bio: string;
+  image: string | null;
+}
 
 export default function SearchScreen() {
   const scheme = useColorScheme();
@@ -29,8 +40,10 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const [userResults, setUserResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [activeTab, setActiveTab] = useState<'posts' | 'users'>('posts');
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,12 +70,19 @@ export default function SearchScreen() {
     setHasSearched(true);
 
     try {
-      const response = await searchPosts(searchQuery.trim());
-      setSearchResults(response?.data?.posts || []);
+      // Search both posts and users in parallel
+      const [postsResponse, usersResponse] = await Promise.all([
+        searchPosts(searchQuery.trim()),
+        searchUsers(searchQuery.trim())
+      ]);
+
+      setSearchResults(postsResponse?.data?.results || []);
+      setUserResults(usersResponse?.data?.users || []);
     } catch (error) {
       console.error('Search error:', error);
-      Alert.alert('Error', 'Failed to search posts. Please try again.');
+      Alert.alert('Error', 'Failed to search. Please try again.');
       setSearchResults([]);
+      setUserResults([]);
     } finally {
       setLoading(false);
     }
@@ -72,10 +92,16 @@ export default function SearchScreen() {
     router.push({ pathname: '/screens/PostDetail', params: { post: JSON.stringify(post) } });
   };
 
+  const handleUserPress = (user: User) => {
+    router.push({ pathname: '/screens/Profile', params: { userId: user.id.toString() } });
+  };
+
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
+    setUserResults([]);
     setHasSearched(false);
+    setActiveTab('posts');
   };
 
   // Sidebar functions
@@ -137,6 +163,53 @@ export default function SearchScreen() {
     </TouchableOpacity>
   );
 
+  const renderUserItem = ({ item }: { item: User }) => (
+    <TouchableOpacity
+      style={[styles.userItem, { borderBottomColor: colors.icon + '20' }]}
+      onPress={() => handleUserPress(item)}
+    >
+      <View style={styles.userHeader}>
+        <View style={styles.userInfo}>
+          {item.image ? (
+            <Image source={{ uri: item.image }} style={styles.userAvatar} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: colors.tint + '30' }]}>
+              <Text style={[styles.avatarText, { color: colors.tint }]}>
+                {(item.first_name?.[0] || item.username?.[0] || 'U').toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={styles.userDetails}>
+            <Text style={[styles.userName, { color: colors.text }]}>
+              {item.first_name && item.last_name
+                ? `${item.first_name} ${item.last_name}`
+                : item.username}
+            </Text>
+            <Text style={[styles.userUsername, { color: colors.icon }]}>
+              @{item.username}
+            </Text>
+            {item.is_online && (
+              <View style={styles.onlineIndicator}>
+                <Text style={[styles.onlineText, { color: '#4CAF50' }]}>Online</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[styles.viewProfileButton, { backgroundColor: colors.tint }]}
+          onPress={() => handleUserPress(item)}
+        >
+          <Text style={styles.viewProfileText}>View Profile</Text>
+        </TouchableOpacity>
+      </View>
+      {item.bio && (
+        <Text style={[styles.userBio, { color: colors.icon }]} numberOfLines={2}>
+          {item.bio}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+
   const renderEmptyState = () => {
     if (!hasSearched) {
       return (
@@ -160,11 +233,15 @@ export default function SearchScreen() {
       );
     }
 
+    const noResultsMessage = activeTab === 'posts'
+      ? `No posts found for "${searchQuery}"`
+      : `No users found for "${searchQuery}"`;
+
     return (
       <View style={styles.emptyState}>
         <Ionicons name="document-text-outline" size={64} color={colors.icon + '40'} />
         <Text style={[styles.emptyStateText, { color: colors.icon }]}>
-          No posts found for "{searchQuery}"
+          {noResultsMessage}
         </Text>
         <Text style={[styles.emptyStateSubtext, { color: colors.icon + '60' }]}>
           Try different keywords or check your spelling
@@ -176,13 +253,14 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <TopNavbar onMenuPress={openDrawer} />
+
       {/* Search Input */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchInputContainer, { backgroundColor: scheme === 'dark' ? '#222' : '#f0f2f5' }]}>
           <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-                        placeholder="Search posts, topics, or users"
+            placeholder="Search posts, topics, or users"
             placeholderTextColor={colors.icon}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -208,15 +286,48 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Tab Navigation */}
+      {hasSearched && (searchResults.length > 0 || userResults.length > 0) && (
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            onPress={() => setActiveTab('posts')}
+            style={[styles.tab, activeTab === 'posts' && { borderBottomColor: colors.tint }]}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'posts' ? colors.tint : colors.icon }]}>
+              Posts ({searchResults.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab('users')}
+            style={[styles.tab, activeTab === 'users' && { borderBottomColor: colors.tint }]}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'users' ? colors.tint : colors.icon }]}>
+              Users ({userResults.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Results */}
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPostItem}
-        ListEmptyComponent={renderEmptyState}
-        contentContainerStyle={searchResults.length === 0 ? styles.emptyList : undefined}
-        showsVerticalScrollIndicator={false}
-      />
+      {activeTab === 'posts' ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderPostItem}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={searchResults.length === 0 ? styles.emptyList : undefined}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <FlatList
+          data={userResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderUserItem}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={userResults.length === 0 ? styles.emptyList : undefined}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Sidebar */}
       <Sidebar
@@ -261,6 +372,22 @@ const styles = StyleSheet.create({
   },
   searchButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: 14,
     fontWeight: '600',
   },
   postItem: {
@@ -316,6 +443,61 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 14,
+  },
+  userItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  userHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  userAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  userUsername: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  onlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  onlineText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  viewProfileButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  viewProfileText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  userBio: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
   },
   emptyState: {
     flex: 1,

@@ -54,6 +54,8 @@ function resolveApiBaseUrl() {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
+export { API_BASE_URL };
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -410,11 +412,19 @@ export const likeComment = (id: number) => {
   return api.post('/post/comment/like/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
+export const sharePost = (id: number) => {
+  const form = new FormData();
+  form.append('id', String(id));
+  return api.post('/post/share/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+
 export const getLikedPosts = () => api.get('/liked-posts/');
 
 export const getSavedPosts = () => api.get('/saved-posts/');
 
 export const searchPosts = (query: string) => api.get('/search/', { params: { query } });
+
+export const searchUsers = (query: string) => api.get('/user/search/', { params: { query } });
 
 // Privacy Settings
 export const updatePrivacySettings = (settings: {
@@ -469,15 +479,21 @@ export const cancelFriendRequest = (receiverUserId: number) => api.post('/friend
 
 export const removeFriend = (receiverUserId: number) => api.post('/friend/friend_remove/', { receiver_user_id: receiverUserId });
 
+export const getFriendSuggestions = () => api.get('/friend/suggestions/');
+
+// Notification APIs
+export const getNotifications = () => api.get('/notifications/');
+
+export const markNotificationRead = (notificationId: number) => api.post(`/notifications/${notificationId}/read/`);
+
+export const markAllNotificationsRead = () => api.post('/notifications/mark-all-read/');
+
 // Chat APIs
 export const getRooms = () => api.get('/chats/');
 
 export const createRoom = (friendId: number) => api.post(`/chats/chat/${friendId}`);
 
 export const getRoomMessages = (roomName: number, friendId: number) => api.get(`/chats/room/${roomName}-${friendId}`);
-
-// Notification APIs
-export const getNotifications = () => api.get('/notifications/');
 
 // Video Call APIs
 export const getToken = (vc_to: number) => api.get(`/vc/getToken/?vc_to=${vc_to}`);
@@ -509,14 +525,17 @@ export interface Post {
   id: number;
   title: string;
   content: string;
-  image?: string;
+  image?: string; // Keep for backward compatibility
+  images?: string[]; // New field for multiple images
   date_posted: string;
   date_updated: string;
   author: User;
   likes_count: number;
   saves_count: number;
+  shares_count: number;
   liked?: boolean;
   saved?: boolean;
+  shared?: boolean;
   comments_count?: number;
 }
 

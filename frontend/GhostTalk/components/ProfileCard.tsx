@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Profile } from '../app/api';
+import { API_BASE_URL } from '../app/api';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProfileCardProps {
   profile: Profile;
@@ -10,25 +12,78 @@ interface ProfileCardProps {
   onFollow?: (id: number) => void;
   onEdit?: (profile: Profile) => void;
   showEdit?: boolean;
+  showOnlineStatus?: boolean;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onPress, onFollow, onEdit, showEdit = false }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ 
+  profile, 
+  onPress, 
+  onFollow, 
+  onEdit, 
+  showEdit = false,
+  showOnlineStatus = true 
+}) => {
   const scheme = useColorScheme();
-  const initials = (profile?.user?.first_name?.[0] || profile?.user?.username?.[0] || 'U').toUpperCase();
   const tint = Colors[scheme ?? 'light'].tint;
+
+  const getInitials = (firstName?: string, lastName?: string, username?: string) => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    }
+    if (lastName) {
+      return lastName.charAt(0).toUpperCase();
+    }
+    if (username) {
+      return username.charAt(0).toUpperCase();
+    }
+    return '?';
+  };
+
+  const initials = getInitials(profile?.user?.first_name, profile?.user?.last_name, profile?.user?.username);
+
   return (
     <TouchableOpacity onPress={() => onPress(profile)} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: scheme === 'dark' ? '#222' : '#eee' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {profile.image ? (
-          <Image source={{ uri: profile.image }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }} />
-        ) : (
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tint + '55', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-            <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
-          </View>
-        )}
+        <View style={{ position: 'relative', marginRight: 10 }}>
+          {profile.image ? (
+            <Image source={{ uri: `${API_BASE_URL}${profile.image}` }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+          ) : (
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tint + '55', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
+            </View>
+          )}
+          {showOnlineStatus && profile.is_online && (
+            <View style={{ 
+              position: 'absolute', 
+              bottom: 0, 
+              right: 0, 
+              width: 12, 
+              height: 12, 
+              borderRadius: 6, 
+              backgroundColor: '#4CAF50',
+              borderWidth: 2,
+              borderColor: scheme === 'dark' ? '#000' : '#fff'
+            }} />
+          )}
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: 'bold', color: Colors[scheme ?? 'light'].text }}>{profile.user.username}</Text>
-          {!!profile.bio && <Text style={{ color: Colors[scheme ?? 'light'].icon }}>{profile.bio}</Text>}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontWeight: 'bold', color: Colors[scheme ?? 'light'].text, marginRight: 8 }}>
+              {profile.user.first_name && profile.user.last_name 
+                ? `${profile.user.first_name} ${profile.user.last_name}`
+                : profile.user.username}
+            </Text>
+            {showOnlineStatus && profile.is_online && (
+              <Ionicons name="ellipse" size={8} color="#4CAF50" />
+            )}
+          </View>
+          <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 12 }}>
+            @{profile.user.username}
+          </Text>
+          {!!profile.bio && <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 13, marginTop: 2 }}>{profile.bio}</Text>}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {showEdit && onEdit && (

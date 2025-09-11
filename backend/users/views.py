@@ -18,6 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.db.models import Q
 import logging
 
 
@@ -403,7 +404,13 @@ def profile(request):
     # GET or invalid POST -> return current profile info
     p = request.user.profile
     return JsonResponse({
-        'user': {'id': request.user.id, 'username': request.user.username, 'email': request.user.email},
+        'user': {
+            'id': request.user.id, 
+            'username': request.user.username, 
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name
+        },
         'profile': {
             'id': p.id,
             'image': p.image.url if p.image else None,
@@ -426,7 +433,14 @@ def public_profile(request, username):
         if not user:
             return JsonResponse({'error': 'User not found'}, status=404)
     
-    return JsonResponse({'user': {'id': user.id, 'username': user.username}})
+    return JsonResponse({
+        'user': {
+            'id': user.id, 
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name
+        }
+    })
 
 
 """ All user profiles """
@@ -437,10 +451,65 @@ def profile_list(request):
     return JsonResponse({'profiles': [
         {
             'id': p.id,
-            'user': {'id': p.user.id, 'username': p.user.username},
+            'user': {
+                'id': p.user.id, 
+                'username': p.user.username,
+                'first_name': p.user.first_name,
+                'last_name': p.user.last_name
+            },
             'is_online': getattr(p, 'is_online', False)
         } for p in profiles
     ]})
+
+@token_required
+def search_users(request):
+    """Search for users by username, first name, or last name"""
+    query = request.GET.get('query', '').strip()
+    
+    if not query or len(query) < 1:
+        return JsonResponse({'users': [], 'count': 0})
+    
+    if len(query) > 100:
+        query = query[:100]  # Limit query length
+    
+    # Search users by username, first name, or last name
+    users = User.objects.filter(
+        Q(username__icontains=query) |
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query)
+    ).exclude(id=request.user.id)[:20]  # Limit to 20 results and exclude current user
+    
+    user_data = []
+    for user in users:
+        try:
+            profile = Profile.objects.get(user=user)
+            user_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'email': user.email or '',
+                'is_online': profile.is_online,
+                'bio': profile.bio or '',
+                'image': profile.image.url if profile.image else None,
+            })
+        except Profile.DoesNotExist:
+            user_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'email': user.email or '',
+                'is_online': False,
+                'bio': '',
+                'image': None,
+            })
+    
+    return JsonResponse({
+        'users': user_data,
+        'count': len(user_data),
+        'query': query
+    })
 
 """ User profile details view """
 @token_required
@@ -479,7 +548,12 @@ def profile_detail(request, pk):
     return JsonResponse({
         'profile': {
             'id': view_profile.id,
-            'user': {'id': account.id, 'username': account.username},
+            'user': {
+                'id': account.id, 
+                'username': account.username,
+                'first_name': account.first_name,
+                'last_name': account.last_name
+            },
             'follow': follow,
         },
         'friends': [{'id': f.id, 'username': f.username} for f in friends],

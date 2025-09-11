@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
+  RefreshControl,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,21 +18,19 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavbar from '../../components/TopNavbar';
 import Sidebar from '../../components/Sidebar';
-import { Animated, Easing } from 'react-native';
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api';
 
 interface Notification {
   id: number;
-  type: 'friend_request' | 'like' | 'comment' | 'mention' | 'system';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  user?: {
-    id: number;
-    username: string;
-    first_name?: string;
-    last_name?: string;
-  };
+  sender?: string;
+  sender_id?: number;
+  sender_first_name?: string;
+  sender_last_name?: string;
+  notification_type: number;
+  text_preview: string;
+  date: string;
+  post_id?: number;
+  is_seen: boolean;
 }
 
 export default function NotificationsScreen() {
@@ -41,8 +41,6 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const slideX = useRef(new Animated.Value(320)).current;
 
@@ -60,61 +58,9 @@ export default function NotificationsScreen() {
 
   const loadNotifications = async () => {
     try {
-      // Mock notifications data - replace with actual API call
-      const mockNotifications: Notification[] = [
-        {
-          id: 1,
-          type: 'friend_request',
-          title: 'Friend Request',
-          message: 'John Doe sent you a friend request',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          read: false,
-          user: {
-            id: 1,
-            username: 'johndoe',
-            first_name: 'John',
-            last_name: 'Doe'
-          }
-        },
-        {
-          id: 2,
-          type: 'like',
-          title: 'Post Liked',
-          message: 'Sarah Smith liked your post',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          read: false,
-          user: {
-            id: 2,
-            username: 'sarahsmith',
-            first_name: 'Sarah',
-            last_name: 'Smith'
-          }
-        },
-        {
-          id: 3,
-          type: 'comment',
-          title: 'New Comment',
-          message: 'Mike Johnson commented on your post',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-          read: true,
-          user: {
-            id: 3,
-            username: 'mikejohnson',
-            first_name: 'Mike',
-            last_name: 'Johnson'
-          }
-        },
-        {
-          id: 4,
-          type: 'system',
-          title: 'Welcome!',
-          message: 'Welcome to GhostTalk! Start exploring and connecting with friends.',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-          read: true
-        }
-      ];
-
-      setNotifications(mockNotifications);
+      setLoading(true);
+      const response = await getNotifications();
+      setNotifications(response.data.notifications || []);
     } catch (error) {
       console.error('Error loading notifications:', error);
       Alert.alert('Error', 'Failed to load notifications');
@@ -129,38 +75,49 @@ export default function NotificationsScreen() {
     setRefreshing(false);
   };
 
-  const markAsRead = (notificationId: number) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const handleMarkAsRead = async (notificationId: number) => {
+    try {
+      await markNotificationRead(notificationId);
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId
+            ? { ...notification, is_seen: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications(prev =>
+        prev.map(notification => ({ ...notification, is_seen: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
-  const handleNotificationPress = (notification: Notification) => {
-    markAsRead(notification.id);
+  const handleNotificationPress = async (notification: Notification) => {
+    // Mark as read first
+    if (!notification.is_seen) {
+      await handleMarkAsRead(notification.id);
+    }
 
-    // Handle different notification types
-    switch (notification.type) {
-      case 'friend_request':
-        // Navigate to friends page
+    // Handle different notification types with smooth navigation
+    switch (notification.notification_type) {
+      case 7: // Friend Request
         router.push('/(tabs)/friends');
         break;
-      case 'like':
-      case 'comment':
-        // Navigate to home/posts
-        router.push('/(tabs)');
-        break;
-      case 'mention':
-        // Navigate to relevant post
+      case 1: // Like
+      case 2: // Follow
+      case 3: // Comment
+      case 4: // Reply
+      case 5: // Like-Comment
+      case 6: // Like-Reply
         router.push('/(tabs)');
         break;
       default:
@@ -168,20 +125,66 @@ export default function NotificationsScreen() {
     }
   };
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: number) => {
     switch (type) {
-      case 'friend_request':
+      case 7: // Friend Request
         return 'person-add-outline';
-      case 'like':
+      case 1: // Like
         return 'heart-outline';
-      case 'comment':
+      case 2: // Follow
+        return 'person-add-outline';
+      case 3: // Comment
         return 'chatbubble-outline';
-      case 'mention':
-        return 'at-outline';
-      case 'system':
-        return 'information-circle-outline';
+      case 4: // Reply
+        return 'return-up-forward-outline';
+      case 5: // Like-Comment
+        return 'heart-outline';
+      case 6: // Like-Reply
+        return 'heart-outline';
       default:
         return 'notifications-outline';
+    }
+  };
+
+  const getNotificationTypeText = (type: number) => {
+    switch (type) {
+      case 7:
+        return 'Friend Request';
+      case 1:
+        return 'Post Liked';
+      case 2:
+        return 'New Follower';
+      case 3:
+        return 'New Comment';
+      case 4:
+        return 'New Reply';
+      case 5:
+        return 'Comment Liked';
+      case 6:
+        return 'Reply Liked';
+      default:
+        return 'Notification';
+    }
+  };
+
+  const getNotificationColor = (type: number) => {
+    switch (type) {
+      case 7: // Friend Request
+        return '#007AFF';
+      case 1: // Like
+        return '#FF3B30';
+      case 2: // Follow
+        return '#34C759';
+      case 3: // Comment
+        return '#FF9500';
+      case 4: // Reply
+        return '#AF52DE';
+      case 5: // Like-Comment
+        return '#FF3B30';
+      case 6: // Like-Reply
+        return '#FF3B30';
+      default:
+        return colors.tint;
     }
   };
 
@@ -202,111 +205,126 @@ export default function NotificationsScreen() {
     return notificationTime.toLocaleDateString();
   };
 
-  // Sidebar functions
-  const openDrawer = () => {
-    setSidebarOpen(true);
-    Animated.timing(slideX, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  };
-
-  const closeDrawer = () => {
-    Animated.timing(slideX, { toValue: 320, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setSidebarOpen(false);
-    });
-  };
-
-  const renderNotificationItem = ({ item }: { item: Notification }) => (
+  const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       onPress={() => handleNotificationPress(item)}
       style={[
         styles.notificationItem,
-        { borderBottomColor: colors.icon + '20' },
-        !item.read && { backgroundColor: scheme === 'dark' ? '#1a1a1a' : '#f8f9fa' }
+        {
+          backgroundColor: colors.background,
+          borderLeftColor: getNotificationColor(item.notification_type),
+          borderLeftWidth: 4
+        },
+        !item.is_seen && {
+          backgroundColor: scheme === 'dark' ? '#1a1a1a' : '#f8f9fa',
+          shadowColor: getNotificationColor(item.notification_type),
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }
       ]}
+      activeOpacity={0.7}
     >
       <View style={styles.notificationIcon}>
         <Ionicons
-          name={getNotificationIcon(item.type)}
+          name={getNotificationIcon(item.notification_type)}
           size={24}
-          color={!item.read ? colors.tint : colors.icon}
+          color={item.is_seen ? colors.icon : getNotificationColor(item.notification_type)}
         />
       </View>
-
       <View style={styles.notificationContent}>
         <Text style={[styles.notificationTitle, { color: colors.text }]}>
-          {item.title}
+          {getNotificationTypeText(item.notification_type)}
         </Text>
         <Text style={[styles.notificationMessage, { color: colors.icon }]}>
-          {item.message}
+          {item.text_preview}
         </Text>
-        <Text style={[styles.notificationTime, { color: colors.icon + '80' }]}>
-          {formatTimestamp(item.timestamp)}
+        <Text style={[styles.notificationTime, { color: colors.tabIconDefault }]}>
+          {formatTimestamp(item.date)}
         </Text>
       </View>
-
-      {!item.read && (
-        <View style={[styles.unreadIndicator, { backgroundColor: colors.tint }]} />
+      {!item.is_seen && (
+        <View style={[styles.unreadIndicator, { backgroundColor: getNotificationColor(item.notification_type) }]} />
       )}
+      <View style={styles.arrowContainer}>
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={colors.tabIconDefault}
+        />
+      </View>
     </TouchableOpacity>
   );
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name="notifications-off-outline" size={64} color={colors.icon + '40'} />
-      <Text style={[styles.emptyStateText, { color: colors.icon }]}>
-        No notifications yet
-      </Text>
-      <Text style={[styles.emptyStateSubtext, { color: colors.icon, opacity: 0.6 }]}>
-        You'll see updates here when people interact with you
-      </Text>
-    </View>
-  );
+  const unreadCount = notifications.filter(n => !n.is_seen).length;
 
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopNavbar onMenuPress={openDrawer} />
+        <TopNavbar onMenuPress={() => setSidebarOpen(true)} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.icon }]}>
             Loading notifications...
           </Text>
         </View>
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={closeDrawer}
-          slideX={slideX}
-        />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      <TopNavbar onMenuPress={openDrawer} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <TopNavbar onMenuPress={() => setSidebarOpen(true)} />
 
-    <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-      <Text style={[styles.headerTitle, { color: colors.text }]}>
-        Notifications
-      </Text>
-      <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-        <Ionicons name="checkmark-done-outline" size={24} color={colors.tint} />
-      </TouchableOpacity>
-    </View>
+      {/* Header with unread count and mark all read */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            Notifications
+          </Text>
+          {unreadCount > 0 && (
+            <View style={[styles.badge, { backgroundColor: colors.tint }]}>
+              <Text style={styles.badgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
+        {unreadCount > 0 && (
+          <TouchableOpacity
+            onPress={handleMarkAllAsRead}
+            style={[styles.markAllButton, { backgroundColor: colors.tint }]}
+          >
+            <Text style={styles.markAllText}>Mark All Read</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={renderNotificationItem}
+        renderItem={renderNotification}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        ListEmptyComponent={renderEmptyState}
-        contentContainerStyle={notifications.length === 0 ? styles.emptyList : undefined}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={notifications.length === 0 ? styles.emptyList : undefined}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.tint + '20' }]}>
+              <Ionicons name="notifications-off-outline" size={48} color={colors.tint} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              No notifications yet
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
+              When someone interacts with you, you'll see it here
+            </Text>
+          </View>
+        }
       />
 
       <Sidebar
         isOpen={sidebarOpen}
-        onClose={closeDrawer}
+        onClose={() => setSidebarOpen(false)}
         slideX={slideX}
       />
     </SafeAreaView>
@@ -318,14 +336,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  badge: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  markAllButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  markAllText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
@@ -339,8 +387,15 @@ const styles = StyleSheet.create({
   notificationItem: {
     flexDirection: 'row',
     padding: 16,
-    borderBottomWidth: 1,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   notificationIcon: {
     width: 40,
@@ -371,31 +426,38 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    marginRight: 8,
+  },
+  arrowContainer: {
     marginLeft: 8,
   },
-  emptyState: {
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+    paddingTop: 100,
   },
-  emptyStateText: {
-    fontSize: 18,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
     fontWeight: '600',
-    marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
-  emptyStateSubtext: {
+  emptySubtitle: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
   },
   emptyList: {
     flexGrow: 1,
-  },
-  markAllButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
   },
 });
