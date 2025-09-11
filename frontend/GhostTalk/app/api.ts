@@ -66,7 +66,7 @@ const api = axios.create({
 // Add token to requests if available
 api.interceptors.request.use(async (config) => {
   // Skip adding token for certain endpoints
-  const skipAuthEndpoints = ['/user/login/', '/user/register/', '/user/request-password-reset/'];
+  const skipAuthEndpoints = ['/user/login/', '/user/register/', '/user/request-password-reset/', '/user/setup-profile/'];
   const shouldSkipAuth = skipAuthEndpoints.some(endpoint => config.url?.includes(endpoint));
 
   if (!shouldSkipAuth) {
@@ -355,6 +355,14 @@ export const resetPassword = (userId: number, otpCode: string, newPassword: stri
 export const getProfile = () => api.get('/user/me/');
 
 export const updateProfile = (data: any) => api.post('/user/me/', data);
+
+export const setupProfile = (userId: string, formData: FormData) => {
+  // Add user_id to the existing FormData
+  formData.append('user_id', userId);
+  return api.post('/user/setup-profile/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
 
 export const getAllProfiles = () => api.get('/user/all/');
 

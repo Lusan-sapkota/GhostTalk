@@ -7,6 +7,7 @@ urlpatterns = [
     path('refresh-token/', views.refresh_token, name='refresh-token'),
     path('register/', views.register, name='register'),
     path('verify-otp/', views.verify_otp, name='verify-otp'),
+    path('setup-profile/', views.setup_profile, name='setup-profile'),
     path('check-username/', views.check_username, name='check-username'),
     path('request-password-reset/', views.request_password_reset, name='request-password-reset'),
     path('verify-password-reset-otp/', views.verify_password_reset_otp, name='verify-password-reset-otp'),

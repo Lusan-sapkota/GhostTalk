@@ -18,6 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils import timezone
 from django.db.models import Q
 import logging
 
@@ -418,6 +419,46 @@ def profile(request):
             'is_online': getattr(p, 'is_online', False),
         }
     })
+
+
+""" Setup profile after verification (no auth required for newly verified users) """
+@csrf_exempt
+@require_http_methods(["POST"])
+def setup_profile(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({'error': 'User ID is required'}, status=400)
+        
+        try:
+            user = User.objects.get(id=user_id)
+            
+            # Check if user was recently verified (within last hour)
+            try:
+                otp_obj = OTP.objects.get(user=user, is_verified=True)
+                # Allow setup if verified within last hour
+                if timezone.now() - otp_obj.created_at > timezone.timedelta(hours=1):
+                    return JsonResponse({'error': 'Profile setup time expired. Please login to update your profile.'}, status=403)
+            except OTP.DoesNotExist:
+                return JsonResponse({'error': 'User not verified'}, status=403)
+            
+            # Get or create profile
+            profile, created = Profile.objects.get_or_create(user=user)
+            
+            # Handle profile update
+            p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
+            
+            if p_form.is_valid():
+                p_form.save()
+                return JsonResponse({'status': 'profile_setup_complete'}, status=200)
+            else:
+                return JsonResponse({'error': p_form.errors}, status=400)
+                
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': 'Profile setup failed'}, status=500)
 
 
 """ Creating a public profile view """
