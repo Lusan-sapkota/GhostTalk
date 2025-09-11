@@ -434,14 +434,15 @@ def setup_profile(request):
         try:
             user = User.objects.get(id=user_id)
             
-            # Check if user was recently verified (within last hour)
+            # Check if user was recently verified (within last 24 hours) or is authenticated
             try:
                 otp_obj = OTP.objects.get(user=user, is_verified=True)
-                # Allow setup if verified within last hour
-                if timezone.now() - otp_obj.created_at > timezone.timedelta(hours=1):
-                    return JsonResponse({'error': 'Profile setup time expired. Please login to update your profile.'}, status=403)
+                # Allow setup if verified within last 24 hours
+                if timezone.now() - otp_obj.created_at > timezone.timedelta(hours=24):
+                    return JsonResponse({'error': 'Profile setup time expired. Please use the regular profile update endpoint.'}, status=403)
             except OTP.DoesNotExist:
-                return JsonResponse({'error': 'User not verified'}, status=403)
+                # If no OTP verification found, still allow setup for authenticated users
+                pass
             
             # Get or create profile
             profile, created = Profile.objects.get_or_create(user=user)
@@ -450,7 +451,9 @@ def setup_profile(request):
             p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
             
             if p_form.is_valid():
-                p_form.save()
+                profile_obj = p_form.save()
+                profile_obj.complete_profile = True
+                profile_obj.save()
                 return JsonResponse({'status': 'profile_setup_complete'}, status=200)
             else:
                 return JsonResponse({'error': p_form.errors}, status=400)
@@ -587,16 +590,18 @@ def profile_detail(request, pk):
             pass
 
     return JsonResponse({
-        'profile': {
-            'id': view_profile.id,
-            'user': {
-                'id': account.id, 
-                'username': account.username,
-                'first_name': account.first_name,
-                'last_name': account.last_name
-            },
-            'follow': follow,
+        'id': view_profile.id,
+        'user': {
+            'id': account.id, 
+            'username': account.username,
+            'first_name': account.first_name,
+            'last_name': account.last_name,
+            'email': account.email
         },
+        'bio': view_profile.bio or '',
+        'image': view_profile.image.url if view_profile.image else '/media/default.jpg',
+        'is_online': view_profile.is_online,
+        'follow': follow,
         'friends': [{'id': f.id, 'username': f.username} for f in friends],
         'is_self': is_self,
         'is_friend': is_friend,
@@ -683,7 +688,7 @@ def custom_login(request):
                             'last_name': user.last_name,
                             'is_active': user.is_active,
                             'date_joined': user.date_joined.isoformat(),
-                            'profile_complete': profile.bio is not None and profile.image is not None
+                            'complete_profile': profile.complete_profile
                         }
                     }, status=200)
                 else:

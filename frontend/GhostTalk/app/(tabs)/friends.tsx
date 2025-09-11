@@ -148,8 +148,7 @@ export default function FriendsScreen() {
   };
 
   const handleProfilePress = (profile: Profile) => {
-    // TODO: Navigate to user profile
-    console.log('Profile pressed:', profile);
+    router.push({ pathname: '/screens/PublicProfile' as any, params: { userId: profile.user.id.toString() } });
   };
 
   const handleEditProfile = (profile: Profile) => {

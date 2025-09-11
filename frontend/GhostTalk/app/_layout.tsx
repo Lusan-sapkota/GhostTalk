@@ -53,6 +53,7 @@ export default function RootLayout() {
             <Stack.Screen name="screens/NewPassword" options={{ headerShown: false }} />
             <Stack.Screen name="screens/OTPVerification" options={{ headerShown: false }} />
             <Stack.Screen name="screens/SetupProfile" options={{ headerShown: false }} />
+            <Stack.Screen name="screens/PublicProfile" options={{ headerShown: false }} />
             <Stack.Screen name="screens/Home" options={{ title: 'Home' }} />
             <Stack.Screen name="screens/Profile" options={{ title: 'Profile' }} />
             <Stack.Screen name="screens/Friends" options={{ title: 'Friends' }} />

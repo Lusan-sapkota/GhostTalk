@@ -93,7 +93,7 @@ export default function SearchScreen() {
   };
 
   const handleUserPress = (user: User) => {
-    router.push({ pathname: '/screens/Profile', params: { userId: user.id.toString() } });
+    router.push({ pathname: '/screens/PublicProfile' as any, params: { userId: user.id.toString() } });
   };
 
   const clearSearch = () => {

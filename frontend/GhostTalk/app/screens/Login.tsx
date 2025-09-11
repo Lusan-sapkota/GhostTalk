@@ -56,8 +56,17 @@ const Login: React.FC = () => {
       // Store authentication data securely
       await authUtils.setAuthData(response.data.token, response.data.user);
 
-      // Navigate to main app
-      router.replace('/(tabs)');
+      // Check if user needs to complete profile setup
+      const userProfile = response.data.user;
+      if (userProfile && userProfile.complete_profile === false) {
+        router.replace({
+          pathname: '/screens/SetupProfile',
+          params: { userId: userProfile.id.toString(), email: userProfile.email }
+        });
+      } else {
+        // Navigate to main app
+        router.replace('/(tabs)');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
 

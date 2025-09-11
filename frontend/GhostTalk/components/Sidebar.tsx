@@ -28,7 +28,7 @@ function SidebarItem({ icon, label, onPress, color }: SidebarItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.sidebarItem, { borderBottomColor: colors.icon + '20' }]}
+      style={[styles.sidebarItem, { borderBottomColor: colors.icon, opacity: 0.2 }]}
       activeOpacity={0.7}
     >
       <Ionicons name={icon} size={24} color={color || colors.text} />
@@ -135,14 +135,14 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
           styles.sidebar,
           {
             backgroundColor: colors.background,
-            borderLeftColor: colors.icon + '30',
+            borderLeftColor: colors.icon,
             transform: [{ translateX: slideX }]
           }
         ]}
       >
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.icon + '20' }]}>
+          <View style={[styles.header, { borderBottomColor: colors.icon, opacity: 0.2 }]}>
             <Image
               source={require('../assets/images/icon.png')}
               style={styles.appIcon}

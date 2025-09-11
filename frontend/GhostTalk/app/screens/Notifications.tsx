@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  Animated
+  Animated,
+  Easing
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,6 +49,27 @@ export default function NotificationsScreen() {
     checkAuth();
     loadNotifications();
   }, []);
+
+  const openSidebar = () => {
+    setSidebarOpen(true);
+    Animated.timing(slideX, { 
+      toValue: 0, 
+      duration: 220, 
+      easing: Easing.ease, 
+      useNativeDriver: true 
+    }).start();
+  };
+
+  const closeSidebar = () => {
+    Animated.timing(slideX, { 
+      toValue: 320, 
+      duration: 200, 
+      easing: Easing.ease, 
+      useNativeDriver: true 
+    }).start(() => {
+      setSidebarOpen(false);
+    });
+  };
 
   const checkAuth = async () => {
     const token = await AsyncStorage.getItem('token');
@@ -235,13 +257,13 @@ export default function NotificationsScreen() {
       </View>
       <View style={styles.notificationContent}>
         <Text style={[styles.notificationTitle, { color: colors.text }]}>
-          {getNotificationTypeText(item.notification_type)}
+          {getNotificationTypeText(item.notification_type) || 'Notification'}
         </Text>
         <Text style={[styles.notificationMessage, { color: colors.icon }]}>
-          {item.text_preview}
+          {item.text_preview || 'No preview available'}
         </Text>
         <Text style={[styles.notificationTime, { color: colors.tabIconDefault }]}>
-          {formatTimestamp(item.date)}
+          {formatTimestamp(item.date) || 'Unknown time'}
         </Text>
       </View>
       {!item.is_seen && (
@@ -262,7 +284,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopNavbar onMenuPress={() => setSidebarOpen(true)} />
+        <TopNavbar onMenuPress={openSidebar} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.icon }]}>
@@ -275,9 +297,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopNavbar onMenuPress={() => setSidebarOpen(true)} />
-
-      {/* Header with unread count and mark all read */}
+        <TopNavbar onMenuPress={openSidebar} />      {/* Header with unread count and mark all read */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>
@@ -285,7 +305,7 @@ export default function NotificationsScreen() {
           </Text>
           {unreadCount > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.tint }]}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
+              <Text style={styles.badgeText}>{unreadCount.toString()}</Text>
             </View>
           )}
         </View>
@@ -309,7 +329,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={notifications.length === 0 ? styles.emptyList : undefined}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <View style={[styles.emptyIconContainer, { backgroundColor: colors.tint + '20' }]}>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.tint, opacity: 0.2 }]}>
               <Ionicons name="notifications-off-outline" size={48} color={colors.tint} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -324,7 +344,7 @@ export default function NotificationsScreen() {
 
       <Sidebar
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={closeSidebar}
         slideX={slideX}
       />
     </SafeAreaView>

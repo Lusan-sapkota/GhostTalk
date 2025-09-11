@@ -33,10 +33,7 @@ const OTPVerification: React.FC = () => {
       const response = await verifyOTP(parseInt(userId), otpCode);
       if (response.data.status === 'verified') {
         Alert.alert('Success', 'Account verified successfully!', [
-          { text: 'OK', onPress: () => router.push({
-            pathname: '/screens/Profile',
-            params: { userId: userId, email: email }
-          }) }
+          { text: 'OK', onPress: () => router.push('/screens/Login') }
         ]);
       }
     } catch (error: any) {

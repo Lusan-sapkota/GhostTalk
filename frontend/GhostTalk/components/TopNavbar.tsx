@@ -117,10 +117,11 @@ export default function TopNavbar({ navigation, onMenuPress }: TopNavbarProps) {
                   styles.activeNavItem,
                   {
                     backgroundColor: colorScheme === 'dark'
-                      ? Colors.dark.tint + '40'
-                      : Colors.light.tint + '30',
+                      ? Colors.dark.tint
+                      : Colors.light.tint,
                     borderWidth: 2,
-                    borderColor: Colors[colorScheme ?? 'light'].tint + '60'
+                    borderColor: Colors[colorScheme ?? 'light'].tint,
+                    opacity: colorScheme === 'dark' ? 0.4 : 0.3
                   }
                 ]
               ]}

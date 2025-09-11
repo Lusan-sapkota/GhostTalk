@@ -868,7 +868,7 @@ const Profile: React.FC = () => {
                   onPress={() => {
                     setShowFriendsModal(false);
                     // Navigate to friend's profile
-                    router.push({ pathname: '/screens/Profile', params: { userId: item.id } });
+                    router.push({ pathname: '/screens/PublicProfile' as any, params: { userId: item.id } });
                   }}
                 >
                   <View style={{ 
@@ -958,7 +958,7 @@ const Profile: React.FC = () => {
                   onPress={() => {
                     setShowFollowersModal(false);
                     // Navigate to follower's profile
-                    router.push({ pathname: '/screens/Profile', params: { userId: item.id } });
+                    router.push({ pathname: '/screens/PublicProfile' as any, params: { userId: item.id } });
                   }}
                 >
                   <View style={{ 

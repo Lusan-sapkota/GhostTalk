@@ -160,12 +160,13 @@ const Friends: React.FC = () => {
           email: f.email
         },
         is_online: f.is_online || false,
-        bio: f.bio,
-        image: f.image
+        bio: f.bio || '',
+        image: f.image || '/media/default.jpg'
       }));
       setFriends(friendsData);
-    } catch (error) {
-      console.error('Error fetching friends:', error);
+    } catch (error: any) {
+      console.error('Friends list error:', error?.response?.data?.error || error?.message || 'Unknown error');
+      Alert.alert('Error', 'Failed to load friends list. Please try again.');
     }
   };
 
@@ -173,8 +174,9 @@ const Friends: React.FC = () => {
     try {
       const response = await getFriendRequests(userId);
       setFriendRequests(response.data.requests || []);
-    } catch (error) {
-      console.error('Error fetching friend requests:', error);
+    } catch (error: any) {
+      console.error('Friend requests error:', error?.response?.data?.error || error?.message || 'Unknown error');
+      Alert.alert('Error', 'Failed to load friend requests. Please try again.');
     }
   };
 

@@ -46,26 +46,60 @@ def friends_list_view(request, *args, **kwargs):
     try:
         auth_user_friend_list = FriendList.objects.get(user=user)
         for friend in friend_list.friends.all():
-            is_mutual = auth_user_friend_list.is_mutual_friend(friend)
-            friends.append({
-                'id': friend.id,
-                'username': friend.username,
-                'first_name': friend.first_name or '',
-                'last_name': friend.last_name or '',
-                'email': friend.email,
-                'is_mutual': is_mutual
-            })
+            try:
+                friend_profile = Profile.objects.get(user=friend)
+                is_mutual = auth_user_friend_list.is_mutual_friend(friend)
+                friends.append({
+                    'id': friend.id,
+                    'username': friend.username,
+                    'first_name': friend.first_name or '',
+                    'last_name': friend.last_name or '',
+                    'email': friend.email,
+                    'is_online': friend_profile.is_online,
+                    'bio': friend_profile.bio or '',
+                    'image': friend_profile.image.url if friend_profile.image else '/media/default.jpg',
+                    'is_mutual': is_mutual
+                })
+            except Profile.DoesNotExist:
+                friends.append({
+                    'id': friend.id,
+                    'username': friend.username,
+                    'first_name': friend.first_name or '',
+                    'last_name': friend.last_name or '',
+                    'email': friend.email,
+                    'is_online': False,
+                    'bio': '',
+                    'image': '/media/default.jpg',
+                    'is_mutual': False
+                })
     except FriendList.DoesNotExist:
         # If auth user has no friend list, just return friends without mutual status
         for friend in friend_list.friends.all():
-            friends.append({
-                'id': friend.id,
-                'username': friend.username,
-                'first_name': friend.first_name or '',
-                'last_name': friend.last_name or '',
-                'email': friend.email,
-                'is_mutual': False
-            })
+            try:
+                friend_profile = Profile.objects.get(user=friend)
+                friends.append({
+                    'id': friend.id,
+                    'username': friend.username,
+                    'first_name': friend.first_name or '',
+                    'last_name': friend.last_name or '',
+                    'email': friend.email,
+                    'is_online': friend_profile.is_online,
+                    'bio': friend_profile.bio or '',
+                    'image': friend_profile.image.url if friend_profile.image else '/media/default.jpg',
+                    'is_mutual': False
+                })
+            except Profile.DoesNotExist:
+                friends.append({
+                    'id': friend.id,
+                    'username': friend.username,
+                    'first_name': friend.first_name or '',
+                    'last_name': friend.last_name or '',
+                    'email': friend.email,
+                    'is_online': False,
+                    'bio': '',
+                    'image': '/media/default.jpg',
+                    'is_mutual': False
+                })
     
     return JsonResponse({
         'this_user': {

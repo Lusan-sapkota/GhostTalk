@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { updateProfile, setupProfile } from '../api';
 
 const SetupProfile: React.FC = () => {
@@ -29,6 +30,33 @@ const SetupProfile: React.FC = () => {
   const params = useLocalSearchParams();
   const userId = params.userId as string;
   const email = params.email as string;
+
+  // If no userId provided, get from stored user data
+  const [storedUserId, setStoredUserId] = useState<string | null>(null);
+  const [storedEmail, setStoredEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      // Get user data from storage
+      getUserData();
+    }
+  }, [userId]);
+
+  const getUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setStoredUserId(user.id.toString());
+        setStoredEmail(user.email);
+      }
+    } catch (error) {
+      console.error('Error getting user data:', error);
+    }
+  };
+
+  const currentUserId = userId || storedUserId;
+  const currentEmail = email || storedEmail;
 
   const colors = Colors[scheme ?? 'light'];
 
@@ -95,12 +123,12 @@ const SetupProfile: React.FC = () => {
         } as any);
       }
 
-      // Use setupProfile for newly verified users (no auth required)
-      const response = await setupProfile(userId, formData);
+      // Use setupProfile for newly verified users or profile completion
+      const response = await setupProfile(currentUserId!, formData);
 
       if (response.status === 200) {
         Alert.alert('Success', 'Profile setup completed!', [
-          { text: 'OK', onPress: () => router.push('/screens/Login') }
+          { text: 'OK', onPress: () => router.replace('/(tabs)') }
         ]);
       }
     } catch (error: any) {
@@ -121,7 +149,7 @@ const SetupProfile: React.FC = () => {
       'You can set up your bio and profile picture later from your profile settings.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip', onPress: () => router.push('/screens/Login') }
+        { text: 'Skip', onPress: () => router.replace('/(tabs)') }
       ]
     );
   };

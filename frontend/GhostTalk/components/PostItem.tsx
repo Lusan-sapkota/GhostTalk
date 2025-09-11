@@ -5,6 +5,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Post, Comment, getPostDetail } from '../app/api';
 import { API_BASE_URL } from '../app/api';
+import { useRouter } from 'expo-router';
 import { useAuth } from './AuthContext';
 import CommentSection from './CommentSection';
 
@@ -24,6 +25,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress, onEd
   const scheme = useColorScheme();
   const colors = Colors[scheme ?? 'light'];
   const { user } = useAuth();
+  const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -96,6 +98,15 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress, onEd
       }
     } catch (error) {
       console.error('Failed to refresh comments:', error);
+    }
+  };
+
+  const handleUserProfilePress = () => {
+    if (post?.author?.id) {
+      router.push({
+        pathname: '/screens/PublicProfile' as any,
+        params: { userId: post.author.id.toString() }
+      });
     }
   };
 
@@ -231,13 +242,18 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress, onEd
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+          <TouchableOpacity
+            onPress={handleUserProfilePress}
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}
+          >
             <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
-          </View>
-          <View>
-            <Text style={{ fontWeight: '700', color: colors.text }}>{authorName}</Text>
-            <Text style={{ fontSize: 11, color: colors.tabIconDefault }}>{new Date(post.date_posted).toLocaleDateString()}</Text>
-          </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleUserProfilePress}>
+            <View>
+              <Text style={{ fontWeight: '700', color: colors.text }}>{authorName}</Text>
+              <Text style={{ fontSize: 11, color: colors.tabIconDefault }}>{new Date(post.date_posted).toLocaleDateString()}</Text>
+            </View>
+          </TouchableOpacity>
         </View>
         {/* Show save button or menu based on showSaveButton prop */}
         {showSaveButton ? (
