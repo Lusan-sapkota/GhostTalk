@@ -9,8 +9,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
+# Import token authentication decorator
+from users.views import token_required
 
-@login_required
+
+@token_required
 @require_http_methods(["GET"])
 def room_enroll(request):
     friends = FriendList.objects.filter(user=request.user)[0].friends.all()
@@ -38,7 +41,7 @@ def room_enroll(request):
 
 
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def room_choice(request, friend_id):
     friend = User.objects.filter(pk=friend_id)
@@ -62,7 +65,7 @@ def room_choice(request, friend_id):
 
 
 """ Chatroom between users """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def room(request, room_name, friend_id):
     all_rooms = Room.objects.filter(room_id=room_name)

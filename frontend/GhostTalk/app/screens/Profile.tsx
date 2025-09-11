@@ -242,6 +242,7 @@ const Profile: React.FC = () => {
             onLike={handleLike}
             onSave={handleSave}
             onPress={handlePostPress}
+            showSaveButton={true}
           />
         )}
         refreshing={refreshing}

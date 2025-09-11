@@ -79,28 +79,40 @@ api.interceptors.request.use(async (config) => {
 // Handle response errors globally
 api.interceptors.response.use(
   (response) => {
-    // Check if response is HTML (Django login page)
+    // Check if response is HTML (Django login page) - but only for error responses
     if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
-      console.warn('Received HTML login page - user not authenticated');
+      console.warn('Received HTML response - checking if it\'s an auth failure');
 
-      // Determine the type of authentication page
-      let errorMessage = 'Authentication required';
-      if (response.data.includes('login') || response.data.includes('Login')) {
-        errorMessage = 'Please log in to continue';
-      } else if (response.data.includes('password') || response.data.includes('Password')) {
-        errorMessage = 'Session expired. Please log in again';
-      } else if (response.data.includes('403') || response.data.includes('Forbidden')) {
-        errorMessage = 'Access denied. Please log in with proper permissions';
+      // Only treat as auth failure if it's actually an error status or contains login form
+      const isAuthFailure = response.status >= 400 ||
+                           response.data.includes('login') ||
+                           response.data.includes('Login') ||
+                           response.data.includes('authenticate');
+
+      if (isAuthFailure) {
+        console.warn('Treating as authentication failure - clearing token');
+
+        // Determine the type of authentication page
+        let errorMessage = 'Authentication required';
+        if (response.data.includes('login') || response.data.includes('Login')) {
+          errorMessage = 'Please log in to continue';
+        } else if (response.data.includes('password') || response.data.includes('Password')) {
+          errorMessage = 'Session expired. Please log in again';
+        } else if (response.data.includes('403') || response.data.includes('Forbidden')) {
+          errorMessage = 'Access denied. Please log in with proper permissions';
+        }
+
+        // Clear invalid token
+        AsyncStorage.removeItem('token');
+        AsyncStorage.removeItem('user');
+
+        // Create a custom error
+        const authError = new Error(errorMessage);
+        authError.name = 'AuthenticationError';
+        throw authError;
+      } else {
+        console.warn('HTML response but not treating as auth failure');
       }
-
-      // Clear invalid token
-      AsyncStorage.removeItem('token');
-      AsyncStorage.removeItem('user');
-
-      // Create a custom error
-      const authError = new Error(errorMessage);
-      authError.name = 'AuthenticationError';
-      throw authError;
     }
     return response;
   },
@@ -357,14 +369,16 @@ export const getUserPosts = (username: string) => api.get(`/post/user/${username
 
 export const getPostDetail = (pk: number) => api.get(`/post/${pk}/`);
 
-export const createPost = (title: string, content: string) => {
+export const createPost = (formData: FormData) => {
+  return api.post('/post/new/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+
+export const updatePost = (pk: number, title: string, content: string) => {
   const form = new FormData();
   form.append('title', title);
   form.append('content', content);
-  return api.post('/post/new/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return api.put(`/post/${pk}/update/`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
-
-export const updatePost = (pk: number, title: string, content: string) => api.put(`/post/${pk}/update/`, { title, content });
 
 export const deletePost = (pk: number) => api.delete(`/post/${pk}/delete/`);
 
@@ -380,10 +394,19 @@ export const savePost = (id: number) => {
   return api.post('/post/save/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
-export const likeComment = (id: number, pid: number) => {
+// Comment APIs
+export const createComment = (postId: number, body: string, replyId?: number) => {
+  const form = new FormData();
+  form.append('body', body);
+  if (replyId) {
+    form.append('comment_id', String(replyId));
+  }
+  return api.post(`/post/${postId}/`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+
+export const likeComment = (id: number) => {
   const form = new FormData();
   form.append('id', String(id));
-  form.append('pid', String(pid));
   return api.post('/post/comment/like/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
@@ -392,6 +415,44 @@ export const getLikedPosts = () => api.get('/liked-posts/');
 export const getSavedPosts = () => api.get('/saved-posts/');
 
 export const searchPosts = (query: string) => api.get('/search/', { params: { query } });
+
+// Privacy Settings
+export const updatePrivacySettings = (settings: {
+  is_private?: boolean;
+  show_online_status?: boolean;
+  allow_messages_from?: 'everyone' | 'friends' | 'none';
+  allow_friend_requests?: boolean;
+}) => {
+  return api.post('/user/privacy/', settings);
+};
+
+export const getPrivacySettings = () => api.get('/user/privacy/');
+
+// Account Settings
+export const changePassword = (oldPassword: string, newPassword: string) => {
+  return api.post('/user/change-password/', {
+    old_password: oldPassword,
+    new_password: newPassword
+  });
+};
+
+export const deleteAccount = (password: string) => {
+  return api.post('/user/delete-account/', { password });
+};
+
+// Notification Settings
+export const updateNotificationSettings = (settings: {
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  like_notifications?: boolean;
+  comment_notifications?: boolean;
+  follow_notifications?: boolean;
+  message_notifications?: boolean;
+}) => {
+  return api.post('/user/notification-settings/', settings);
+};
+
+export const getNotificationSettings = () => api.get('/user/notification-settings/');
 
 // Friend APIs
 export const getFriendsList = (userId: number) => api.get(`/friend/list/${userId}`);
@@ -448,6 +509,7 @@ export interface Post {
   id: number;
   title: string;
   content: string;
+  image?: string;
   date_posted: string;
   date_updated: string;
   author: User;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text, TextInput, TouchableOpacity } from 'react-native';
 import { getRoomMessages } from '../api';
+import { useLocalSearchParams } from 'expo-router';
 
 interface Message {
   user: string;
@@ -8,8 +9,10 @@ interface Message {
   date: string;
 }
 
-const ChatRoom: React.FC<{ route: any }> = ({ route }) => {
-  const { room } = route.params;
+const ChatRoom: React.FC = () => {
+  const params = useLocalSearchParams();
+  const roomParam = params.room as string;
+  const room = JSON.parse(roomParam);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
 

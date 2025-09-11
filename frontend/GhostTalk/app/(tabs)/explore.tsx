@@ -66,6 +66,25 @@ export default function ProfileScreen() {
     router.push({ pathname: '/screens/PostDetail', params: { post: JSON.stringify(post) } });
   };
 
+  const handleEditPost = (post: Post) => {
+    router.push({ pathname: '/screens/CreatePost', params: { editPost: JSON.stringify(post) } });
+  };
+
+  const handleSharePost = (post: Post) => {
+    // Implement share functionality
+    alert('Share functionality coming soon!');
+  };
+
+  const handleDeletePost = (post: Post) => {
+    // Implement delete functionality
+    alert('Delete functionality will be implemented!');
+  };
+
+  const handlePrivacyPost = (post: Post) => {
+    // Implement privacy functionality
+    alert('Privacy settings will be implemented!');
+  };
+
   if (!profile) return <Text>Loading...</Text>;
 
   return (
@@ -99,6 +118,11 @@ export default function ProfileScreen() {
               onLike={handleLike}
               onSave={handleSave}
               onPress={handlePostPress}
+              onEdit={handleEditPost}
+              onShare={handleSharePost}
+              onDelete={handleDeletePost}
+              onPrivacy={handlePrivacyPost}
+              showSaveButton={true}
             />
           )}
         />

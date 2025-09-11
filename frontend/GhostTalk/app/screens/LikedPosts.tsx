@@ -78,6 +78,25 @@ export default function LikedPostsScreen() {
     router.push({ pathname: '/screens/PostDetail', params: { post: JSON.stringify(post) } });
   };
 
+  const handleEditPost = (post: Post) => {
+    router.push({ pathname: '/screens/CreatePost', params: { editPost: JSON.stringify(post) } });
+  };
+
+  const handleSharePost = (post: Post) => {
+    // Implement share functionality
+    alert('Share functionality coming soon!');
+  };
+
+  const handleDeletePost = (post: Post) => {
+    // Implement delete functionality
+    alert('Delete functionality will be implemented!');
+  };
+
+  const handlePrivacyPost = (post: Post) => {
+    // Implement privacy functionality
+    alert('Privacy settings will be implemented!');
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[scheme ?? 'light'].background }}>
       {/* Header */}
@@ -103,6 +122,10 @@ export default function LikedPostsScreen() {
             onLike={handleLike}
             onSave={handleSave}
             onPress={handlePostPress}
+            onEdit={handleEditPost}
+            onShare={handleSharePost}
+            onDelete={handleDeletePost}
+            onPrivacy={handlePrivacyPost}
           />
         )}
         refreshControl={

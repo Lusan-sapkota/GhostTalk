@@ -24,6 +24,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def token_required(view_func):
+    """
+    Decorator to authenticate users based on token in Authorization header
+    Similar to @login_required but works with token authentication
+    """
+    def wrapper(request, *args, **kwargs):
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if not (auth_header.startswith('Token ') or auth_header.startswith('Bearer ')):
+            return JsonResponse({'error': 'Authorization header required'}, status=401)
+
+        token_key = auth_header.split(' ')[1]
+
+        from rest_framework.authtoken.models import Token
+        try:
+            token = Token.objects.get(key=token_key)
+            # Set the user on the request object (always override any existing user)
+            request.user = token.user
+        except Token.DoesNotExist:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def validate_email_format(email):
     """Validate email format and check for disposable domains"""
     import re
@@ -61,7 +85,7 @@ def got_offline(sender, user, request, **kwargs):
 
 """ Following and Unfollowing users """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def follow_unfollow_profile(request):
     if request.method == 'POST':
@@ -361,7 +385,7 @@ def reset_password(request):
         except Exception as e:
             return JsonResponse({'error': 'Password reset failed'}, status=500)
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["GET", "POST"])
 def profile(request):
     if request.method == 'POST':
@@ -406,7 +430,7 @@ def public_profile(request, username):
 
 
 """ All user profiles """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def profile_list(request):
     profiles = Profile.objects.all().exclude(user=request.user)
@@ -419,7 +443,7 @@ def profile_list(request):
     ]})
 
 """ User profile details view """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def profile_detail(request, pk):
     view_profile = Profile.objects.get(pk=pk)

@@ -1,11 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from notification.models import Notification
+from users.views import token_required
 
 # Create your views here.
 
 """ All notifications """
-@login_required
+@token_required
 def ShowNotifications(request):
     user = request.user
     notifications = Notification.objects.filter(user=user).order_by('-date')

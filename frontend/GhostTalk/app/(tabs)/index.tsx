@@ -132,6 +132,7 @@ export default function HomeScreen() {
             onLike={handleLike}
             onSave={handleSave}
             onPress={handlePostPress}
+            showSaveButton={true}
           />
         )}
   refreshing={refreshing}

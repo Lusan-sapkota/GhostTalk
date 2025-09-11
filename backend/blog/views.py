@@ -14,6 +14,9 @@ import random
 from django.views.decorators.csrf import csrf_exempt
 import re
 
+# Import token authentication decorator
+from users.views import token_required
+
 try:
     import bleach
 except Exception:
@@ -74,6 +77,7 @@ def _serialize_post(p: Post, user=None):
         "id": p.id,
         "title": p.title,
     "content": _safe_text(p.content or ""),
+        "image": p.image.url if p.image else None,
         "date_posted": p.date_posted.isoformat(),
         "date_updated": p.date_updated.isoformat(),
         "author": _serialize_user(p.author),
@@ -104,7 +108,7 @@ def first(request):
     return JsonResponse({"posts": [_serialize_post(p, user) for p in posts]}, status=200)
 
 """ Posts of following user profiles """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def posts_of_following_profiles(request):
 
@@ -140,7 +144,7 @@ def posts_of_following_profiles(request):
 
 """ Post Like """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def LikeView(request):
 
@@ -172,7 +176,7 @@ def LikeView(request):
 
 """ Post save """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def SaveView(request):
 
@@ -200,7 +204,7 @@ def SaveView(request):
 
 """ Like post comments """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def LikeCommentView(request): # , id1, id2              id1=post.pk id2=reply.pk
     post = get_object_or_404(Comment, id=request.POST.get('id'))
@@ -242,7 +246,7 @@ def LikeCommentView(request): # , id1, id2              id1=post.pk id2=reply.pk
 
 
 """ Home page with all posts """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def post_list(request):
     qs = Post.objects.all().order_by('-date_posted')
@@ -269,7 +273,7 @@ def post_list(request):
 
 
 """ All the posts of the user """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def user_posts(request, username):
     user = get_object_or_404(User, username=username)
@@ -293,7 +297,7 @@ def user_posts(request, username):
 
 """ Post detail view """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["GET", "POST"])
 def PostDetailView(request,pk):
 
@@ -373,21 +377,34 @@ def PostDetailView(request,pk):
 
 """ Create post """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["POST"])
 def post_create(request):
     title = request.POST.get('title')
     content = request.POST.get('content')
+    image = request.FILES.get('image')
+
     if not title:
         return JsonResponse({'error': 'title is required'}, status=400)
-    post = Post.objects.create(title=_safe_text(title, max_len=200), content=_safe_text(content or ""), author=request.user)
+
+    post = Post.objects.create(
+        title=_safe_text(title, max_len=200),
+        content=_safe_text(content or ""),
+        author=request.user
+    )
+
+    # Handle image upload if provided
+    if image:
+        post.image = image
+        post.save()
+
     return JsonResponse({'post': _serialize_post(post, request.user)}, status=201)
 
 
 
 """ Update post """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["PUT", "PATCH"])
 def post_update(request, pk):
     post = get_object_or_404(Post, pk=pk)
@@ -412,7 +429,7 @@ def post_update(request, pk):
 
 """ Delete post """
 @csrf_exempt
-@login_required
+@token_required
 @require_http_methods(["DELETE"])
 def post_delete(request, pk):
     post = get_object_or_404(Post, pk=pk)
@@ -446,7 +463,7 @@ def search(request):
 
 
 """ Liked posts """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def AllLikeView(request):
     user = request.user
@@ -458,7 +475,7 @@ def AllLikeView(request):
 
 
 """ Saved posts """
-@login_required
+@token_required
 @require_http_methods(["GET"])
 def AllSaveView(request):
     user = request.user

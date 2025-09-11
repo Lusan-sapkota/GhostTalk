@@ -255,7 +255,7 @@ export default function NotificationsScreen() {
       <Text style={[styles.emptyStateText, { color: colors.icon }]}>
         No notifications yet
       </Text>
-      <Text style={[styles.emptyStateSubtext, { color: colors.icon + '60' }]}>
+      <Text style={[styles.emptyStateSubtext, { color: colors.icon, opacity: 0.6 }]}>
         You'll see updates here when people interact with you
       </Text>
     </View>
