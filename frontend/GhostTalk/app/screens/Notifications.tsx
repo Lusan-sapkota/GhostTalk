@@ -134,6 +134,9 @@ export default function NotificationsScreen() {
       case 7: // Friend Request
         router.push('/(tabs)/friends');
         break;
+      case 8: // Friend Request Accepted
+        router.push('/(tabs)/friends');
+        break;
       case 1: // Like
       case 2: // Follow
       case 3: // Comment
@@ -151,6 +154,8 @@ export default function NotificationsScreen() {
     switch (type) {
       case 7: // Friend Request
         return 'person-add-outline';
+      case 8: // Friend Request Accepted
+        return 'checkmark-circle-outline';
       case 1: // Like
         return 'heart-outline';
       case 2: // Follow
@@ -172,6 +177,8 @@ export default function NotificationsScreen() {
     switch (type) {
       case 7:
         return 'Friend Request';
+      case 8:
+        return 'Friend Request Accepted';
       case 1:
         return 'Post Liked';
       case 2:
@@ -193,6 +200,8 @@ export default function NotificationsScreen() {
     switch (type) {
       case 7: // Friend Request
         return '#007AFF';
+      case 8: // Friend Request Accepted
+        return '#34C759';
       case 1: // Like
         return '#FF3B30';
       case 2: // Follow

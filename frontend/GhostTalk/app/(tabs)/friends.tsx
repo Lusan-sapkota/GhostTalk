@@ -1,93 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, Image, Animated, Easing, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, FlatList, Text, Image, Animated, Easing, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getFriendsList, Profile } from '../api';
+import { getFriendsList, Profile, getFriendRequests, acceptFriendRequest, declineFriendRequest, getFollowers } from '../api';
 import ProfileCard from '../../components/ProfileCard';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+interface FriendRequest {
+  id: number;
+  sender: {
+    id: number;
+    username: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  receiver: {
+    id: number;
+    username: string;
+  };
+  is_active: boolean;
+  timestamp: string;
+}
+
 export default function FriendsScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
+  const colors = Colors[scheme ?? 'light'];
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [followers, setFollowers] = useState<Profile[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [suggestions, setSuggestions] = useState<Profile[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'friends' | 'followers'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'followers' | 'requests'>('friends');
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const pulse = useRef(new Animated.Value(1)).current;
-
-  // Mock suggestions data
-  const [suggestions] = useState<Profile[]>([
-    {
-      id: 1,
-      user: {
-        id: 1,
-        username: 'johndoe',
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john@example.com'
-      },
-      is_online: true,
-      bio: 'Software developer passionate about React Native',
-      image: undefined
-    },
-    {
-      id: 2,
-      user: {
-        id: 2,
-        username: 'sarahsmith',
-        first_name: 'Sarah',
-        last_name: 'Smith',
-        email: 'sarah@example.com'
-      },
-      is_online: false,
-      bio: 'UI/UX designer with 5+ years experience',
-      image: undefined
-    },
-    {
-      id: 3,
-      user: {
-        id: 3,
-        username: 'mikejohnson',
-        first_name: 'Mike',
-        last_name: 'Johnson',
-        email: 'mike@example.com'
-      },
-      is_online: true,
-      bio: 'Full-stack developer and tech enthusiast',
-      image: undefined
-    }
-  ]);
-
-  // Mock followers data
-  const [followers] = useState<Profile[]>([
-    {
-      id: 4,
-      user: {
-        id: 4,
-        username: 'alexchen',
-        first_name: 'Alex',
-        last_name: 'Chen',
-        email: 'alex@example.com'
-      },
-      is_online: true,
-      bio: 'Mobile app developer',
-      image: undefined
-    },
-    {
-      id: 5,
-      user: {
-        id: 5,
-        username: 'emmawilson',
-        first_name: 'Emma',
-        last_name: 'Wilson',
-        email: 'emma@example.com'
-      },
-      is_online: false,
-      bio: 'Product designer',
-      image: undefined
-    }
-  ]);
 
   useEffect(() => {
     (async () => {
@@ -96,7 +44,17 @@ export default function FriendsScreen() {
         router.replace('/screens/Login');
         return;
       }
-      await fetchFriends();
+
+      const userRaw = await AsyncStorage.getItem('user');
+      if (userRaw) {
+        const user = JSON.parse(userRaw);
+        setCurrentUserId(user.id);
+        await Promise.all([
+          fetchFriends(),
+          fetchFollowers(user.id),
+          fetchFriendRequests(user.id)
+        ]);
+      }
     })();
 
     Animated.loop(
@@ -138,12 +96,67 @@ export default function FriendsScreen() {
     }
   };
 
+  const fetchFollowers = async (userId: number) => {
+    try {
+      const response = await getFollowers(userId);
+      setFollowers(response.data.followers || []);
+    } catch (error) {
+      console.error('Error fetching followers:', error);
+      setFollowers([]);
+    }
+  };
+
+  const fetchFriendRequests = async (userId: number) => {
+    try {
+      const response = await getFriendRequests(userId);
+      setFriendRequests(response.data.requests || []);
+    } catch (error) {
+      console.error('Error fetching friend requests:', error);
+      setFriendRequests([]);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchFriends();
+      if (currentUserId) {
+        await Promise.all([
+          fetchFriends(),
+          fetchFollowers(currentUserId),
+          fetchFriendRequests(currentUserId)
+        ]);
+      }
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId: number) => {
+    try {
+      await acceptFriendRequest(requestId);
+      if (currentUserId) {
+        await Promise.all([
+          fetchFriends(),
+          fetchFriendRequests(currentUserId)
+        ]);
+      }
+      Alert.alert('Success', 'Friend request accepted!');
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert('Error', 'Failed to accept friend request');
+    }
+  };
+
+  const handleDeclineRequest = async (requestId: number) => {
+    try {
+      await declineFriendRequest(requestId);
+      if (currentUserId) {
+        await fetchFriendRequests(currentUserId);
+      }
+      Alert.alert('Success', 'Friend request declined');
+    } catch (error) {
+      console.error('Error declining friend request:', error);
+      Alert.alert('Error', 'Failed to decline friend request');
     }
   };
 
@@ -177,68 +190,6 @@ export default function FriendsScreen() {
         </View>
       </View>
 
-      {/* Suggestions Section */}
-      {suggestions.length > 0 && (
-        <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
-          <Text style={{
-            color: Colors[scheme ?? 'light'].text,
-            fontWeight: '600',
-            fontSize: 18,
-            marginBottom: 12
-          }}>
-            Suggestions
-          </Text>
-          <FlatList
-            data={suggestions}
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handleProfilePress(item)}
-                style={{
-                  backgroundColor: scheme === 'dark' ? '#222' : '#f8f9fa',
-                  borderRadius: 12,
-                  padding: 12,
-                  marginRight: 12,
-                  width: 120,
-                  alignItems: 'center'
-                }}
-              >
-                <View style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 25,
-                  backgroundColor: Colors[scheme ?? 'light'].tint + '55',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: 8
-                }}>
-                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
-                    {(item.user.first_name?.[0] || item.user.username?.[0] || 'U').toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={{
-                  color: Colors[scheme ?? 'light'].text,
-                  fontWeight: '600',
-                  fontSize: 14,
-                  textAlign: 'center'
-                }} numberOfLines={1}>
-                  {item.user.first_name || item.user.username}
-                </Text>
-                <View style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: item.is_online ? '#4CAF50' : Colors[scheme ?? 'light'].icon,
-                  marginTop: 4
-                }} />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
-
       {/* Friends and Followers Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: Colors[scheme ?? 'light'].icon + '40' }]}>
         <TouchableOpacity
@@ -269,36 +220,131 @@ export default function FriendsScreen() {
             Followers ({followers.length})
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('requests')}
+          style={[
+            styles.tab,
+            activeTab === 'requests' && [styles.activeTab, { borderBottomColor: Colors[scheme ?? 'light'].tint }]
+          ]}
+        >
+          <Text style={[
+            styles.tabText,
+            { color: activeTab === 'requests' ? Colors[scheme ?? 'light'].tint : Colors[scheme ?? 'light'].icon }
+          ]}>
+            Requests ({friendRequests.length})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Content based on active tab */}
-      <FlatList
-        data={activeTab === 'friends' ? friends : followers}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <ProfileCard
-            profile={item}
-            onPress={handleProfilePress}
-            onEdit={activeTab === 'friends' ? handleEditProfile : undefined}
-            showEdit={activeTab === 'friends'}
-          />
-        )}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        ListEmptyComponent={
-          <View style={{ alignItems: 'center', marginTop: 48 }}>
-            <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
-            </Animated.View>
-            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
-              {activeTab === 'friends' ? 'No friends yet' : 'No followers yet'}
-            </Text>
-            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
-              {activeTab === 'friends' ? 'Find peers to start chats…' : 'People who follow you will appear here'}
-            </Text>
-          </View>
-        }
-      />
+      {activeTab === 'requests' ? (
+        <FlatList
+          data={friendRequests}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: Colors[scheme ?? 'light'].icon + '20'
+            }}>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: '/screens/PublicProfile' as any, params: { userId: item.sender.id.toString() } })}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+              >
+                <View style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 25,
+                  backgroundColor: Colors[scheme ?? 'light'].tint + '55',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: 12
+                }}>
+                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
+                    {(item.sender.first_name?.[0] || item.sender.username?.[0] || 'U').toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: Colors[scheme ?? 'light'].text, fontWeight: '600', fontSize: 16 }}>
+                    {item.sender.first_name && item.sender.last_name
+                      ? `${item.sender.first_name} ${item.sender.last_name}`
+                      : item.sender.username}
+                  </Text>
+                  <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 14 }}>
+                    @{item.sender.username}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity
+                  onPress={() => handleAcceptRequest(item.id)}
+                  style={{
+                    backgroundColor: Colors[scheme ?? 'light'].tint,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    marginRight: 8
+                  }}
+                >
+                  <Text style={{ color: 'white', fontWeight: '600' }}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDeclineRequest(item.id)}
+                  style={{
+                    backgroundColor: Colors[scheme ?? 'light'].icon + '40',
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20
+                  }}
+                >
+                  <Text style={{ color: Colors[scheme ?? 'light'].text, fontWeight: '600' }}>Decline</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 48 }}>
+              <Ionicons name="person-add" size={48} color={Colors[scheme ?? 'light'].icon} />
+              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+                No friend requests
+              </Text>
+              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon + '80', textAlign: 'center' }}>
+                Friend requests will appear here
+              </Text>
+            </View>
+          }
+        />
+      ) : (
+        <FlatList
+          data={activeTab === 'friends' ? friends : followers}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <ProfileCard
+              profile={item}
+              onPress={handleProfilePress}
+            />
+          )}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', marginTop: 48 }}>
+              <Animated.View style={{ transform: [{ scale: pulse }] }}>
+                <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
+              </Animated.View>
+              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+                {activeTab === 'friends' ? 'No friends yet' : 'No followers yet'}
+              </Text>
+              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
+                {activeTab === 'friends' ? 'Find peers to start chats…' : 'People who follow you will appear here'}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }

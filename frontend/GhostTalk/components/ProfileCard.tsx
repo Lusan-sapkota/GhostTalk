@@ -81,7 +81,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             )}
           </View>
           <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 12 }}>
-            @{profile.user.username}
+            @{profile.user.username} • {profile.is_online ? 'Online' : 'Offline'}
           </Text>
           {!!profile.bio && <Text style={{ color: Colors[scheme ?? 'light'].icon, fontSize: 13, marginTop: 2 }}>{profile.bio}</Text>}
         </View>

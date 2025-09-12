@@ -8,16 +8,56 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Dimensions
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
-import { getProfileDetail, sendFriendRequest, getFriendsList } from '../api';
+import { getProfileDetail, sendFriendRequest, getFriendsList, followUnfollow, cancelFriendRequest, removeFriend, acceptFriendRequest } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../api';
 
 const { width } = Dimensions.get('window');
+
+// ImageWithFallback component for handling image loading errors
+const ImageWithFallback: React.FC<{
+  source: { uri: string };
+  fallbackText: string;
+  style: any;
+}> = ({ source, fallbackText, style }) => {
+  const [imageError, setImageError] = useState(false);
+  const scheme = useColorScheme();
+
+  if (imageError) {
+    return (
+      <View style={{
+        ...style,
+        backgroundColor: Colors[scheme ?? 'light'].tint,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <Text style={{ 
+          fontSize: 32, 
+          fontWeight: 'bold', 
+          color: 'white',
+          textAlign: 'center'
+        }}>
+          {fallbackText}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={source}
+      style={style}
+      onError={() => setImageError(true)}
+    />
+  );
+};
 
 interface UserProfile {
   id: number;
@@ -33,13 +73,18 @@ interface Profile {
   bio: string;
   image: string;
   is_online: boolean;
+  friends_count: number;
+  followers_count: number;
+  following_count: number;
+  is_friend: boolean;
+  follow: boolean;
+  request_sent: number;
+  pending_friend_request_id: number | null;
 }
 
 const PublicProfile: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isFriend, setIsFriend] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const params = useLocalSearchParams();
@@ -76,14 +121,8 @@ const PublicProfile: React.FC = () => {
     try {
       setLoading(true);
       const response = await getProfileDetail(parseInt(userId));
-      setProfile(response.data);
-
-      // Check if this user is a friend
-      if (currentUserId && currentUserId !== parseInt(userId)) {
-        const friendsResponse = await getFriendsList(currentUserId);
-        const isUserFriend = friendsResponse.data.friends.some((friend: any) => friend.id === parseInt(userId));
-        setIsFriend(isUserFriend);
-      }
+      const profileData = response.data;
+      setProfile(profileData);
     } catch (error: any) {
       console.error('Error loading profile:', error);
       Alert.alert('Error', 'Failed to load user profile');
@@ -98,11 +137,113 @@ const PublicProfile: React.FC = () => {
 
     try {
       await sendFriendRequest(profile.user.id);
-      setRequestSent(true);
-      Alert.alert('Success', 'Friend request sent!');
+      // Update profile data
+      setProfile(prev => prev ? {...prev, request_sent: 2} : null); // 2 = you sent to them
     } catch (error: any) {
       console.error('Error sending friend request:', error);
-      Alert.alert('Error', error?.response?.data?.error || 'Failed to send friend request');
+      Alert.alert('Error', 'Failed to send friend request');
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    if (!profile || !profile.pending_friend_request_id) return;
+
+    try {
+      await acceptFriendRequest(profile.pending_friend_request_id);
+      // Update profile data
+      setProfile(prev => prev ? {...prev, is_friend: true, request_sent: 0} : null);
+      Alert.alert('Success', 'Friend request accepted!');
+    } catch (error: any) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert('Error', 'Failed to accept friend request');
+    }
+  };
+
+  const handleUnfollow = () => {
+    if (!profile) return;
+    Alert.alert(
+      'Unfollow User',
+      `Are you sure you want to unfollow ${getFullName(profile.user)}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Unfollow', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await followUnfollow(profile.id);
+              // Update profile data based on API response
+              setProfile(prev => prev ? {...prev, follow: response.data.now_following} : null);
+            } catch (error: any) {
+              console.error('Error unfollowing:', error);
+              Alert.alert('Error', 'Failed to unfollow user');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelRequest = () => {
+    if (!profile) return;
+    Alert.alert(
+      'Cancel Friend Request',
+      `Are you sure you want to cancel your friend request to ${getFullName(profile.user)}?`,
+      [
+        { text: 'Keep', style: 'cancel' },
+        { 
+          text: 'Cancel Request', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelFriendRequest(profile.user.id);
+              // Update profile data
+              setProfile(prev => prev ? {...prev, request_sent: 0} : null);
+            } catch (error: any) {
+              console.error('Error canceling request:', error);
+              Alert.alert('Error', 'Failed to cancel friend request');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleUnfriend = () => {
+    if (!profile) return;
+    Alert.alert(
+      'Remove Friend',
+      `Are you sure you want to remove ${getFullName(profile.user)} from your friends?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeFriend(profile.user.id);
+              // Update profile data
+              setProfile(prev => prev ? {...prev, is_friend: false} : null);
+            } catch (error: any) {
+              console.error('Error removing friend:', error);
+              Alert.alert('Error', 'Failed to remove friend');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleFollow = async () => {
+    if (!profile) return;
+
+    try {
+      const response = await followUnfollow(profile.id);
+      // Update profile data based on API response
+      setProfile(prev => prev ? {...prev, follow: response.data.now_following} : null);
+    } catch (error: any) {
+      console.error('Error following/unfollowing:', error);
+      Alert.alert('Error', 'Failed to update follow status');
     }
   };
 
@@ -113,20 +254,27 @@ const PublicProfile: React.FC = () => {
     return user.username;
   };
 
+  const getUserInitials = (user: UserProfile) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    }
+    return user.username.charAt(0).toUpperCase();
+  };
+
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!profile) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
           <Ionicons name="person-circle-outline" size={80} color={colors.icon} />
           <Text style={[styles.errorText, { color: colors.text }]}>Profile not found</Text>
@@ -137,15 +285,15 @@ const PublicProfile: React.FC = () => {
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const isOwnProfile = currentUserId === profile.user.id;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header - outside SafeAreaView */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -155,19 +303,50 @@ const PublicProfile: React.FC = () => {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
         <View style={styles.headerSpacer} />
+        {!isOwnProfile && (
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(
+                'Block User',
+                `Are you sure you want to block ${getFullName(profile.user)}? You won't be able to see their posts or interact with them.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Block', 
+                    style: 'destructive',
+                    onPress: () => {
+                      // TODO: Implement block user functionality
+                      Alert.alert('Feature Coming Soon', 'Block user functionality will be available soon.');
+                    }
+                  }
+                ]
+              );
+            }}
+            style={styles.headerIcon}
+          >
+            <Ionicons name="ban-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
       </View>
+
+      <SafeAreaView style={[styles.safeAreaContainer, { backgroundColor: colors.background }]}>
+
+      <ScrollView style={{ flex: 1 }}>
 
       {/* Profile Content */}
       <View style={styles.profileContainer}>
         {/* Profile Picture */}
         <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: profile.image || '/media/default.jpg' }}
+          <ImageWithFallback
+            source={{ uri: profile.image ? `${API_BASE_URL}${profile.image}` : '' }}
+            fallbackText={getUserInitials(profile.user)}
             style={styles.avatar}
           />
-          {profile.is_online && (
-            <View style={[styles.onlineIndicator, { backgroundColor: '#4CAF50' }]} />
-          )}
+          <View style={[styles.onlineIndicator, { 
+            backgroundColor: profile.is_online ? '#4CAF50' : '#9E9E9E',
+            borderColor: colors.background,
+            borderWidth: 2
+          }]} />
         </View>
 
         {/* User Info */}
@@ -192,25 +371,79 @@ const PublicProfile: React.FC = () => {
         {/* Action Buttons */}
         {!isOwnProfile && (
           <View style={styles.actionContainer}>
-            {isFriend ? (
-              <View style={[styles.friendButton, { backgroundColor: colors.icon }]}>
-                <Ionicons name="checkmark-circle" size={20} color="white" />
-                <Text style={styles.friendButtonText}>Friends</Text>
-              </View>
-            ) : requestSent ? (
-              <View style={[styles.requestSentButton, { backgroundColor: colors.icon }]}>
-                <Ionicons name="time-outline" size={20} color="white" />
-                <Text style={styles.requestSentText}>Request Sent</Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={handleSendFriendRequest}
-                style={[styles.addFriendButton, { backgroundColor: colors.primary }]}
-              >
-                <Ionicons name="person-add" size={20} color="white" />
-                <Text style={styles.addFriendText}>Add Friend</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.buttonRow}>
+              {/* Follow Button */}
+              {profile.follow ? (
+                <TouchableOpacity
+                  onPress={handleUnfollow}
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: colors.icon }
+                  ]}
+                >
+                  <Ionicons 
+                    name="heart" 
+                    size={20} 
+                    color="white" 
+                  />
+                  <Text style={styles.actionButtonText}>
+                    Following
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleFollow}
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: colors.primary }
+                  ]}
+                >
+                  <Ionicons 
+                    name="heart-outline" 
+                    size={20} 
+                    color="white" 
+                  />
+                  <Text style={styles.actionButtonText}>
+                    Follow
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Friend Button */}
+              {profile.is_friend ? (
+                <TouchableOpacity
+                  onPress={handleUnfriend}
+                  style={[styles.actionButton, { backgroundColor: colors.icon }]}
+                >
+                  <Ionicons name="checkmark-circle" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Friends</Text>
+                </TouchableOpacity>
+              ) : profile.request_sent === 2 ? (
+                <TouchableOpacity
+                  onPress={handleCancelRequest}
+                  style={[styles.actionButton, { backgroundColor: colors.icon }]}
+                >
+                  <Ionicons name="time-outline" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Request Sent</Text>
+                </TouchableOpacity>
+              ) : profile.request_sent === 1 ? (
+                <TouchableOpacity
+                  onPress={handleAcceptRequest}
+                  style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                >
+                  <Ionicons name="checkmark" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Accept Request</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleSendFriendRequest}
+                  style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                >
+                  <Ionicons name="person-add" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Add Friend</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         )}
 
@@ -222,24 +455,32 @@ const PublicProfile: React.FC = () => {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: colors.primary }]}>0</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.friends_count || 0}</Text>
             <Text style={[styles.statLabel, { color: colors.icon }]}>Friends</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: colors.primary }]}>
-              {profile.is_online ? 'Online' : 'Offline'}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.icon }]}>Status</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.followers_count || 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.icon }]}>Followers</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.following_count || 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.icon }]}>Following</Text>
           </View>
         </View>
       </View>
     </ScrollView>
+    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  safeAreaContainer: {
     flex: 1,
   },
   loadingContainer: {
@@ -278,6 +519,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 50, // Add top padding for status bar
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
@@ -287,11 +529,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
+    flex: 1, // Take remaining space
   },
   headerSpacer: {
     width: 40,
+  },
+  headerIcon: {
+    padding: 8,
   },
   profileContainer: {
     padding: 20,
@@ -309,11 +553,11 @@ const styles = StyleSheet.create({
   },
   onlineIndicator: {
     position: 'absolute',
-    bottom: 8,
+    top: 8,
     right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: 'white',
   },
@@ -342,6 +586,25 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     marginBottom: 24,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   addFriendButton: {
     flexDirection: 'row',

@@ -27,6 +27,12 @@ class Profile(models.Model):
     def get_friends_no(self):
         return self.friends.all().count()
 
+    def get_followers_no(self):
+        return self.followers.all().count()
+
+    def get_following_no(self):
+        return self.following.all().count()
+
     def __str__(self):
         return f'{self.user.username} Profile'
 

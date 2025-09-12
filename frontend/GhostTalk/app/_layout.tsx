@@ -58,7 +58,7 @@ export default function RootLayout() {
             <Stack.Screen name="screens/Profile" options={{ title: 'Profile' }} />
             <Stack.Screen name="screens/Friends" options={{ title: 'Friends' }} />
             <Stack.Screen name="screens/ChatList" options={{ title: 'Chats' }} />
-            <Stack.Screen name="screens/ChatRoom" options={{ title: 'Chat' }} />
+            <Stack.Screen name="screens/ChatRoom" options={{ headerShown: false }} />
             <Stack.Screen name="screens/PostDetail" options={{ title: 'Post' }} />
             <Stack.Screen name="screens/CreatePost" options={{ headerShown: false }} />
             <Stack.Screen name="screens/Search" options={{ headerShown: false }} />

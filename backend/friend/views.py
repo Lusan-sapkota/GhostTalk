@@ -16,6 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from users.views import token_required
 from users.models import Profile
 from notification.models import Notification
+from chat.models import Room, Chat
 
 
 @token_required
@@ -141,16 +142,14 @@ def friend_requests(request, *args, **kwargs):
                 'id': fr.sender.id,
                 'username': fr.sender.username,
                 'first_name': fr.sender.first_name or '',
-                'last_name': fr.sender.last_name or '',
-                'email': fr.sender.email
+                'last_name': fr.sender.last_name or ''
             },
             'receiver': {
                 'id': fr.receiver.id,
-                'username': fr.receiver.username,
-                'first_name': fr.receiver.first_name or '',
-                'last_name': fr.receiver.last_name or ''
+                'username': fr.receiver.username
             },
-            'created_at': fr.created_at.isoformat() if fr.created_at else None
+            'is_active': fr.is_active,
+            'timestamp': fr.timestamp.isoformat() if fr.timestamp else None
         })
     
     return JsonResponse({
@@ -190,15 +189,18 @@ def send_friend_request(request, *args, **kwargs):
         return JsonResponse({'error': 'Cannot send friend request to yourself'}, status=400)
     
     try:
-        # Check if there's already an active friend request
+        # Check if there's already an active friend request in either direction
         existing_requests = FriendRequest.objects.filter(
-            sender=user, 
-            receiver=receiver, 
+            (Q(sender=user) & Q(receiver=receiver)) | (Q(sender=receiver) & Q(receiver=user)),
             is_active=True
         )
         
         if existing_requests.exists():
-            return JsonResponse({'error': 'Friend request already sent'}, status=400)
+            existing_request = existing_requests.first()
+            if existing_request.sender == user:
+                return JsonResponse({'error': 'Friend request already sent'}, status=400)
+            else:
+                return JsonResponse({'error': 'This user has already sent you a friend request'}, status=400)
         
         # Check if they're already friends
         try:
@@ -417,38 +419,9 @@ def friend_suggestions(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-@token_required
-def accept_friend_request(request, *args, **kwargs):
-    user = request.user
-    friend_request_id = kwargs.get("friend_request_id")
-    
-    if not friend_request_id:
-        return JsonResponse({'error': 'Friend request ID required'}, status=400)
-    
-    try:
-        friend_request = FriendRequest.objects.get(pk=friend_request_id)
-    except FriendRequest.DoesNotExist:
-        return JsonResponse({'error': 'Friend request does not exist'}, status=404)
-    
-    # Confirm that this is the correct request for this user
-    if friend_request.receiver != user:
-        return JsonResponse({'error': 'This is not your friend request to accept'}, status=403)
-    
-    if not friend_request.is_active:
-        return JsonResponse({'error': 'Friend request is not active'}, status=400)
-    
-    try:
-        friend_request.accept()
-        return JsonResponse({
-            'success': True,
-            'message': 'Friend request accepted successfully'
-        })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
 @csrf_exempt
 @token_required
+
 def remove_friend(request, *args, **kwargs):
     user = request.user
     
@@ -482,6 +455,66 @@ def remove_friend(request, *args, **kwargs):
         })
     except FriendList.DoesNotExist:
         return JsonResponse({'error': 'Friend list not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@token_required
+def accept_friend_request(request, *args, **kwargs):
+    user = request.user
+    friend_request_id = kwargs.get("friend_request_id")
+    
+    if not friend_request_id:
+        return JsonResponse({'error': 'Friend request ID required'}, status=400)
+    
+    try:
+        friend_request = FriendRequest.objects.get(pk=friend_request_id)
+    except FriendRequest.DoesNotExist:
+        return JsonResponse({'error': 'Friend request does not exist'}, status=404)
+    
+    # Confirm that this is the correct request for this user
+    if friend_request.receiver != user:
+        return JsonResponse({'error': 'This is not your friend request to accept'}, status=403)
+    
+    if not friend_request.is_active:
+        return JsonResponse({'error': 'Friend request is not active'}, status=400)
+    
+    try:
+        friend_request.accept()
+        
+        # Create a chat room between the two users
+        from chat.models import Room, Chat
+        room = Room.objects.filter(
+            Q(author=user, friend=friend_request.sender) | Q(author=friend_request.sender, friend=user)
+        )
+        if not room.exists():
+            room = Room(author=user, friend=friend_request.sender)
+            room.save()
+        else:
+            room = room.first()
+        
+        # Send initial "Say hi" message
+        initial_message = Chat.objects.create(
+            room_id=room,
+            author=user,
+            friend=friend_request.sender,
+            text="Say hi! 👋"
+        )
+        
+        # Create notification for the sender that their friend request was accepted
+        Notification.objects.create(
+            sender=user,
+            user=friend_request.sender,
+            notification_type=8,  # Friend Request Accepted
+            text_preview=f'{user.username} accepted your friend request',
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Friend request accepted successfully',
+            'room_id': room.room_id
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

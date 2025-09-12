@@ -472,6 +472,8 @@ export const updateNotificationSettings = (settings: {
 
 export const getNotificationSettings = () => api.get('/user/notification-settings/');
 
+export const getFollowers = (userId: number) => api.get(`/user/followers/${userId}/`);
+
 // Friend APIs
 export const getFriendsList = (userId: number) => api.get(`/friend/list/${userId}`);
 
@@ -479,9 +481,9 @@ export const sendFriendRequest = (receiverUserId: number) => api.post('/friend/f
 
 export const getFriendRequests = (userId: number) => api.get(`/friend/friend_requests/${userId}/`);
 
-export const acceptFriendRequest = (friendRequestId: number) => api.get(`/friend/friend_request_accept/${friendRequestId}/`);
+export const acceptFriendRequest = (friendRequestId: number) => api.post(`/friend/friend_request_accept/${friendRequestId}/`);
 
-export const declineFriendRequest = (friendRequestId: number) => api.get(`/friend/friend_request_decline/${friendRequestId}/`);
+export const declineFriendRequest = (friendRequestId: number) => api.post(`/friend/friend_request_decline/${friendRequestId}/`);
 
 export const cancelFriendRequest = (receiverUserId: number) => api.post('/friend/friend_request_cancel/', { receiver_user_id: receiverUserId });
 
@@ -502,6 +504,12 @@ export const getRooms = () => api.get('/chats/');
 export const createRoom = (friendId: number) => api.post(`/chats/chat/${friendId}`);
 
 export const getRoomMessages = (roomName: number, friendId: number) => api.get(`/chats/room/${roomName}-${friendId}`);
+
+export const sendMessage = (roomName: number, message: string) => api.post(`/chats/send/${roomName}`, { message });
+
+export const uploadFile = (roomName: number, file: FormData) => api.post(`/chats/upload/${roomName}`, file, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Video Call APIs
 export const getToken = (vc_to: number) => api.get(`/vc/getToken/?vc_to=${vc_to}`);

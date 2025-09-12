@@ -16,6 +16,7 @@ urlpatterns = [
     path('all/', views.profile_list, name='profile-list-view'),
     path('search/', views.search_users, name='search-users'),
     path('follow/', views.follow_unfollow_profile, name='follow-unfollow-view'),
+    path('followers/<int:user_id>/', views.get_followers, name='get-followers'),
     path('<int:pk>/', views.profile_detail, name='profile-detail-view'),
     path('public-profile/<str:username>/', views.public_profile, name='public-profile'),
 ]

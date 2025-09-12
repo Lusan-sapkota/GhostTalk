@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver 
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from notification.models import Notification
+import json
 import requests
 from django.conf import settings
 from friend.utils import get_friend_request_or_false
@@ -92,7 +93,8 @@ def got_offline(sender, user, request, **kwargs):
 def follow_unfollow_profile(request):
     if request.method == 'POST':
         my_profile = Profile.objects.get(user = request.user)
-        pk = request.POST.get('profile_pk')
+        data = json.loads(request.body)
+        pk = data.get('profile_pk')
         obj = Profile.objects.get(pk=pk)
 
         if obj.user in my_profile.following.all():
@@ -535,7 +537,7 @@ def search_users(request):
                 'email': user.email or '',
                 'is_online': profile.is_online,
                 'bio': profile.bio or '',
-                'image': profile.image.url if profile.image else None,
+                'image': profile.image.url if profile.image else '/media/default.jpg',
             })
         except Profile.DoesNotExist:
             user_data.append({
@@ -546,7 +548,7 @@ def search_users(request):
                 'email': user.email or '',
                 'is_online': False,
                 'bio': '',
-                'image': None,
+                'image': '/media/default.jpg',
             })
     
     return JsonResponse({
@@ -576,11 +578,16 @@ def profile_detail(request, pk):
     request_sent = FriendRequestStatus.NO_REQUEST_SENT.value
     pending_friend_request_id = None
     if request.user.is_authenticated and request.user != account:
-        if get_friend_request_or_false(sender=account, receiver=request.user) != False:
+        # Check if they sent a request to us
+        request_from_them = get_friend_request_or_false(sender=account, receiver=request.user)
+        if request_from_them != False:
             request_sent = FriendRequestStatus.THEM_SENT_TO_YOU.value
-            pending_friend_request_id = get_friend_request_or_false(sender=account, receiver=request.user).pk
-        elif get_friend_request_or_false(sender=request.user, receiver=account) != False:
-            request_sent = FriendRequestStatus.YOU_SENT_TO_THEM.value
+            pending_friend_request_id = request_from_them.pk
+        else:
+            # Check if we sent a request to them
+            request_from_us = get_friend_request_or_false(sender=request.user, receiver=account)
+            if request_from_us != False:
+                request_sent = FriendRequestStatus.YOU_SENT_TO_THEM.value
 
     friend_requests = None
     if request.user.is_authenticated and is_self:
@@ -602,6 +609,9 @@ def profile_detail(request, pk):
         'image': view_profile.image.url if view_profile.image else '/media/default.jpg',
         'is_online': view_profile.is_online,
         'follow': follow,
+        'friends_count': len(friends),
+        'followers_count': view_profile.get_followers_no(),
+        'following_count': view_profile.get_following_no(),
         'friends': [{'id': f.id, 'username': f.username} for f in friends],
         'is_self': is_self,
         'is_friend': is_friend,
@@ -612,6 +622,42 @@ def profile_detail(request, pk):
             for fr in friend_requests
         ] if friend_requests is not None else []
     })
+
+
+@token_required
+@require_http_methods(["GET"])
+def get_followers(request, user_id):
+    """Get list of followers for a user"""
+    try:
+        user = User.objects.get(pk=user_id)
+        profile = Profile.objects.get(user=user)
+        
+        followers = []
+        for follower in profile.followers.all():
+            followers.append({
+                'id': follower.id,
+                'user': {
+                    'id': follower.user.id,
+                    'username': follower.user.username,
+                    'first_name': follower.user.first_name,
+                    'last_name': follower.user.last_name,
+                    'email': follower.user.email
+                },
+                'is_online': follower.is_online,
+                'bio': follower.bio or '',
+                'image': follower.image.url if follower.image else '/media/default.jpg'
+            })
+        
+        return JsonResponse({
+            'followers': followers,
+            'count': len(followers)
+        })
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    except Profile.DoesNotExist:
+        return JsonResponse({'error': 'Profile not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @csrf_exempt

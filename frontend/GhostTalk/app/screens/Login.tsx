@@ -157,8 +157,6 @@ const Login: React.FC = () => {
           <Image
             source={require('../../assets/images/icon.png')}
             style={{ width: 72, height: 72, borderRadius: 16 }}
-            accessible={true}
-            accessibilityLabel="GhostTalk App Logo"
           />
         </View>
 

@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 # Import token authentication decorator
 from users.views import token_required
@@ -83,9 +84,47 @@ def room(request, room_name, friend_id):
         'me': {'id': request.user.id, 'username': request.user.username},
         'old_chats': [
             {
-                'user': c.user.username,
-                'message': c.message,
+                'user': c.author.username,
+                'message': c.text,
                 'date': c.date.isoformat(),
             } for c in chats
         ]
     })
+
+
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def send_message(request, room_name):
+    try:
+        data = json.loads(request.body)
+        message_text = data.get('message', '').strip()
+        
+        if not message_text:
+            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        
+        # Get the room
+        room = Room.objects.get(room_id=room_name)
+        
+        # Determine who the friend is
+        friend = room.friend if room.author == request.user else room.author
+        
+        # Create the chat message
+        chat = Chat.objects.create(
+            room_id=room,
+            author=request.user,
+            friend=friend,
+            text=message_text
+        )
+        
+        return JsonResponse({
+            'id': chat.id,
+            'user': chat.author.username,
+            'message': chat.text,
+            'date': chat.date.isoformat(),
+        })
+        
+    except Room.DoesNotExist:
+        return JsonResponse({'error': 'Room not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

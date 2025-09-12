@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavbar from '../../components/TopNavbar';
 import Sidebar from '../../components/Sidebar';
+import { API_BASE_URL } from '../api';
 
 interface User {
   id: number;
@@ -170,8 +171,8 @@ export default function SearchScreen() {
     >
       <View style={styles.userHeader}>
         <View style={styles.userInfo}>
-          {item.image ? (
-            <Image source={{ uri: item.image }} style={styles.userAvatar} />
+          {item.image && item.image !== '/media/default.jpg' ? (
+            <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={styles.userAvatar} />
           ) : (
             <View style={[styles.avatar, { backgroundColor: colors.tint + '30' }]}>
               <Text style={[styles.avatarText, { color: colors.tint }]}>
