@@ -15,11 +15,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavbar from '../../components/TopNavbar';
 import Sidebar from '../../components/Sidebar';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api';
+import Skeleton from '../../components/Skeleton';
 
 interface Notification {
   id: number;
@@ -49,6 +50,28 @@ export default function NotificationsScreen() {
     checkAuth();
     loadNotifications();
   }, []);
+
+  // Auto mark all visible notifications as read when screen focused
+  useFocusEffect(
+    React.useCallback(() => {
+      let mounted = true;
+      (async () => {
+        try {
+          const resp = await getNotifications();
+          const notifs = resp.data.notifications || [];
+          const hasUnread = notifs.some((n: any) => !n.is_seen);
+          if (hasUnread) {
+            await markAllNotificationsRead();
+            if (mounted) setNotifications(notifs.map((n: any) => ({ ...n, is_seen: true })));
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+
+      return () => { mounted = false; };
+    }, [])
+  );
 
   const openSidebar = () => {
     setSidebarOpen(true);
@@ -143,7 +166,12 @@ export default function NotificationsScreen() {
       case 4: // Reply
       case 5: // Like-Comment
       case 6: // Like-Reply
-        router.push('/(tabs)');
+        // If this notification has a post_id, navigate to post detail
+        if (notification.post_id) {
+          router.push({ pathname: '/screens/PostDetail', params: { postId: notification.post_id.toString() } } as any);
+        } else {
+          router.push('/(tabs)');
+        }
         break;
       default:
         break;
@@ -294,11 +322,8 @@ export default function NotificationsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <TopNavbar onMenuPress={openSidebar} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
-          <Text style={[styles.loadingText, { color: colors.icon }]}>
-            Loading notifications...
-          </Text>
+        <View style={{ padding: 12 }}>
+          <Skeleton variant="rect" height={72} borderRadius={12} count={5} />
         </View>
       </SafeAreaView>
     );

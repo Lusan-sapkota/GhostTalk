@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Animated, Easing, Image, ScrollView, Alert, RefreshControl, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { 
@@ -81,10 +82,13 @@ const Profile: React.FC = () => {
   const [isOwnProfile, setIsOwnProfile] = useState<boolean>(false);
   const [friendsCount, setFriendsCount] = useState<number>(0);
   const [followersCount, setFollowersCount] = useState<number>(0);
+  const [followingCount, setFollowingCount] = useState<number>(0);
   const [showFriendsModal, setShowFriendsModal] = useState<boolean>(false);
   const [showFollowersModal, setShowFollowersModal] = useState<boolean>(false);
   const [friendsList, setFriendsList] = useState<any[]>([]);
   const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [showFollowingModal, setShowFollowingModal] = useState<boolean>(false);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -306,9 +310,10 @@ const Profile: React.FC = () => {
       
       if (friendsResponse.data?.success) {
         setFriends(friendsResponse.data?.friends || []);
-        setFriendsCount(friendsResponse.data?.count || 0);
-        // For now, followers count is same as friends count (mutual follows)
-        setFollowersCount(friendsResponse.data?.count || 0);
+  setFriendsCount(friendsResponse.data?.count || 0);
+  // followers/following counts come from profile detail endpoint or friendsResponse
+  setFollowersCount(friendsResponse.data?.count || 0);
+  setFollowingCount(friendsResponse.data?.count || 0);
       } else {
         console.error('Friends list error:', friendsResponse.data?.error);
         setFriends([]);
@@ -442,6 +447,23 @@ const Profile: React.FC = () => {
     // In a real app, you'd have separate followers/following APIs
     setFollowersList(friends);
     setShowFollowersModal(true);
+  };
+
+  const handleShowFollowing = async () => {
+    if (!profile) return;
+    try {
+      // Try to fetch profile detail which includes following_count; backend does not expose following list directly
+      const resp = await getProfileDetail(profile.user.id);
+      const data = resp.data;
+      // backend returns friends array; use it as a fallback for following list if no explicit following list available
+      const following = data.following || data.friends || [];
+      setFollowingList(following || []);
+      setShowFollowingModal(true);
+    } catch (error) {
+      console.error('Error fetching following list:', error);
+      setFollowingList([]);
+      setShowFollowingModal(true);
+    }
   };
 
   const getInitials = (firstName?: string, lastName?: string, username?: string) => {
@@ -647,6 +669,15 @@ const Profile: React.FC = () => {
               </Text>
               <Text style={{ color: Colors[scheme ?? 'light'].text }}>Followers</Text>
             </TouchableOpacity>
+            <TouchableOpacity 
+              style={{ alignItems: 'center' }}
+              onPress={handleShowFollowing}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors[scheme ?? 'light'].text }}>
+                {followingCount}
+              </Text>
+              <Text style={{ color: Colors[scheme ?? 'light'].text }}>Following</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Action Buttons */}
@@ -804,6 +835,51 @@ const Profile: React.FC = () => {
             ))}
           </View>
         )}
+
+        {/* Following Modal */}
+        <Modal
+          visible={showFollowingModal}
+          animationType="slide"
+          onRequestClose={() => setShowFollowingModal(false)}
+        >
+          <SafeAreaView style={[{ flex: 1 }, { backgroundColor: Colors[scheme ?? 'light'].background }]}> 
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: Colors[scheme ?? 'light'].icon }}>
+              <TouchableOpacity onPress={() => setShowFollowingModal(false)}>
+                <Ionicons name="close" size={24} color={Colors[scheme ?? 'light'].text} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: Colors[scheme ?? 'light'].text }}>Following</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            <FlatList
+              data={followingList}
+              keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+              renderItem={({ item }) => (
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: Colors[scheme ?? 'light'].icon + '20' }}>
+                  {item.image && item.image !== '/media/default.jpg' ? (
+                    <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 12 }} />
+                  ) : (
+                    <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: Colors[scheme ?? 'light'].tint + '55', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
+                        {(item.user?.first_name?.[0] || item.user?.username?.[0] || 'U').toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: Colors[scheme ?? 'light'].text, fontWeight: '600' }}>
+                      {item.user?.first_name && item.user?.last_name ? `${item.user.first_name} ${item.user.last_name}` : item.user?.username}
+                    </Text>
+                    <Text style={{ color: Colors[scheme ?? 'light'].icon, marginTop: 2 }}>@{item.user?.username}</Text>
+                  </View>
+                </View>
+              )}
+              ListEmptyComponent={
+                <View style={{ alignItems: 'center', marginTop: 48 }}>
+                  <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No following yet</Text>
+                </View>
+              }
+            />
+          </SafeAreaView>
+        </Modal>
 
         {/* Posts Section */}
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors[scheme ?? 'light'].text, marginBottom: 16 }}>

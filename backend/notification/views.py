@@ -35,8 +35,8 @@ def ShowNotifications(request):
     })
 
 """ Mark notification as read """
-@token_required
 @csrf_exempt
+@token_required
 def MarkNotificationRead(request, notification_id):
     if request.method == 'POST':
         try:
@@ -49,8 +49,8 @@ def MarkNotificationRead(request, notification_id):
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
 
 """ Mark all notifications as read """
-@token_required
 @csrf_exempt
+@token_required
 def MarkAllNotificationsRead(request):
     if request.method == 'POST':
         Notification.objects.filter(user=request.user, is_seen=False).update(is_seen=True)
