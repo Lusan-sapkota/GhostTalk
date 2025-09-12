@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { searchPosts, searchUsers, Post } from '../api';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavbar from '../../components/TopNavbar';
@@ -224,12 +225,14 @@ export default function SearchScreen() {
     }
 
     if (loading) {
+      // show skeleton placeholders for posts (or users if activeTab === 'users')
       return (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={colors.tint} />
-          <Text style={[styles.emptyStateText, { color: colors.icon }]}>
-            Searching...
-          </Text>
+        <View style={{ padding: 12 }}>
+          {activeTab === 'posts' ? (
+            <Skeleton variant="rect" height={160} borderRadius={10} count={3} />
+          ) : (
+            <Skeleton variant="rect" height={72} borderRadius={8} count={4} />
+          )}
         </View>
       );
     }

@@ -28,7 +28,7 @@ function SidebarItem({ icon, label, onPress, color }: SidebarItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.sidebarItem, { borderBottomColor: colors.icon, opacity: 0.2 }]}
+      style={[styles.sidebarItem, { borderBottomColor: colors.icon }]}
       activeOpacity={0.7}
     >
       <Ionicons name={icon} size={24} color={color || colors.text} />
@@ -123,11 +123,13 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
   return (
     <>
       {/* Backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        onPress={onClose}
-        activeOpacity={1}
-      />
+      <View style={styles.backdropWrapper} pointerEvents="auto">
+        <TouchableOpacity
+          style={styles.backdrop}
+          onPress={onClose}
+          activeOpacity={1}
+        />
+      </View>
 
       {/* Sidebar */}
       <Animated.View
@@ -136,13 +138,14 @@ export default function Sidebar({ isOpen, onClose, slideX }: SidebarProps) {
           {
             backgroundColor: colors.background,
             borderLeftColor: colors.icon,
-            transform: [{ translateX: slideX }]
+            transform: [{ translateX: slideX }],
+            pointerEvents: 'auto'
           }
         ]}
       >
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.icon, opacity: 0.2 }]}>
+          <View style={[styles.header, { borderBottomColor: colors.icon }]}>
             <Image
               source={require('../assets/images/icon.png')}
               style={styles.appIcon}
@@ -225,6 +228,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    // Ensure backdrop sits below the sidebar but above page content
+    zIndex: 998,
+    elevation: 8,
   },
   sidebar: {
     position: 'absolute',
@@ -240,7 +246,8 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 10,
+    elevation: 20,
+    zIndex: 999,
   },
   safeArea: {
     flex: 1,
@@ -282,5 +289,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 16,
     flex: 1,
+  },
+  backdropWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 997,
   },
 });

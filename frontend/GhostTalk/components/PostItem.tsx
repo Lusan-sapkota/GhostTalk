@@ -244,9 +244,15 @@ const PostItem: React.FC<PostItemProps> = ({ post, onLike, onSave, onPress, onEd
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
             onPress={handleUserProfilePress}
-            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}
+            style={{ position: 'relative', marginRight: 10 }}
           >
-            <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
+            {post.author.image && post.author.image !== '/media/default.jpg' ? (
+              <Image source={{ uri: `${API_BASE_URL}${post.author.image}` }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+            ) : (
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '800' }}>{initials}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleUserProfilePress}>
             <View>

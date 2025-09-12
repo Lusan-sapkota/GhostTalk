@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
-import { getFriendsList, Profile, getFriendRequests, acceptFriendRequest, declineFriendRequest, getFriendSuggestions, sendFriendRequest, getFollowers } from '../api';
+import { getFriendsList, Profile, getFriendRequests, acceptFriendRequest, declineFriendRequest, getFriendSuggestions, sendFriendRequest } from '../api';
 import ProfileCard from '../../components/ProfileCard';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -28,10 +28,9 @@ const Friends: React.FC = () => {
   const scheme = useColorScheme();
   const colors = Colors[scheme ?? 'light'];
   const [friends, setFriends] = useState<Profile[]>([]);
-  const [followers, setFollowers] = useState<Profile[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
-  const [activeTab, setActiveTab] = useState<'friends' | 'followers' | 'requests' | 'suggestions'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'suggestions'>('friends');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -137,7 +136,6 @@ const Friends: React.FC = () => {
         setCurrentUserId(user.id);
         await Promise.all([
           fetchFriends(user.id),
-          fetchFollowers(user.id),
           fetchFriendRequests(user.id),
           fetchSuggestions()
         ]);
@@ -182,16 +180,6 @@ const Friends: React.FC = () => {
     }
   };
 
-  const fetchFollowers = async (userId: number) => {
-    try {
-      const response = await getFollowers(userId);
-      setFollowers(response.data.followers || []);
-    } catch (error: any) {
-      console.error('Followers error:', error?.response?.data?.error || error?.message || 'Unknown error');
-      Alert.alert('Error', 'Failed to load followers list. Please try again.');
-    }
-  };
-
   const fetchSuggestions = async () => {
     try {
       const response = await getFriendSuggestions();
@@ -207,7 +195,6 @@ const Friends: React.FC = () => {
       if (currentUserId) {
         await Promise.all([
           fetchFriends(currentUserId),
-          fetchFollowers(currentUserId),
           fetchFriendRequests(currentUserId),
           fetchSuggestions()
         ]);
@@ -353,14 +340,6 @@ const Friends: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setActiveTab('followers')}
-          style={[styles.tab, activeTab === 'followers' && { borderBottomColor: colors.tint }]}
-        >
-          <Text style={[styles.tabText, { color: activeTab === 'followers' ? colors.tint : colors.icon }]}>
-            Followers ({followers.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           onPress={() => setActiveTab('requests')}
           style={[styles.tab, activeTab === 'requests' && { borderBottomColor: colors.tint }]}
         >
@@ -395,28 +374,6 @@ const Friends: React.FC = () => {
               <Text style={[styles.emptyText, { color: colors.icon }]}>No friends yet</Text>
               <Text style={[styles.emptySubtext, { color: colors.icon + '60' }]}>
                 Add friends to see them here
-              </Text>
-            </View>
-          }
-        />
-      )}
-
-      {activeTab === 'followers' && (
-        <FlatList
-          data={followers}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <ProfileCard profile={item} onPress={() => {}} />
-          )}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="people" size={48} color={colors.icon} />
-              <Text style={[styles.emptyText, { color: colors.icon }]}>No followers yet</Text>
-              <Text style={[styles.emptySubtext, { color: colors.icon + '60' }]}>
-                People who follow you will appear here
               </Text>
             </View>
           }

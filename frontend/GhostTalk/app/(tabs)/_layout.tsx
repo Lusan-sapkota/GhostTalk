@@ -13,14 +13,16 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const slideX = React.useRef(new Animated.Value(320)).current;
+  // match Sidebar width (280) so the drawer starts off-screen
+  const SIDEBAR_WIDTH = 280;
+  const slideX = React.useRef(new Animated.Value(SIDEBAR_WIDTH)).current;
 
   const openDrawer = () => {
     setOpen(true);
     Animated.timing(slideX, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   };
   const closeDrawer = () => {
-    Animated.timing(slideX, { toValue: 320, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
+    Animated.timing(slideX, { toValue: SIDEBAR_WIDTH, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
       if (finished) setOpen(false);
     });
   };

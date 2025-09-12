@@ -6,6 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getSavedPosts, Post, likePost, savePost } from '../api';
 import PostItem from '../../components/PostItem';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +15,7 @@ export default function SavedPostsScreen() {
   const scheme = useColorScheme();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -34,10 +36,14 @@ export default function SavedPostsScreen() {
         router.replace('/screens/Login');
         return;
       }
+      setLoading(true);
       const response = await getSavedPosts();
       setPosts(response?.data?.saved_posts ?? []);
     } catch (error) {
       console.error('Error fetching saved posts:', error);
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -136,17 +142,25 @@ export default function SavedPostsScreen() {
           />
         }
         ListEmptyComponent={
-          <View style={{ alignItems: 'center', marginTop: 48 }}>
-            <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <Ionicons name="bookmark-outline" size={52} color={Colors[scheme ?? 'light'].icon} />
-            </Animated.View>
-            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
-              No saved posts yet
-            </Text>
-            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
-              Save posts to read them later
-            </Text>
-          </View>
+          loading ? (
+            <View style={{ padding: 16 }}>
+              <Skeleton height={120} borderRadius={10} style={{ marginBottom: 12 }} />
+              <Skeleton height={20} width="60%" />
+              <Skeleton height={12} width="80%" />
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 48 }}>
+              <Animated.View style={{ transform: [{ scale: pulse }] }}>
+                <Ionicons name="bookmark-outline" size={52} color={Colors[scheme ?? 'light'].icon} />
+              </Animated.View>
+              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+                No saved posts yet
+              </Text>
+              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
+                Save posts to read them later
+              </Text>
+            </View>
+          )
         }
       />
     </SafeAreaView>

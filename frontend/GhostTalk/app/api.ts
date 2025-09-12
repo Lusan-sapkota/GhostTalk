@@ -370,6 +370,8 @@ export const getProfileDetail = (pk: number) => api.get(`/user/${pk}/`);
 
 export const followUnfollow = (profilePk: number) => api.post('/user/follow/', { profile_pk: profilePk });
 
+export const getFollowers = (userId: number) => api.get(`/user/followers/${userId}/`);
+
 // Blog APIs
 export const getHomePosts = () => api.get('/home/');
 
@@ -436,12 +438,13 @@ export const searchUsers = (query: string) => api.get('/user/search/', { params:
 
 // Privacy Settings
 export const updatePrivacySettings = (settings: {
-  is_private?: boolean;
   show_online_status?: boolean;
+  show_last_seen?: boolean;
   allow_messages_from?: 'everyone' | 'friends' | 'none';
   allow_friend_requests?: boolean;
+  profile_visibility?: 'public' | 'friends' | 'private';
 }) => {
-  return api.post('/user/privacy/', settings);
+  return api.post('/user/privacy/update/', settings);
 };
 
 export const getPrivacySettings = () => api.get('/user/privacy/');
@@ -472,9 +475,32 @@ export const updateNotificationSettings = (settings: {
 
 export const getNotificationSettings = () => api.get('/user/notification-settings/');
 
-export const getFollowers = (userId: number) => api.get(`/user/followers/${userId}/`);
+export const getOnlineStatus = (userId: number) => api.get(`/user/online-status/${userId}/`);
+
+export const updateOnlineStatus = (isOnline: boolean) => api.post('/user/update-online-status/', { is_online: isOnline });
 
 // Friend APIs
+
+// Chat APIs
+export const getRooms = () => api.get('/chats/');
+
+export const createRoom = (friendId: number) => api.post(`/chats/chat/${friendId}`);
+
+export const getRoomMessages = (roomName: number, friendId: number) => api.get(`/chats/room/${roomName}-${friendId}`);
+
+export const sendMessage = (roomName: number, message: string) => api.post(`/chats/send/${roomName}`, { message });
+
+export const markMessagesDelivered = (roomName: number) => api.post(`/chats/mark-delivered/${roomName}`);
+
+export const markMessagesRead = (roomName: number) => api.post(`/chats/mark-read/${roomName}`);
+
+export const deleteMessage = (messageId: number, deleteType: 'for_everyone' | 'for_me' = 'for_everyone') => 
+  api.post(`/chats/delete-message/${messageId}`, { delete_type: deleteType });
+
+export const uploadFile = (roomName: number, file: FormData) => api.post(`/chats/upload/${roomName}`, file, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
 export const getFriendsList = (userId: number) => api.get(`/friend/list/${userId}`);
 
 export const sendFriendRequest = (receiverUserId: number) => api.post('/friend/friend_request/', { receiver_user_id: receiverUserId });
@@ -498,19 +524,6 @@ export const markNotificationRead = (notificationId: number) => api.post(`/notif
 
 export const markAllNotificationsRead = () => api.post('/notifications/mark-all-read/');
 
-// Chat APIs
-export const getRooms = () => api.get('/chats/');
-
-export const createRoom = (friendId: number) => api.post(`/chats/chat/${friendId}`);
-
-export const getRoomMessages = (roomName: number, friendId: number) => api.get(`/chats/room/${roomName}-${friendId}`);
-
-export const sendMessage = (roomName: number, message: string) => api.post(`/chats/send/${roomName}`, { message });
-
-export const uploadFile = (roomName: number, file: FormData) => api.post(`/chats/upload/${roomName}`, file, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
-
 // Video Call APIs
 export const getToken = (vc_to: number) => api.get(`/vc/getToken/?vc_to=${vc_to}`);
 
@@ -527,6 +540,7 @@ export interface User {
   first_name?: string;
   last_name?: string;
   email?: string;
+  image?: string;
 }
 
 export interface Profile {

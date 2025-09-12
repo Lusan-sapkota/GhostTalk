@@ -60,7 +60,12 @@ def _safe_text(text: str, max_len: int = 5000) -> str:
 
 
 def _serialize_user(u: User):
-    return {"id": u.id, "username": u.username, "first_name": u.first_name, "last_name": u.last_name}
+    try:
+        profile = Profile.objects.get(user=u)
+        image = profile.image.url if profile.image else '/media/default.jpg'
+    except Profile.DoesNotExist:
+        image = '/media/default.jpg'
+    return {"id": u.id, "username": u.username, "first_name": u.first_name, "last_name": u.last_name, "image": image}
 
 
 def _serialize_post(p: Post, user=None):

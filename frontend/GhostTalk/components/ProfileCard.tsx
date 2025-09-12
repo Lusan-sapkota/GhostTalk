@@ -48,7 +48,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     <TouchableOpacity onPress={() => onPress(profile)} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: scheme === 'dark' ? '#222' : '#eee' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ position: 'relative', marginRight: 10 }}>
-          {profile.image ? (
+          {profile.image && profile.image !== '/media/default.jpg' ? (
             <Image source={{ uri: `${API_BASE_URL}${profile.image}` }} style={{ width: 36, height: 36, borderRadius: 18 }} />
           ) : (
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tint + '55', justifyContent: 'center', alignItems: 'center' }}>

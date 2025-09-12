@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getFriendsList, Profile, createRoom } from '../api';
+import { API_BASE_URL } from '../api';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 
 interface Friend {
@@ -23,6 +25,7 @@ export default function ChatsScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -45,6 +48,7 @@ export default function ChatsScreen() {
   }, []);
 
   const fetchFriends = async () => {
+    setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
@@ -72,6 +76,8 @@ export default function ChatsScreen() {
     } catch (error) {
       console.error('Error fetching friends:', error);
       setFriends([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,17 +140,23 @@ export default function ChatsScreen() {
               alignItems: 'center'
             }}
           >
-            <View style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              backgroundColor: Colors[scheme ?? 'light'].tint + '55',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: 12
-            }}>
-              <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>C</Text>
-            </View>
+            {item.image && item.image !== '/media/default.jpg' ? (
+              <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 12 }} />
+            ) : (
+              <View style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: Colors[scheme ?? 'light'].tint + '55',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 12
+              }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
+                  {(item?.user?.first_name?.[0] || item?.user?.username?.[0] || 'U').toUpperCase()}
+                </Text>
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={{ color: Colors[scheme ?? 'light'].text, fontWeight: '600' }}>
                 {item?.user?.username || 'Unknown User'}
@@ -158,13 +170,19 @@ export default function ChatsScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
-          <View style={{ alignItems: 'center', marginTop: 48 }}>
-            <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
-            </Animated.View>
-            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No chats yet</Text>
-            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>Start a conversation…</Text>
-          </View>
+          loading ? (
+            <View style={{ padding: 16 }}>
+              <Skeleton variant="rect" height={64} borderRadius={10} count={4} />
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 48 }}>
+              <Animated.View style={{ transform: [{ scale: pulse }] }}>
+                <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
+              </Animated.View>
+              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No chats yet</Text>
+              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>Start a conversation…</Text>
+            </View>
+          )
         }
       />
     </View>

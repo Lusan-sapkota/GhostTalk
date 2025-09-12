@@ -24,6 +24,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../api';
+import Skeleton from '../../components/Skeleton';
 
 // ImageWithFallback component for handling image loading errors
 const ImageWithFallback: React.FC<{
@@ -501,8 +502,15 @@ const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors[scheme ?? 'light'].background }}>
-        <Text style={{ color: Colors[scheme ?? 'light'].text }}>Loading profile...</Text>
+      <View style={{ flex: 1, backgroundColor: Colors[scheme ?? 'light'].background, padding: 16 }}>
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+          <Skeleton variant="circle" width={100} height={100} />
+          <Skeleton height={20} width={200} style={{ marginTop: 12 }} />
+          <Skeleton height={14} width={140} style={{ marginTop: 8 }} />
+          <Skeleton count={3} height={12} style={{ marginTop: 12 }} />
+        </View>
+        <Skeleton height={18} width={'40%'} style={{ marginTop: 8 }} />
+        <Skeleton count={3} height={120} style={{ marginTop: 12 }} />
       </View>
     );
   }

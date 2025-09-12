@@ -9,19 +9,20 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  SafeAreaView
+  SafeAreaView,
+  Modal,
+  FlatList
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
-import { getProfileDetail, sendFriendRequest, getFriendsList, followUnfollow, cancelFriendRequest, removeFriend, acceptFriendRequest } from '../api';
+import { getProfileDetail, sendFriendRequest, getFriendsList, followUnfollow, cancelFriendRequest, removeFriend, acceptFriendRequest, getFollowers } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../api';
+import Skeleton from '../../components/Skeleton';
 
 const { width } = Dimensions.get('window');
-
-// ImageWithFallback component for handling image loading errors
 const ImageWithFallback: React.FC<{
   source: { uri: string };
   fallbackText: string;
@@ -86,6 +87,13 @@ const PublicProfile: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [friendsModalVisible, setFriendsModalVisible] = useState(false);
+  const [followersModalVisible, setFollowersModalVisible] = useState(false);
+  const [followingModalVisible, setFollowingModalVisible] = useState(false);
+  const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [listLoading, setListLoading] = useState(false);
 
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -109,6 +117,38 @@ const PublicProfile: React.FC = () => {
     } catch (error) {
       console.error('Error getting current user:', error);
     }
+  };
+
+  const fetchFriendsList = async () => {
+    if (!profile) return;
+    try {
+      setListLoading(true);
+      const response = await getFriendsList(profile.user.id);
+      setFriendsList(response.data.friends || []);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const fetchFollowersList = async () => {
+    if (!profile) return;
+    try {
+      setListLoading(true);
+      const response = await getFollowers(profile.user.id);
+      setFollowersList(response.data.followers || []);
+    } catch (error) {
+      console.error('Error fetching followers:', error);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const fetchFollowingList = async () => {
+    // For now, we'll show an empty list since there's no API endpoint for following
+    // This would need to be implemented in the backend
+    setFollowingList([]);
   };
 
   const loadProfile = async () => {
@@ -263,10 +303,19 @@ const PublicProfile: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+        <View style={{ padding: 20 }}>
+          {/* Avatar skeleton */}
+          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <Skeleton width={120} height={120} borderRadius={60} />
+          </View>
+          {/* Name / username */}
+          <Skeleton height={22} width="60%" style={{ alignSelf: 'center', marginBottom: 8 }} />
+          <Skeleton height={16} width="40%" style={{ alignSelf: 'center', marginBottom: 12 }} />
+          {/* Bio */}
+          <Skeleton height={12} width="90%" />
+          <Skeleton height={12} width="85%" />
+          <Skeleton height={12} width="70%" />
         </View>
       </SafeAreaView>
     );
@@ -449,29 +498,184 @@ const PublicProfile: React.FC = () => {
 
         {/* Stats */}
         <View style={[styles.statsContainer, { backgroundColor: colors.background, borderColor: colors.icon, borderWidth: 1 }]}>
-          <View style={styles.statItem}>
+          <TouchableOpacity 
+            style={styles.statItem}
+            onPress={() => {
+              // Posts - could navigate to user's posts
+              Alert.alert('Coming Soon', 'Posts view will be available soon');
+            }}
+          >
             <Text style={[styles.statNumber, { color: colors.primary }]}>0</Text>
             <Text style={[styles.statLabel, { color: colors.icon }]}>Posts</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}>
+          <TouchableOpacity 
+            style={styles.statItem}
+            onPress={() => {
+              fetchFriendsList();
+              setFriendsModalVisible(true);
+            }}
+          >
             <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.friends_count || 0}</Text>
             <Text style={[styles.statLabel, { color: colors.icon }]}>Friends</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}>
+          <TouchableOpacity 
+            style={styles.statItem}
+            onPress={() => {
+              fetchFollowersList();
+              setFollowersModalVisible(true);
+            }}
+          >
             <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.followers_count || 0}</Text>
             <Text style={[styles.statLabel, { color: colors.icon }]}>Followers</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}>
+          <TouchableOpacity 
+            style={styles.statItem}
+            onPress={() => {
+              fetchFollowingList();
+              setFollowingModalVisible(true);
+            }}
+          >
             <Text style={[styles.statNumber, { color: colors.primary }]}>{profile.following_count || 0}</Text>
             <Text style={[styles.statLabel, { color: colors.icon }]}>Following</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
     </SafeAreaView>
+
+    {/* Friends Modal */}
+    <Modal
+      visible={friendsModalVisible}
+      animationType="slide"
+      onRequestClose={() => setFriendsModalVisible(false)}
+    >
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalHeader, { borderBottomColor: colors.icon }]}>
+          <TouchableOpacity onPress={() => setFriendsModalVisible(false)}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.modalTitle, { color: colors.text }]}>Friends</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        {listLoading ? (
+          <View style={styles.modalLoading}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={friendsList}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={[styles.listItem, { borderBottomColor: colors.icon }]}>
+                {item.image && item.image !== '/media/default.jpg' ? (
+                  <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={styles.listItemImage} />
+                ) : (
+                  <View style={[styles.listItemImage, { backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ color: 'white', fontWeight: '800' }}>
+                      {(item.user?.first_name?.[0] || item.user?.username?.[0] || 'U').toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.listItemInfo}>
+                  <Text style={[styles.listItemName, { color: colors.text }]}>
+                    {item.user?.first_name && item.user?.last_name 
+                      ? `${item.user.first_name} ${item.user.last_name}`
+                      : item.user?.username || 'Unknown User'}
+                  </Text>
+                  <Text style={[styles.listItemUsername, { color: colors.icon }]}>
+                    @{item.user?.username || 'unknown'}
+                  </Text>
+                </View>
+              </View>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.icon }]}>No friends yet</Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </Modal>
+
+    {/* Followers Modal */}
+    <Modal
+      visible={followersModalVisible}
+      animationType="slide"
+      onRequestClose={() => setFollowersModalVisible(false)}
+    >
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalHeader, { borderBottomColor: colors.icon }]}>
+          <TouchableOpacity onPress={() => setFollowersModalVisible(false)}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.modalTitle, { color: colors.text }]}>Followers</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        {listLoading ? (
+          <View style={styles.modalLoading}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={followersList}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={[styles.listItem, { borderBottomColor: colors.icon }]}>
+                {item.image && item.image !== '/media/default.jpg' ? (
+                  <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={styles.listItemImage} />
+                ) : (
+                  <View style={[styles.listItemImage, { backgroundColor: colors.tint + '55', justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ color: 'white', fontWeight: '800' }}>
+                      {(item.user?.first_name?.[0] || item.user?.username?.[0] || 'U').toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.listItemInfo}>
+                  <Text style={[styles.listItemName, { color: colors.text }]}>
+                    {item.user?.first_name && item.user?.last_name 
+                      ? `${item.user.first_name} ${item.user.last_name}`
+                      : item.user?.username || 'Unknown User'}
+                  </Text>
+                  <Text style={[styles.listItemUsername, { color: colors.icon }]}>
+                    @{item.user?.username || 'unknown'}
+                  </Text>
+                </View>
+              </View>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.icon }]}>No followers yet</Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </Modal>
+
+    {/* Following Modal */}
+    <Modal
+      visible={followingModalVisible}
+      animationType="slide"
+      onRequestClose={() => setFollowingModalVisible(false)}
+    >
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalHeader, { borderBottomColor: colors.icon }]}>
+          <TouchableOpacity onPress={() => setFollowingModalVisible(false)}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.modalTitle, { color: colors.text }]}>Following</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: colors.icon }]}>Following list coming soon</Text>
+        </View>
+      </SafeAreaView>
+    </Modal>
+
     </View>
   );
 };
@@ -671,6 +875,58 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
     marginHorizontal: 16,
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  listItemImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  listItemInfo: {
+    flex: 1,
+  },
+  listItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  listItemUsername: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 

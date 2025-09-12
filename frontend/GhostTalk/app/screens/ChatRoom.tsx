@@ -8,19 +8,20 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Modal,
   ScrollView,
 } from 'react-native';
-import { getRoomMessages, sendMessage, getProfileDetail } from '../api';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getRoomMessages, sendMessage, getProfileDetail, getOnlineStatus, markMessagesDelivered, markMessagesRead, deleteMessage } from '../api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import OnlineStatusManager from '../utils/OnlineStatusManager';
 
 const { width } = Dimensions.get('window');
 
@@ -31,6 +32,9 @@ interface Message {
   date: string;
   isMine?: boolean;
   status?: 'sending' | 'sent' | 'delivered' | 'read';
+  is_deleted?: boolean;
+  delivered_at?: string;
+  read_at?: string;
 }
 
 interface Room {
@@ -54,12 +58,44 @@ const ChatRoom: React.FC = () => {
   const [friendProfile, setFriendProfile] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [friendUsername, setFriendUsername] = useState('');
+  const [onlineStatus, setOnlineStatus] = useState<string>('Offline');
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     getCurrentUser();
     fetchMessages();
+    
+    // Initialize online status manager
+    OnlineStatusManager.getInstance().initialize();
+    
+    // Mark messages as read when component mounts
+    const markAsRead = async () => {
+      try {
+        await markMessagesRead(room.room_id);
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+    markAsRead();
+  }, []);
+
+  // Update online status periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchOnlineStatus();
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cleanup online status manager on unmount
+  useEffect(() => {
+    return () => {
+      OnlineStatusManager.getInstance().cleanup();
+    };
   }, []);
 
   const getCurrentUser = async () => {
@@ -80,10 +116,20 @@ const ChatRoom: React.FC = () => {
       const formattedMessages = response.data.old_chats.map((msg: any) => ({
         ...msg,
         isMine: msg.user === response.data.me.username,
-        status: msg.user === response.data.me.username ? 'sent' : undefined
+        status: msg.status || (msg.user === response.data.me.username ? 'sent' : undefined),
+        is_deleted: msg.is_deleted || false,
+        delivered_at: msg.delivered_at,
+        read_at: msg.read_at,
       }));
       setMessages(formattedMessages);
       setFriendUsername(response.data.friend.username);
+
+      // Mark messages as delivered
+      try {
+        await markMessagesDelivered(room.room_id);
+      } catch (error) {
+        console.error('Error marking messages as delivered:', error);
+      }
 
       // Fetch friend's profile for the header
       try {
@@ -92,8 +138,25 @@ const ChatRoom: React.FC = () => {
       } catch (profileError) {
         console.error('Error fetching friend profile:', profileError);
       }
+
+      // Fetch online status
+      await fetchOnlineStatus();
     } catch (error) {
       console.error('Error fetching messages:', error);
+    }
+  };
+
+  const fetchOnlineStatus = async () => {
+    try {
+      const response = await getOnlineStatus(room.friend_id);
+      if (response.data.is_visible) {
+        setOnlineStatus(response.data.online_status || 'Offline');
+      } else {
+        setOnlineStatus('Offline'); // Hidden by privacy settings
+      }
+    } catch (error) {
+      console.error('Error fetching online status:', error);
+      setOnlineStatus('Offline');
     }
   };
 
@@ -120,7 +183,14 @@ const ChatRoom: React.FC = () => {
       // Update message status to sent
       setMessages(prev => prev.map(msg =>
         msg.id === tempMessage.id
-          ? { ...msg, ...response.data, status: 'sent' as const }
+          ? { 
+              ...msg, 
+              ...response.data, 
+              status: 'sent' as const,
+              is_deleted: response.data.is_deleted || false,
+              delivered_at: response.data.delivered_at,
+              read_at: response.data.read_at,
+            }
           : msg
       ));
     } catch (error) {
@@ -181,11 +251,45 @@ const ChatRoom: React.FC = () => {
     }
   };
 
+  const handleLongPressMessage = (message: Message) => {
+    if (message.isMine && !message.is_deleted) {
+      setSelectedMessage(message);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const handleDeleteMessage = async (deleteType: 'for_everyone' | 'for_me') => {
+    if (!selectedMessage?.id) return;
+
+    try {
+      await deleteMessage(selectedMessage.id, deleteType);
+      
+      // Update the message in the UI
+      setMessages(prev => prev.map(msg => 
+        msg.id === selectedMessage.id 
+          ? { ...msg, is_deleted: true }
+          : msg
+      ));
+      
+      setShowDeleteModal(false);
+      setSelectedMessage(null);
+      
+      Alert.alert('Success', deleteType === 'for_everyone' ? 'Message unsent' : 'Message deleted');
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      Alert.alert('Error', 'Failed to delete message');
+    }
+  };
+
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageContainer,
-      item.isMine ? styles.myMessage : styles.theirMessage
-    ]}>
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      onLongPress={() => handleLongPressMessage(item)}
+      style={[
+        styles.messageContainer,
+        item.isMine ? styles.myMessage : styles.theirMessage
+      ]}
+    >
       {!item.isMine && (
         <Text style={[styles.username, { color: colors.primary }]}>
           {item.user}
@@ -196,18 +300,27 @@ const ChatRoom: React.FC = () => {
         item.isMine ? styles.myBubble : styles.theirBubble,
         { backgroundColor: item.isMine ? colors.primary : colors.icon + '20' }
       ]}>
-        <Text style={[
-          styles.messageText,
-          { color: item.isMine ? 'white' : colors.text }
-        ]}>
-          {item.message}
-        </Text>
+        {item.is_deleted ? (
+          <Text style={[
+            styles.deletedMessageText,
+            { color: colors.icon }
+          ]}>
+            This message was unsent
+          </Text>
+        ) : (
+          <Text style={[
+            styles.messageText,
+            { color: item.isMine ? 'white' : colors.text }
+          ]}>
+            {item.message}
+          </Text>
+        )}
       </View>
       <View style={styles.messageFooter}>
         <Text style={[styles.timestamp, { color: colors.icon }]}>
           {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Text>
-        {item.isMine && (
+        {item.isMine && !item.is_deleted && (
           <View style={styles.statusContainer}>
             {item.status === 'sending' && (
               <Ionicons name="time-outline" size={12} color={colors.icon} />
@@ -224,7 +337,7 @@ const ChatRoom: React.FC = () => {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -244,7 +357,7 @@ const ChatRoom: React.FC = () => {
           <View style={styles.headerTextContainer}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>{friendUsername}</Text>
             <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
-              {friendProfile?.is_online ? 'Online' : 'Offline'}
+              {onlineStatus}
             </Text>
           </View>
         </View>
@@ -416,6 +529,45 @@ const ChatRoom: React.FC = () => {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Delete Message Modal */}
+      <Modal
+        visible={showDeleteModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={[styles.deleteModalContent, { backgroundColor: colors.background }]}>
+            <Text style={[styles.deleteModalTitle, { color: colors.text }]}>
+              Unsend Message
+            </Text>
+            <Text style={[styles.deleteModalMessage, { color: colors.icon }]}>
+              This message will be unsent for everyone. This action cannot be undone.
+            </Text>
+            
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.cancelButton]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={[styles.deleteModalButtonText, { color: colors.text }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.unsendButton]}
+                onPress={() => handleDeleteMessage('for_everyone')}
+              >
+                <Text style={[styles.unsendButtonText]}>
+                  Unsend
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -432,7 +584,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'ios' ? 8 : 12, // Adjust for status bar
     borderBottomWidth: 1,
   },
   backButton: {
@@ -514,6 +665,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
   },
+  deletedMessageText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
   timestamp: {
     fontSize: 10,
     marginTop: 4,
@@ -532,7 +687,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 12, // Extra padding for iOS home indicator
   },
   inputRow: {
     flexDirection: 'row',
@@ -653,6 +807,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 12,
     flex: 1,
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteModalContent: {
+    margin: 20,
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  deleteModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  deleteModalMessage: {
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  unsendButton: {
+    backgroundColor: '#ff6b6b',
+  },
+  deleteModalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  unsendButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

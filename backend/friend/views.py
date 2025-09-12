@@ -495,12 +495,12 @@ def accept_friend_request(request, *args, **kwargs):
             room = room.first()
         
         # Send initial "Say hi" message
-        initial_message = Chat.objects.create(
-            room_id=room,
-            author=user,
-            friend=friend_request.sender,
-            text="Say hi! 👋"
-        )
+        # initial_message = Chat.objects.create(
+        #     room_id=room,
+        #     author=user,
+        #     friend=friend_request.sender,
+        #     text="Say hi! 👋"
+        # )
         
         # Create notification for the sender that their friend request was accepted
         Notification.objects.create(

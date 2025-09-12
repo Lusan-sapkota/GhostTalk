@@ -84,10 +84,15 @@ def room(request, room_name, friend_id):
         'me': {'id': request.user.id, 'username': request.user.username},
         'old_chats': [
             {
+                'id': c.id,
                 'user': c.author.username,
                 'message': c.text,
                 'date': c.date.isoformat(),
-            } for c in chats
+                'status': c.status,
+                'delivered_at': c.delivered_at.isoformat() if c.delivered_at else None,
+                'read_at': c.read_at.isoformat() if c.read_at else None,
+                'is_deleted': c.is_deleted,
+            } for c in chats if not c.is_deleted
         ]
     })
 
@@ -122,9 +127,126 @@ def send_message(request, room_name):
             'user': chat.author.username,
             'message': chat.text,
             'date': chat.date.isoformat(),
+            'status': chat.status,
+            'delivered_at': chat.delivered_at.isoformat() if chat.delivered_at else None,
+            'read_at': chat.read_at.isoformat() if chat.read_at else None,
+            'is_deleted': chat.is_deleted,
         })
         
     except Room.DoesNotExist:
         return JsonResponse({'error': 'Room not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def mark_messages_delivered(request, room_name):
+    """Mark messages as delivered when recipient fetches them"""
+    try:
+        room = Room.objects.get(room_id=room_name)
+        
+        # Determine who the friend is (the recipient)
+        friend = room.friend if room.author == request.user else room.author
+        
+        # Mark all undelivered messages from friend to current user as delivered
+        undelivered_messages = Chat.objects.filter(
+            room_id=room,
+            author=friend,
+            friend=request.user,
+            status='sent',
+            is_deleted=False
+        )
+        
+        updated_count = 0
+        for message in undelivered_messages:
+            message.mark_as_delivered()
+            updated_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'updated_count': updated_count
+        })
+        
+    except Room.DoesNotExist:
+        return JsonResponse({'error': 'Room not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def mark_messages_read(request, room_name):
+    """Mark messages as read when recipient views them"""
+    try:
+        room = Room.objects.get(room_id=room_name)
+        
+        # Determine who the friend is (the recipient)
+        friend = room.friend if room.author == request.user else room.author
+        
+        # Mark all unread messages from friend to current user as read
+        unread_messages = Chat.objects.filter(
+            room_id=room,
+            author=friend,
+            friend=request.user,
+            status__in=['sent', 'delivered'],
+            is_deleted=False
+        )
+        
+        updated_count = 0
+        for message in unread_messages:
+            message.mark_as_read()
+            updated_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'updated_count': updated_count
+        })
+        
+    except Room.DoesNotExist:
+        return JsonResponse({'error': 'Room not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def delete_message(request, message_id):
+    """Delete a message (unsend for everyone or delete for self)"""
+    try:
+        data = json.loads(request.body)
+        delete_type = data.get('delete_type', 'for_everyone')  # 'for_everyone' or 'for_me'
+        
+        message = Chat.objects.get(id=message_id, is_deleted=False)
+        
+        # Check if user can delete this message
+        if message.author != request.user:
+            return JsonResponse({'error': 'You can only delete your own messages'}, status=403)
+        
+        if delete_type == 'for_everyone':
+            # Unsend for everyone (soft delete)
+            message.delete_message(request.user)
+            return JsonResponse({
+                'success': True,
+                'message': 'Message unsent for everyone'
+            })
+        elif delete_type == 'for_me':
+            # This would require a separate table for per-user message visibility
+            # For now, we'll implement it as unsend for everyone
+            message.delete_message(request.user)
+            return JsonResponse({
+                'success': True,
+                'message': 'Message deleted'
+            })
+        else:
+            return JsonResponse({'error': 'Invalid delete type'}, status=400)
+            
+    except Chat.DoesNotExist:
+        return JsonResponse({'error': 'Message not found'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

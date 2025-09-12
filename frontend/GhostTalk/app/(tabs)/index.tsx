@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFeedPosts, Post, likePost, savePost } from '../api';
 import PostItem from '../../components/PostItem';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,6 +16,7 @@ export default function HomeScreen() {
   const scheme = useColorScheme();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const pulse = useRef(new Animated.Value(1)).current;
   const [userInitials, setUserInitials] = useState<string>('U');
@@ -27,8 +29,8 @@ export default function HomeScreen() {
         return;
       }
 
-      // Only fetch posts if user is authenticated
-      await fetchPosts();
+  // Only fetch posts if user is authenticated
+  await fetchPosts();
 
       const userRaw = await AsyncStorage.getItem('user');
       if (userRaw) {
@@ -61,12 +63,16 @@ export default function HomeScreen() {
         console.warn('No token available, skipping fetchPosts');
         return;
       }
+      setLoading(true);
       const response = await getFeedPosts();
       setPosts(response?.data?.posts ?? []);
     } catch (error) {
       console.error('Error fetching posts:', error);
       // If we get a 401, the interceptor should handle token refresh
       // If refresh fails, user will be logged out
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -138,13 +144,21 @@ export default function HomeScreen() {
   refreshing={refreshing}
   onRefresh={onRefresh}
         ListEmptyComponent={
-          <View style={{ alignItems: 'center', marginTop: 48 }}>
-            <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
-            </Animated.View>
-            <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No whispers yet</Text>
-            <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>Start the conversation…</Text>
-          </View>
+          loading ? (
+            <View style={{ padding: 16 }}>
+              <Skeleton height={120} borderRadius={10} style={{ marginBottom: 12 }} />
+              <Skeleton height={20} width="60%" />
+              <Skeleton height={12} width="80%" />
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 48 }}>
+              <Animated.View style={{ transform: [{ scale: pulse }] }}>
+                <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
+              </Animated.View>
+              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>No whispers yet</Text>
+              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>Start the conversation…</Text>
+            </View>
+          )
         }
       />
       </View>

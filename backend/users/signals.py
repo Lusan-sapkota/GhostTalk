@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from .models import Profile, Relationship
+from .models import Profile, Relationship, PrivacySettings
 from friend.models import FriendList
 
 """ Creating profile when an user creates an account """
@@ -9,6 +9,7 @@ from friend.models import FriendList
 def create_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+        PrivacySettings.objects.create(user=instance)
 
 
 """ Saving profile when an user updates his/her account """

@@ -19,4 +19,8 @@ urlpatterns = [
     path('followers/<int:user_id>/', views.get_followers, name='get-followers'),
     path('<int:pk>/', views.profile_detail, name='profile-detail-view'),
     path('public-profile/<str:username>/', views.public_profile, name='public-profile'),
+    path('online-status/<int:user_id>/', views.get_online_status, name='get-online-status'),
+    path('update-online-status/', views.update_online_status, name='update-online-status'),
+    path('privacy/', views.get_privacy_settings, name='get-privacy-settings'),
+    path('privacy/update/', views.update_privacy_settings, name='update-privacy-settings'),
 ]

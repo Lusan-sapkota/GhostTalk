@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getFriendsList, Profile, getFriendRequests, acceptFriendRequest, declineFriendRequest, getFollowers } from '../api';
+import Skeleton from '../../components/Skeleton';
 import ProfileCard from '../../components/ProfileCard';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +32,7 @@ export default function FriendsScreen() {
   const [friends, setFriends] = useState<Profile[]>([]);
   const [followers, setFollowers] = useState<Profile[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'friends' | 'followers' | 'requests'>('friends');
@@ -66,6 +68,7 @@ export default function FriendsScreen() {
   }, []);
 
   const fetchFriends = async () => {
+    setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
@@ -93,6 +96,9 @@ export default function FriendsScreen() {
     } catch (error) {
       console.error('Error fetching friends:', error);
       setFriends([]);
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -178,7 +184,7 @@ export default function FriendsScreen() {
     <View style={{ flex: 1, backgroundColor: Colors[scheme ?? 'light'].background }}>
       <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomColor: Colors[scheme ?? 'light'].icon + '40' }]}>
         <Text style={[styles.headerTitle, { color: Colors[scheme ?? 'light'].text }]}>
-          Friends and Followers
+          Friends & Followers
         </Text>
         <View style={styles.headerRight}>
           <TouchableOpacity
@@ -190,7 +196,7 @@ export default function FriendsScreen() {
         </View>
       </View>
 
-      {/* Friends and Followers Tabs */}
+      {/* Friends Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: Colors[scheme ?? 'light'].icon + '40' }]}>
         <TouchableOpacity
           onPress={() => setActiveTab('friends')}
@@ -307,15 +313,21 @@ export default function FriendsScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 48 }}>
-              <Ionicons name="person-add" size={48} color={Colors[scheme ?? 'light'].icon} />
-              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
-                No friend requests
-              </Text>
-              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon + '80', textAlign: 'center' }}>
-                Friend requests will appear here
-              </Text>
-            </View>
+            loading ? (
+              <View style={{ padding: 16 }}>
+                <Skeleton variant="rect" height={64} borderRadius={10} count={3} />
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', marginTop: 48 }}>
+                <Ionicons name="person-add" size={48} color={Colors[scheme ?? 'light'].icon} />
+                <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+                  No friend requests
+                </Text>
+                <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon + '80', textAlign: 'center' }}>
+                  Friend requests will appear here
+                </Text>
+              </View>
+            )
           }
         />
       ) : (
@@ -331,17 +343,23 @@ export default function FriendsScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 48 }}>
-              <Animated.View style={{ transform: [{ scale: pulse }] }}>
-                <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
-              </Animated.View>
-              <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
-                {activeTab === 'friends' ? 'No friends yet' : 'No followers yet'}
-              </Text>
-              <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
-                {activeTab === 'friends' ? 'Find peers to start chats…' : 'People who follow you will appear here'}
-              </Text>
-            </View>
+            loading ? (
+              <View style={{ padding: 16 }}>
+                <Skeleton variant="rect" height={64} borderRadius={10} count={4} />
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', marginTop: 48 }}>
+                <Animated.View style={{ transform: [{ scale: pulse }] }}>
+                  <Image source={require('../../assets/images/icon.png')} style={{ width: 52, height: 52, opacity: 0.8 }} />
+                </Animated.View>
+                <Text style={{ marginTop: 10, color: Colors[scheme ?? 'light'].icon, fontWeight: '600' }}>
+                  No friends yet
+                </Text>
+                <Text style={{ marginTop: 4, color: Colors[scheme ?? 'light'].icon }}>
+                  Find peers to start chats…
+                </Text>
+              </View>
+            )
           }
         />
       )}

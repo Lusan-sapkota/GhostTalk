@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
-from .models import Profile, OTP
+from .models import Profile, OTP, PrivacySettings
 from django.contrib.auth.models import User
 from django.dispatch import receiver 
 from django.contrib.auth.signals import user_logged_in, user_logged_out
@@ -840,4 +840,128 @@ def refresh_token(request):
         logger = logging.getLogger(__name__)
         logger.error(f'Token refresh error: {str(e)}')
         return JsonResponse({'error': 'Token refresh failed'}, status=500)
+
+
+# Online Status APIs
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def update_online_status(request):
+    """Update user's online status"""
+    try:
+        data = json.loads(request.body)
+        is_online = data.get('is_online', False)
+
+        profile = request.user.profile
+        profile.update_online_status(is_online)
+
+        return JsonResponse({
+            'success': True,
+            'is_online': profile.is_online,
+            'last_seen': profile.last_seen.isoformat()
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@token_required
+@require_http_methods(["GET"])
+def get_online_status(request, user_id):
+    """Get online status for a specific user (respecting privacy settings)"""
+    try:
+        target_user = User.objects.get(pk=user_id)
+        target_profile = target_user.profile
+
+        # Check if current user can see the online status
+        if not target_profile.show_online_status:
+            return JsonResponse({
+                'user_id': user_id,
+                'online_status': None,  # Hidden
+                'is_visible': False
+            })
+
+        online_status = target_profile.get_online_status_display(request.user.profile)
+
+        return JsonResponse({
+            'user_id': user_id,
+            'online_status': online_status,
+            'is_online': target_profile.is_online,
+            'last_seen': target_profile.last_seen.isoformat(),
+            'is_visible': True
+        })
+
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Privacy Settings APIs
+@token_required
+@require_http_methods(["GET"])
+def get_privacy_settings(request):
+    """Get user's privacy settings"""
+    try:
+        privacy_settings, created = PrivacySettings.objects.get_or_create(user=request.user)
+
+        return JsonResponse({
+            'success': True,
+            'settings': {
+                'show_online_status': privacy_settings.show_online_status,
+                'show_last_seen': privacy_settings.show_last_seen,
+                'allow_messages_from': privacy_settings.allow_messages_from,
+                'allow_friend_requests': privacy_settings.allow_friend_requests,
+                'profile_visibility': privacy_settings.profile_visibility,
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@token_required
+@require_http_methods(["POST"])
+def update_privacy_settings(request):
+    """Update user's privacy settings"""
+    try:
+        data = json.loads(request.body)
+        privacy_settings, created = PrivacySettings.objects.get_or_create(user=request.user)
+
+        # Update fields if provided
+        if 'show_online_status' in data:
+            privacy_settings.show_online_status = data['show_online_status']
+            # Also update the profile setting for consistency
+            request.user.profile.show_online_status = data['show_online_status']
+            request.user.profile.save()
+
+        if 'show_last_seen' in data:
+            privacy_settings.show_last_seen = data['show_last_seen']
+
+        if 'allow_messages_from' in data:
+            privacy_settings.allow_messages_from = data['allow_messages_from']
+
+        if 'allow_friend_requests' in data:
+            privacy_settings.allow_friend_requests = data['allow_friend_requests']
+
+        if 'profile_visibility' in data:
+            privacy_settings.profile_visibility = data['profile_visibility']
+
+        privacy_settings.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Privacy settings updated successfully',
+            'settings': {
+                'show_online_status': privacy_settings.show_online_status,
+                'show_last_seen': privacy_settings.show_last_seen,
+                'allow_messages_from': privacy_settings.allow_messages_from,
+                'allow_friend_requests': privacy_settings.allow_friend_requests,
+                'profile_visibility': privacy_settings.profile_visibility,
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
